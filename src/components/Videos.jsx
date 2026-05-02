@@ -1,0 +1,112 @@
+import { Play } from "lucide-react";
+
+const videos = [
+  {
+    title: "Bungalow for Sale",
+    location: "Karali, Vadodara",
+    image: "/v1.jpg",
+    overlay: "LUXURY HOME FOR SALE - VIRTUAL TOUR",
+  },
+  {
+    title: "Bungalow for Sale",
+    location: "Kuhu, Ahmedabad",
+    image: "/v2.jpg",
+  },
+  {
+    title: "Land for Sale",
+    location: "Kuhu, Ahmedabad",
+    image: "/v3.jpg",
+    overlay: "Property Video",
+  },
+  {
+    title: "Villa for Sale",
+    location: "Kuhu, Ahmedabad",
+    image: "/v4.jpg",
+    overlay: "FOR SALE - DREAM HOME",
+    button: "CONTACT AGENT",
+  },
+];
+
+export default function Videos() {
+  return (
+    <div className="w-full bg-gray-100 py-16">
+
+      {/* Header */}
+      <div className="px-6 md:px-12 lg:px-20 pb-8">
+        <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
+          Watch Our Videos
+        </h2>
+        <p className="text-gray-500 mt-2">
+          Explore our collection of short videos showcasing properties and insights
+        </p>
+      </div>
+
+      {/* Video Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 md:px-12 lg:px-20">
+
+        {videos.map((v, i) => (
+          <div key={i} className="flex flex-col">
+
+            {/* Video Card */}
+            <div className="relative h-64 rounded-2xl overflow-hidden group">
+
+              <img
+                src={v.image}
+                alt=""
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+              />
+
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/40" />
+
+              {/* Play Button */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition cursor-pointer">
+                  <Play size={22} />
+                </div>
+              </div>
+
+              {/* Text Overlay */}
+              {v.overlay && (
+                <div className="absolute bottom-4 left-4 right-4">
+                  <p className="text-white font-medium text-sm">
+                    {v.overlay}
+                  </p>
+                  {v.button && (
+                    <button className="mt-2 bg-blue-600 text-white px-4 py-1 rounded-full text-xs font-medium hover:bg-blue-700 transition">
+                      {v.button}
+                    </button>
+                  )}
+                </div>
+              )}
+
+            </div>
+
+            {/* Info */}
+            <div className="mt-3">
+              <h3 className="font-medium text-gray-900">
+                {v.title}
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {v.location}
+              </p>
+            </div>
+
+          </div>
+        ))}
+
+      </div>
+
+      {/* Navigation Arrows */}
+      <div className="flex justify-center gap-4 mt-8">
+        <button className="w-10 h-10 border border-gray-300 rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 transition-colors">
+          ←
+        </button>
+        <button className="w-10 h-10 border-2 border-blue-600 text-blue-600 rounded-full flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors">
+          →
+        </button>
+      </div>
+
+    </div>
+  );
+}
