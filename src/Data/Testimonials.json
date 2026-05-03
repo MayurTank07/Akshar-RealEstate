@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "name": "Ananya Desai",
+    "role": "First-time Buyer",
+    "image": "/t1.jpg",
+    "text": "Buying my first home was daunting, but the LuxeEstate team guided me through every step. They were patient, answered all my questions, and made the entire process stress-free."
+  },
+  {
+    "id": 2,
+    "name": "Vikram Patel",
+    "role": "Commercial Buyer",
+    "image": "/t2.jpg",
+    "text": "Excellent service for commercial properties. They understood our business needs and found us the perfect location. Their professionalism and attention to detail are unmatched."
+  },
+  {
+    "id": 3,
+    "name": "Priya Sharma",
+    "role": "Homeowner",
+    "image": "/t3.jpg",
+    "text": "LuxeEstate made finding my dream home incredibly easy. Their team was professional, responsive, and truly understood what I was looking for."
+  },
+  {
+    "id": 4,
+    "name": "Rajesh Kumar",
+    "role": "Property Investor",
+    "image": "/t4.jpg",
+    "text": "As a real estate investor, I've worked with many agencies. LuxeEstate stands out with their market knowledge and transparent approach."
+  },
+  {
+    "id": 5,
+    "name": "Amit Shah",
+    "role": "Home Buyer",
+    "image": "/t5.jpg",
+    "text": "Smooth and transparent process. The team ensured everything was handled professionally from start to finish."
+  },
+  {
+    "id": 6,
+    "name": "Sneha Iyer",
+    "role": "Investor",
+    "image": "/t6.jpg",
+    "text": "Highly recommend LuxeEstate for property investments. Their insights helped me make the right decisions."
+  }
+]

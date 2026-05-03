@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "name": "Vikram Patel",
+    "city": "Vadodara",
+    "image": "/a1.jpg"
+  },
+  {
+    "id": 2,
+    "name": "Rakesh Dahiyal",
+    "city": "Vadodara",
+    "image": "/a2.jpg"
+  }
+]

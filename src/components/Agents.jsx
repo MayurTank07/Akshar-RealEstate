@@ -1,19 +1,8 @@
-const agents = [
-  {
-    name: "Vikram Patel",
-    city: "Vadodara",
-    image: "/a1.jpg",
-  },
-  {
-    name: "Rakesh Dahiyal",
-    city: "Vadodara",
-    image: "/a2.jpg",
-  },
-];
+import agents from "../data/agents.json";
 
 export default function Agents() {
   return (
-    <div className="w-full bg-#F5F8FF py-20 px-6 md:px-12 lg:px-20">
+    <div className="w-full bg-[#F5F8FF] py-20 px-6 md:px-12 lg:px-20">
 
       {/* Header */}
       <div className="max-w-3xl mb-12">
@@ -22,7 +11,7 @@ export default function Agents() {
         </p>
 
         <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mt-2">
-          Meet our Experts Agents in Ahmedabad
+          Meet our Expert Agents in Ahmedabad
         </h2>
 
         <p className="text-gray-500 mt-3">
@@ -32,10 +21,9 @@ export default function Agents() {
 
       {/* Cards */}
       <div className="flex gap-8 flex-wrap">
-
-        {agents.map((agent, i) => (
+        {agents.map((agent) => (
           <div
-            key={i}
+            key={agent.id}
             className="w-[300px] bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition"
           >
 
@@ -43,7 +31,7 @@ export default function Agents() {
             <div className="w-16 h-16 rounded-full overflow-hidden border-4 border-white shadow mb-4">
               <img
                 src={agent.image}
-                alt=""
+                alt={agent.name}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -69,7 +57,6 @@ export default function Agents() {
 
           </div>
         ))}
-
       </div>
 
     </div>

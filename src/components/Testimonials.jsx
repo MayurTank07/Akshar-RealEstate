@@ -1,45 +1,8 @@
-const testimonials = [
-  {
-    name: "Ananya Desai",
-    role: "First-time Buyer",
-    image: "/t1.jpg",
-    text: "Buying my first home was daunting, but the LuxeEstate team guided me through every step. They were patient, answered all my questions, and made the entire process stress-free.",
-  },
-  {
-    name: "Vikram Patel",
-    role: "Commercial Buyer",
-    image: "/t2.jpg",
-    text: "Excellent service for commercial properties. They understood our business needs and found us the perfect location. Their professionalism and attention to detail are unmatched.",
-  },
-  {
-    name: "Priya Sharma",
-    role: "Homeowner",
-    image: "/t3.jpg",
-    text: "LuxeEstate made finding my dream home incredibly easy. Their team was professional, responsive, and truly understood what I was looking for.",
-  },
-  {
-    name: "Rajesh Kumar",
-    role: "Property Investor",
-    image: "/t4.jpg",
-    text: "As a real estate investor, I've worked with many agencies. LuxeEstate stands out with their market knowledge and transparent approach.",
-  },
-  {
-    name: "Rajesh Kumar",
-    role: "Property Investor",
-    image: "/t4.jpg",
-    text: "As a real estate investor, I've worked with many agencies. LuxeEstate stands out with their market knowledge and transparent approach.",
-  },
-  {
-    name: "Rajesh Kumar",
-    role: "Property Investor",
-    image: "/t4.jpg",
-    text: "As a real estate investor, I've worked with many agencies. LuxeEstate stands out with their market knowledge and transparent approach.",
-  },
-];
+import testimonials from "../data/testimonials.json";
 
 export default function Testimonials() {
   return (
-    <div className="w-full bg-#FFFFFF py-20 px-6 md:px-12 lg:px-20">
+    <div className="w-full bg-white py-20 px-6 md:px-12 lg:px-20">
 
       {/* Header */}
       <div className="max-w-3xl mb-12">
@@ -58,10 +21,9 @@ export default function Testimonials() {
 
       {/* Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-
-        {testimonials.map((t, i) => (
+        {testimonials.map((t) => (
           <div
-            key={i}
+            key={t.id}
             className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
           >
 
@@ -79,11 +41,10 @@ export default function Testimonials() {
 
             {/* User */}
             <div className="flex items-center gap-3 mt-6">
-
               <div className="w-10 h-10 rounded-full overflow-hidden">
                 <img
                   src={t.image}
-                  alt=""
+                  alt={t.name}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -96,12 +57,10 @@ export default function Testimonials() {
                   {t.role}
                 </p>
               </div>
-
             </div>
 
           </div>
         ))}
-
       </div>
 
     </div>

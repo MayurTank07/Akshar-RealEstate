@@ -1,0 +1,30 @@
+{
+    "top_metropolitans": [
+        "Properties for sale in Mumbai",
+        "Properties for sale in Kolkata",
+        "Properties for sale in Delhi",
+        "Properties for sale in Pune",
+        "Properties for sale in Bangalore"
+    ],
+    "top_emerging_cities": [
+        "Properties for sale in Mumbai",
+        "Properties for sale in Kolkata",
+        "Properties for sale in Delhi",
+        "Properties for sale in Pune",
+        "Properties for sale in Bangalore"
+    ],
+    "top_projects": [
+        "Gurukrupa Ananatam",
+        "Trump Towers",
+        "Ashapura Skies",
+        "Clinton Heights",
+        "Nathani Heights"
+    ],
+    "top_developers": [
+        "Vaibhavlaxmi Developers",
+        "Lodha Builders",
+        "Reliable India and Corporation",
+        "Haware Properties",
+        "Agastya Infra"
+    ]
+}

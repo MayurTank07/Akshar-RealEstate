@@ -1,66 +1,5 @@
 // components/Properties.jsx
-const properties = [
-  {
-    title: "Luxury Modern Villa",
-    location: "Palm Jumeirah, Dubai",
-    price: "₹8.5 Cr",
-    beds: 4,
-    baths: 3,
-    area: "3200 sq.ft",
-    tag: "Featured",
-    image: "/p1.jpg",
-  },
-  {
-    title: "Contemporary Apartment",
-    location: "Bandra West, Mumbai",
-    price: "₹2.8 Cr",
-    beds: 3,
-    baths: 2,
-    area: "1850 sq.ft",
-    tag: "New",
-    image: "/p2.jpg",
-  },
-  {
-    title: "Luxury Villa with Pool",
-    location: "Whitefield, Bangalore",
-    price: "₹5.2 Cr",
-    beds: 5,
-    baths: 4,
-    area: "4500 sq.ft",
-    tag: "Hot",
-    image: "/p3.jpg",
-  },
-  {
-    title: "Modern Penthouse",
-    location: "Cyber City, Gurgaon",
-    price: "₹6.5 Cr",
-    beds: 4,
-    baths: 3,
-    area: "3800 sq.ft",
-    tag: "Featured",
-    image: "/p4.jpg",
-  },
-  {
-    title: "Residential Tower",
-    location: "Andheri East, Mumbai",
-    price: "₹1.8 Cr",
-    beds: 2,
-    baths: 2,
-    area: "1200 sq.ft",
-    tag: "New",
-    image: "/p5.jpg",
-  },
-  {
-    title: "Cozy Family Home",
-    location: "Koramangala, Bangalore",
-    price: "₹3.2 Cr",
-    beds: 3,
-    baths: 2,
-    area: "2100 sq.ft",
-    tag: "Hot",
-    image: "/p6.jpg",
-  },
-];
+import properties from "../data/Properties.json";
 
 export default function Properties() {
   return (
@@ -85,9 +24,9 @@ export default function Properties() {
 
         {/* Grid */}
         <div className="grid md:grid-cols-3 gap-8">
-          {properties.map((p, i) => (
+          {properties.map((p) => (
             <div
-              key={i}
+              key={p.id}
               className="bg-white rounded-2xl shadow-sm hover:shadow-md transition overflow-hidden"
             >
 
@@ -95,7 +34,7 @@ export default function Properties() {
               <div className="relative">
                 <img
                   src={p.image}
-                  alt=""
+                  alt={p.title}
                   className="h-52 w-full object-cover"
                 />
 
@@ -136,7 +75,6 @@ export default function Properties() {
                   <span>📐 {p.area}</span>
                 </div>
 
-                {/* Divider */}
                 <div className="border-t my-4"></div>
 
                 {/* Price */}
