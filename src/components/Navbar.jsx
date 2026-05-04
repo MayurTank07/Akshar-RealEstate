@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 // JSON imports (Ensure these paths are correct in your project)
-import buyersData from "../data/Buyers.json";
-import sellersData from "../data/Sellers.json";
-import rentalsData from "../data/Rentals.json";
-import servicesData from "../data/Services.json";
-import newsData from "../data/News.json";
+import buyersData from "../data/buyers.json";
+import sellersData from "../data/sellers.json";
+import rentalsData from "../data/rentals.json";
+import servicesData from "../data/services.json";
+import newsData from "../data/news.json";
 
 export default function Navbar() {
   const [activeMenu, setActiveMenu] = useState(null);
