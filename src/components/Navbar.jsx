@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 // JSON imports (Ensure these paths are correct in your project)
-import buyersData from "../data/buyers.json";
-import sellersData from "../data/sellers.json";
-import rentalsData from "../data/rentals.json";
-import servicesData from "../data/services.json";
-import newsData from "../data/news.json";
+import buyersdata from "../data/buyers.json";
+import sellersdata from "../data/sellers.json";
+import rentalsdata from "../data/rentals.json";
+import servicesdata from "../data/services.json";
+import newsdata from "../data/news.json";
 
 export default function Navbar() {
   const [activeMenu, setActiveMenu] = useState(null);
@@ -18,11 +18,11 @@ export default function Navbar() {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
   const dataMap = {
-    buyers: buyersData,
-    sellers: sellersData,
-    rentals: rentalsData,
-    services: servicesData,
-    news: newsData
+    buyers: buyersdata,
+    sellers: sellersdata,
+    rentals: rentalsdata,
+    services: servicesdata,
+    news: newsdata
   };
 
   const navItems = [
