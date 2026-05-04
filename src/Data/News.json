@@ -1,0 +1,12 @@
+{
+  "menus": [
+    {
+      "title": "Property market guide",
+      "items": [
+        { "name": "Real Estate News", "desc": "Latest market updates" },
+        { "name": "Buying Guide", "desc": "Expert homebuying tips" },
+        { "name": "Housing Research", "desc": "Data-driven insights" }
+      ]
+    }
+  ]
+}

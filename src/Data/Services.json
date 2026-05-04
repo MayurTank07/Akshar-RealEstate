@@ -1,0 +1,12 @@
+{
+  "menus": [
+    {
+      "title": "Housing Edge",
+      "items": ["Home Loan", "Housing Protect", "Housing Premium"]
+    },
+    {
+      "title": "Tools",
+      "items": ["EMI calculator", "Property value calculator", "Rent receipt generator"]
+    }
+  ]
+}

@@ -1,30 +1,44 @@
 {
-    "top_metropolitans": [
+  "menus": [
+    {
+      "title": "Top Metropolitans in India",
+      "items": [
         "Properties for Rent in Mumbai",
         "Properties for Rent in Kolkata",
         "Properties for Rent in Delhi",
         "Properties for Rent in Pune",
         "Properties for Rent in Bangalore"
-    ],
-    "top_emerging_cities": [
+      ]
+    },
+    {
+      "title": "Top Emerging Cities in India",
+      "items": [
         "Properties for Rent in Mumbai",
         "Properties for Rent in Kolkata",
         "Properties for Rent in Delhi",
         "Properties for Rent in Pune",
         "Properties for Rent in Bangalore"
-    ],
-    "top_projects": [
-        "Gurukrupa Ananatam",
+      ]
+    },
+    {
+      "title": "Top Projects in India",
+      "items": [
+        "Gurukrupa Anantam",
         "Trump Towers",
         "Ashapura Skies",
         "Clinton Heights",
         "Nathani Heights"
-    ],
-    "top_developers": [
+      ]
+    },
+    {
+      "title": "Top Developers in India",
+      "items": [
         "Vaibhavlaxmi Developers",
         "Lodha Builders",
-        "Reliable India and Corporation",
+        "Reliable India Corporation",
         "Haware Properties",
         "Agastya Infra"
-    ]
+      ]
+    }
+  ]
 }

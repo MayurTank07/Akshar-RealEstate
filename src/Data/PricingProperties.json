@@ -1,0 +1,48 @@
+{
+  "propertyTypes": [
+    "Apartments",
+    "Commercials",
+    "Farmhouse",
+    "Plots",
+    "Villas",
+    "PG / Hostel"
+  ],
+  "listings": [
+    {
+      "id": 1,
+      "title": "Anant Skies",
+      "location": "Worli, Mumbai",
+      "price": "8.5 Cr",
+      "beds": 4,
+      "baths": 3,
+      "sqft": 3200,
+      "badge": "Featured",
+      "badgeColor": "bg-blue-600",
+      "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      "id": 2,
+      "title": "Modern Living",
+      "location": "Lower Parel, Mumbai",
+      "price": "2.8 Cr",
+      "beds": 3,
+      "baths": 2,
+      "sqft": 1850,
+      "badge": "New",
+      "badgeColor": "bg-emerald-500",
+      "image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      "id": 3,
+      "title": "Luxury Penthouse",
+      "location": "Worli, Mumbai",
+      "price": "15.2 Cr",
+      "beds": 5,
+      "baths": 6,
+      "sqft": 5500,
+      "badge": "Premium",
+      "badgeColor": "bg-orange-600",
+      "image": "https://images.unsplash.com/photo-1600607687940-47a000be3976?auto=format&fit=crop&q=80&w=800"
+    }
+  ]
+}
