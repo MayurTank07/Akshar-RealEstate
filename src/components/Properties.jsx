@@ -1,5 +1,5 @@
 // components/Properties.jsx
-import properties from "../data/Properties.json";
+import properties from "../data/properties.json";
 
 export default function Properties() {
   return (

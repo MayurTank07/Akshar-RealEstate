@@ -5,7 +5,7 @@ import {
   ChevronDown, Menu, SlidersHorizontal, Bookmark 
 } from 'lucide-react';
 
-import propertydata from '../data/pricingproperties.json'; 
+import propertyData from "../data/pricingProperties.json";
 
 export default function PricingPage() {
   const { category, slug } = useParams();
