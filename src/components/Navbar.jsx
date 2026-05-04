@@ -18,11 +18,11 @@ export default function Navbar() {
   const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
 
   const dataMap = {
-    buyers: buyersdata,
-    sellers: sellersdata,
-    rentals: rentalsdata,
-    services: servicesdata,
-    news: newsdata
+    buyers: buyersData,
+    sellers: sellersData,
+    rentals: rentalsData,
+    services: servicesData,
+    news: newsData
   };
 
   const navItems = [
