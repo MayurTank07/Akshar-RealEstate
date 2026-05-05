@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 const types = [
   {
@@ -28,8 +28,7 @@ const types = [
 ];
 
 export default function PropertyTypes() {
-  const [activeIndex, setActiveIndex] = useState(0); // Track which card is expanded
-  const scrollRef = useRef();
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const scroll = (dir) => {
     if (dir === "left") {
@@ -40,74 +39,77 @@ export default function PropertyTypes() {
   };
 
   return (
-    <div className="bg-gray-50 py-16">
-      <div className="max-w-7xl mx-auto px-6">
+    // Fixed height wrapper to prevent vertical scrolling
+    <div className="bg-gray-50 h-screen max-h-[900px] flex flex-col justify-center overflow-hidden py-8">
+      <div className="max-w-7xl mx-auto px-6 w-full flex flex-col h-full">
         
-        {/* Header */}
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-          Explore Property Types
-        </h2>
-        <p className="text-gray-500 mt-2">
-          Find the perfect property that matches your needs
-        </p>
+        {/* Header - Compact */}
+        <div className="shrink-0 mb-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Explore Property Types
+          </h2>
+          <p className="text-gray-500 mt-1">
+            Find the perfect property that matches your needs
+          </p>
+        </div>
 
-        {/* Interactive Container */}
-        <div className="mt-12 flex flex-col md:flex-row gap-4 h-[500px] w-full transition-all duration-500 ease-in-out">
+        {/* Interactive Container - flex-1 allows it to take remaining space */}
+        <div className="flex flex-col md:flex-row gap-4 flex-1 min-h-0 w-full transition-all duration-500 ease-in-out">
           {types.map((item, i) => {
             const isActive = activeIndex === i;
             return (
               <div
                 key={i}
                 onClick={() => setActiveIndex(i)}
-                className={`relative cursor-pointer rounded-3xl overflow-hidden transition-all duration-700 ease-in-out 
-                  ${isActive ? "flex-[3]" : "flex-1"} 
+                className={`relative cursor-pointer rounded-[2rem] overflow-hidden transition-all duration-700 ease-in-out 
+                  ${isActive ? "flex-[3.5]" : "flex-1"} 
                   group h-full`}
               >
                 {/* Background Image with Zoom */}
                 <img
                   src={item.image}
                   alt={item.title}
-                  className={`w-full h-full object-cover transition-transform duration-700 
+                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-1000 
                     ${isActive ? "scale-110" : "scale-100"}`}
                 />
 
                 {/* Gradient Overlay */}
-                <div className={`absolute inset-0 transition-opacity duration-500 bg-gradient-to-t from-black/90 via-black/20 to-transparent 
-                  ${isActive ? "opacity-100" : "opacity-70"}`}>
+                <div className={`absolute inset-0 transition-opacity duration-500 bg-gradient-to-t from-black/80 via-black/20 to-transparent 
+                  ${isActive ? "opacity-100" : "opacity-60"}`}>
                 </div>
 
                 {/* Content */}
-                <div className="absolute bottom-8 left-8 right-8 text-white">
-                  <div className={`${isActive ? "flex items-end justify-between gap-4" : "block"}`}>
-                    <div>
-                      <h3 className={`font-bold transition-all duration-500 ${isActive ? "text-3xl" : "text-xl"}`}>
+                <div className="absolute bottom-6 left-6 right-6 text-white pointer-events-none">
+                    <div className="overflow-hidden">
+                      <h3 className={`font-bold transition-all duration-500 whitespace-nowrap ${isActive ? "text-2xl md:text-3xl mb-2" : "text-lg"}`}>
                         {item.title}
                       </h3>
                       
-                      {/* Description only shows when active */}
-                      <p className={`text-gray-200 mt-2 text-sm leading-relaxed transition-all duration-500 overflow-hidden
-                        ${isActive ? "max-h-20 opacity-100" : "max-h-0 opacity-0"}`}>
-                        {item.desc}
-                      </p>
+                      {/* Description logic */}
+                      <div className={`transition-all duration-500 ease-in-out
+                        ${isActive ? "max-h-24 opacity-100 mb-2" : "max-h-0 opacity-0"}`}>
+                        <p className="text-gray-200 text-sm leading-relaxed max-w-md">
+                          {item.desc}
+                        </p>
+                      </div>
 
-                      <p className={`font-semibold mt-2 transition-all ${isActive ? "text-xl" : "text-sm text-gray-300"}`}>
+                      <p className={`font-semibold transition-all duration-500 ${isActive ? "text-xl text-blue-400" : "text-sm text-gray-300"}`}>
                         {item.count}
                       </p>
                     </div>
-                  </div>
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* Navigation Arrows */}
-        <div className="flex justify-center gap-4 mt-10">
+        {/* Navigation Arrows - Fixed at bottom */}
+        <div className="flex justify-center gap-4 mt-8 shrink-0">
           <button
             onClick={() => scroll("left")}
             disabled={activeIndex === 0}
             className={`w-12 h-12 border rounded-full flex items-center justify-center transition-all
-              ${activeIndex === 0 ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-gray-400 text-gray-600 hover:bg-gray-100"}`}
+              ${activeIndex === 0 ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-gray-400 text-gray-600 hover:bg-white shadow-sm"}`}
           >
             ←
           </button>
@@ -115,7 +117,7 @@ export default function PropertyTypes() {
             onClick={() => scroll("right")}
             disabled={activeIndex === types.length - 1}
             className={`w-12 h-12 border-2 rounded-full flex items-center justify-center transition-all
-              ${activeIndex === types.length - 1 ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white"}`}
+              ${activeIndex === types.length - 1 ? "border-gray-200 text-gray-300 cursor-not-allowed" : "border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white shadow-md shadow-blue-100"}`}
           >
             →
           </button>

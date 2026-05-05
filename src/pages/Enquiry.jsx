@@ -20,11 +20,10 @@ export default function PropertyForm() {
     bhk: "2 BHK",
   });
 
-  // Handle Redirection after submission
   useEffect(() => {
     if (isSubmitted) {
       const timer = setTimeout(() => {
-        window.location.href = "/"; // Redirects to home page
+        window.location.href = "/";
       }, 5000);
       return () => clearTimeout(timer);
     }
@@ -38,10 +37,9 @@ export default function PropertyForm() {
     { id: 3, label: "Review" },
   ];
 
-  // Success Message View
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-sans">
+      <div className="h-screen flex items-center justify-center bg-gray-50 p-4 overflow-hidden">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 text-center border border-gray-100">
           <div className="flex justify-center mb-6">
             <div className="bg-green-100 p-4 rounded-full">
@@ -51,41 +49,32 @@ export default function PropertyForm() {
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Enquiry Submitted!</h2>
           <p className="text-gray-600 leading-relaxed">
             Thank you for your interest. You will receive a call from our team 
-            <span className="font-bold text-blue-600"> within 48 hours </span> 
-            to help you find your dream home.
+            <span className="font-bold text-blue-600"> within 48 hours</span>.
           </p>
-          
           <div className="mt-8 space-y-3">
-            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">
-              Redirecting to Home
-            </p>
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold">Redirecting...</p>
             <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
               <div className="bg-blue-600 h-full animate-[progress_5s_linear]"></div>
             </div>
           </div>
         </div>
-        <style dangerouslySetInnerHTML={{ __html: `
-          @keyframes progress {
-            from { width: 100%; }
-            to { width: 0%; }
-          }
-        `}} />
+        <style dangerouslySetInnerHTML={{ __html: `@keyframes progress { from { width: 100%; } to { width: 0%; } }` }} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 font-sans">
-      <div className="w-full max-w-4xl">
+    <div className="h-screen flex items-center justify-center bg-gray-50 p-4 font-sans overflow-hidden">
+      <div className="w-full max-w-4xl flex flex-col h-full max-h-[850px]">
         
-        {/* HEADER */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-800">Property Enquiry Form</h1>
-          <p className="text-gray-500 mt-2">Find your dream home in just 3 simple steps</p>
+        {/* HEADER - Compact */}
+        <div className="text-center mb-6 shrink-0">
+          <h1 className="text-3xl font-bold text-gray-800">Property Enquiry</h1>
+          <p className="text-gray-500 mt-1">Complete these 3 steps</p>
         </div>
 
-        {/* STEPPER */}
-        <div className="relative flex justify-between mb-12 max-w-2xl mx-auto">
+        {/* STEPPER - Fixed Top */}
+        <div className="relative flex justify-between mb-8 max-w-xl mx-auto w-full shrink-0">
           <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-200 -z-0"></div>
           <div 
             className="absolute top-5 left-0 h-0.5 bg-blue-600 transition-all duration-500 -z-0"
@@ -99,75 +88,61 @@ export default function PropertyForm() {
               }`}>
                 {step > s.id ? "✓" : s.id}
               </div>
-              <span className={`text-xs mt-3 font-semibold ${step >= s.id ? "text-blue-600" : "text-gray-400"}`}>
+              <span className={`text-xs mt-2 font-semibold ${step >= s.id ? "text-blue-600" : "text-gray-400"}`}>
                 {s.label}
               </span>
             </div>
           ))}
         </div>
 
-        {/* MAIN CARD */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-8">
-            
-            {/* STEP 1: BASIC DETAILS */}
+        {/* MAIN CARD - Height controlled */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col grow">
+          
+          {/* SCROLLABLE CONTENT AREA */}
+          <div className="p-8 overflow-y-auto grow custom-scrollbar">
             {step === 1 && (
-              <div className="space-y-6">
-                <div>
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <header>
                   <h2 className="text-xl font-bold text-gray-800">Basic Details</h2>
-                  <p className="text-sm text-gray-500">Please provide your contact and personal information.</p>
-                </div>
-                
+                  <p className="text-sm text-gray-500">Personal and contact info.</p>
+                </header>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <InputGroup label="Full Name" icon={<User size={18}/>} name="name" value={form.name} onChange={update} placeholder="John Doe" />
-                  <InputGroup label="Email Address" icon={<Mail size={18}/>} name="email" value={form.email} onChange={update} placeholder="john.doe@example.com" />
-                  <InputGroup label="Phone Number" icon={<Phone size={18}/>} name="phone" value={form.phone} onChange={update} placeholder="+91 98765 43210" />
-                  <InputGroup label="Age" icon={<Calendar size={18}/>} name="age" value={form.age} onChange={update} placeholder="25" />
+                  <InputGroup label="Full Name" icon={<User size={18}/>} name="name" value={form.name} onChange={update} />
+                  <InputGroup label="Email" icon={<Mail size={18}/>} name="email" value={form.email} onChange={update} />
+                  <InputGroup label="Phone" icon={<Phone size={18}/>} name="phone" value={form.phone} onChange={update} />
+                  <InputGroup label="Age" icon={<Calendar size={18}/>} name="age" value={form.age} onChange={update} />
                 </div>
-
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700">Current Address</label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
                     <textarea 
-                      name="address" 
-                      rows="3"
-                      value={form.address}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                      placeholder="Enter your full residential address"
-                      onChange={update}
+                      name="address" rows="2" value={form.address} onChange={update}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="Enter address..."
                     />
                   </div>
                 </div>
               </div>
             )}
 
-            {/* STEP 2: PREFERENCES */}
             {step === 2 && (
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-800">Property Preferences</h2>
-                  <p className="text-sm text-gray-500">Help us narrow down the perfect match for your requirements.</p>
-                </div>
-
+              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                <header>
+                  <h2 className="text-xl font-bold text-gray-800">Preferences</h2>
+                  <p className="text-sm text-gray-500">What are you looking for?</p>
+                </header>
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-semibold text-gray-700">Budget Range</label>
-                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">
-                      ₹10L - ₹{form.budget}Cr
-                    </span>
+                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">₹10L - ₹{form.budget}Cr</span>
                   </div>
                   <input 
                     type="range" min="1" max="50" value={form.budget} 
                     onChange={(e) => setForm({...form, budget: e.target.value})}
                     className="w-full h-2 bg-blue-100 rounded-lg appearance-none cursor-pointer accent-blue-600"
                   />
-                  <div className="flex justify-between text-xs text-gray-400 font-medium">
-                    <span>₹10L</span>
-                    <span>₹50Cr</span>
-                  </div>
                 </div>
-
                 <div className="space-y-4">
                   <label className="text-sm font-semibold text-gray-700">Property Type</label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -177,71 +152,42 @@ export default function PropertyForm() {
                     <TypeCard icon={<TreePine />} label="Bungalow" active={form.type === "Bungalow"} onClick={() => setForm({...form, type: "Bungalow"})} />
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <label className="text-sm font-semibold text-gray-700">BHK Size</label>
-                  <div className="flex flex-wrap gap-3">
-                    {["1 BHK", "2 BHK", "3 BHK", "4+ BHK"].map(b => (
-                      <button 
-                        key={b}
-                        onClick={() => setForm({...form, bhk: b})}
-                        className={`px-6 py-2 rounded-lg border text-sm font-medium transition-all ${
-                          form.bhk === b ? "bg-blue-600 border-blue-600 text-white shadow-md" : "bg-white border-gray-200 text-gray-600 hover:border-blue-300"
-                        }`}
-                      >
-                        {b}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
 
-            {/* STEP 3: REVIEW */}
             {step === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-800">Review Your Details</h2>
-                  <p className="text-sm text-gray-500">Please confirm your information before submitting.</p>
-                </div>
-
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                <h2 className="text-xl font-bold text-gray-800">Review</h2>
                 <ReviewSection title="Basic Details" onEdit={() => setStep(1)}>
-                  <div className="grid grid-cols-2 gap-y-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <ReviewItem label="NAME" value={form.name} />
-                    <ReviewItem label="EMAIL" value={form.email} />
                     <ReviewItem label="PHONE" value={form.phone} />
-                    <ReviewItem label="AGE" value={form.age + " years"} />
-                    <div className="col-span-2">
-                      <ReviewItem label="ADDRESS" value={form.address || "Not provided"} />
+                    <div className="col-span-2 border-t pt-2 mt-2">
+                       <ReviewItem label="ADDRESS" value={form.address || "Not provided"} />
                     </div>
                   </div>
                 </ReviewSection>
-
-                <ReviewSection title="Property Preferences" onEdit={() => setStep(2)}>
-                  <div className="grid grid-cols-2 gap-y-4 text-sm">
+                <ReviewSection title="Preferences" onEdit={() => setStep(2)}>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <ReviewItem label="BUDGET" value={`₹${form.budget}Cr`} />
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-bold mb-1">PROPERTY TYPE</p>
-                      <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-medium">{form.type}</span>
-                    </div>
-                    <ReviewItem label="BHK SIZE" value={form.bhk} />
+                    <ReviewItem label="TYPE" value={form.type} />
                   </div>
                 </ReviewSection>
               </div>
             )}
           </div>
 
-          {/* FOOTER NAV */}
-          <div className="bg-gray-50 px-8 py-4 flex justify-between items-center border-t border-gray-100">
+          {/* FIXED FOOTER NAV */}
+          <div className="bg-gray-50 px-8 py-5 flex justify-between items-center border-t border-gray-100 shrink-0">
             <button 
               onClick={() => step > 1 && setStep(step - 1)}
-              className={`flex items-center gap-2 text-sm font-bold transition-colors ${step === 1 ? "text-transparent cursor-default" : "text-gray-500 hover:text-gray-800"}`}
+              className={`flex items-center gap-2 text-sm font-bold transition-colors ${step === 1 ? "invisible" : "text-gray-500 hover:text-gray-800"}`}
             >
               <ChevronLeft size={18} /> Back
             </button>
             <button 
               onClick={() => step < 3 ? setStep(step + 1) : setIsSubmitted(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-blue-200"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-all shadow-lg"
             >
               {step === 3 ? "Submit Enquiry" : "Next"} <ChevronRight size={18} />
             </button>
@@ -252,14 +198,14 @@ export default function PropertyForm() {
   );
 }
 
-// Sub-components
+// Sub-components (Stay same, but cleaned up props)
 function InputGroup({ label, icon, ...props }) {
   return (
     <div className="space-y-2">
       <label className="text-sm font-semibold text-gray-700">{label}</label>
       <div className="relative">
         <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</div>
-        <input {...props} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all" />
+        <input {...props} className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
       </div>
     </div>
   );
@@ -267,26 +213,19 @@ function InputGroup({ label, icon, ...props }) {
 
 function TypeCard({ icon, label, active, onClick }) {
   return (
-    <button 
-      onClick={onClick}
-      className={`flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all ${
-        active ? "border-blue-600 bg-blue-50 text-blue-600 shadow-sm" : "border-gray-100 text-gray-500 hover:border-gray-200"
-      }`}
-    >
-      <div className="mb-3">{icon}</div>
-      <span className="text-sm font-bold">{label}</span>
+    <button onClick={onClick} className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${active ? "border-blue-600 bg-blue-50 text-blue-600" : "border-gray-100 text-gray-500"}`}>
+      <div className="mb-2">{icon}</div>
+      <span className="text-xs font-bold">{label}</span>
     </button>
   );
 }
 
 function ReviewSection({ title, children, onEdit }) {
   return (
-    <div className="border border-gray-200 rounded-xl p-5 relative">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-gray-800">{title}</h3>
-        <button onClick={onEdit} className="text-blue-600 flex items-center gap-1 text-xs font-bold hover:underline">
-          <Pencil size={12} /> Edit
-        </button>
+    <div className="border border-gray-200 rounded-xl p-4 relative">
+      <div className="flex justify-between items-center mb-3">
+        <h3 className="font-bold text-gray-800 text-sm">{title}</h3>
+        <button onClick={onEdit} className="text-blue-600 text-[10px] font-bold flex items-center gap-1 uppercase tracking-wider"><Pencil size={10} /> Edit</button>
       </div>
       {children}
     </div>
@@ -296,8 +235,8 @@ function ReviewSection({ title, children, onEdit }) {
 function ReviewItem({ label, value }) {
   return (
     <div>
-      <p className="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">{label}</p>
-      <p className="font-semibold text-gray-800">{value}</p>
+      <p className="text-[10px] text-gray-400 font-bold mb-0.5">{label}</p>
+      <p className="font-semibold text-gray-800 text-xs">{value}</p>
     </div>
   );
 }
