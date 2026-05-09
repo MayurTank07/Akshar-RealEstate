@@ -5,12 +5,24 @@ import { MapPin, Bed, Bath, Maximize, Heart } from 'lucide-react';
 import propertyData from "../data/pricingProperties.json";
 import Navbar from "../components/PricingNavbar"; // ✅ added
 
-export default function PricingPage() {
-  const { category, slug } = useParams();
+export default function PricingPage({ category, type }) {
+  const { category: urlCategory, slug } = useParams();
   const navigate = useNavigate();
 
   const [activeType, setActiveType] = useState("Apartments");
   const [city, setCity] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Auto-fill search bar with selected type from Navbar
+  useEffect(() => {
+    if (type) {
+      setSearchTerm(type);
+      // Also set active type if it matches property types
+      if (propertyData.propertyTypes.includes(type)) {
+        setActiveType(type);
+      }
+    }
+  }, [type]);
 
   useEffect(() => {
     if (slug) {
@@ -23,17 +35,18 @@ export default function PricingPage() {
   const searchType = category === "rentals" ? "Rent" : "Buy";
 
   const handlePropertyClick = (item) => {
-    navigate(`/property/${item.id}`, { state: { property: item } });
+    navigate("/westfield", { state: { property: item } });
   };
 
   return (
     <div className="bg-white min-h-screen font-sans">
 
       {/* ✅ Navbar Component */}
-      <Navbar searchType={searchType} city={city} />
+      <Navbar searchType={searchType} city={city} selectedOption={type} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
 
+        
         {/* Filters */}
         <div className="flex gap-3 mb-10 overflow-x-auto pb-2 no-scrollbar">
           {propertyData.propertyTypes.map((type) => (

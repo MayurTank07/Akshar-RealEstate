@@ -2,7 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Menu, SlidersHorizontal, Bookmark } from "lucide-react";
 
-export default function Navbar({ searchType, city }) {
+export default function Navbar({ searchType, city, selectedOption }) {
   const navigate = useNavigate();
 
   return (
@@ -24,6 +24,8 @@ export default function Navbar({ searchType, city }) {
             className="w-full outline-none text-[13px] text-gray-600" 
             type="text" 
             placeholder="Worli" 
+            value={selectedOption || ""}
+            onChange={(e) => {/* Allow user to edit if needed */}}
           />
           <SlidersHorizontal className="w-4 h-4 text-blue-600 rotate-90" />
         </div>
