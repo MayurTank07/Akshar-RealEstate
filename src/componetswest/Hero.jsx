@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   MapPin, Heart, Play, CheckCircle2, 
   Phone, Mail, Calendar, ChevronRight, Info,
@@ -7,10 +7,29 @@ import {
 } from 'lucide-react';
 
 import Navbar from '../components/PricingNavbar';
+import { useAuth } from '../contexts/AuthContext';
 
-const PropertyDetails = () => {
+const PropertyDetails = ({ property }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, user } = useAuth();
   const [selectedImage, setSelectedImage] = useState(0);
+
+  // Debug: Check authentication state
+  console.log('Hero component mounted');
+  console.log('Auth state:', { isAuthenticated, user });
+  console.log('Property:', property);
+
+  // Handle automatic call trigger after registration
+  useEffect(() => {
+    if (isAuthenticated && location.state?.triggerCall) {
+      // Small delay to ensure the component is fully rendered
+      setTimeout(() => {
+        const phoneNumber = "+911234567890";
+        window.location.href = `tel:${phoneNumber}`;
+      }, 500);
+    }
+  }, [isAuthenticated, location.state?.triggerCall]);
 
   const images = [
     "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1000",
@@ -21,6 +40,29 @@ const PropertyDetails = () => {
     "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=400",
     "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=400",
   ];
+
+  const handleCall = () => {
+    console.log('handleCall called');
+    console.log('isAuthenticated:', isAuthenticated);
+    console.log('property:', property);
+    
+    if (isAuthenticated) {
+      // User is authenticated, allow direct call
+      console.log('User is authenticated, making call...');
+      const phoneNumber = "+911234567890";
+      window.location.href = `tel:${phoneNumber}`;
+    } else {
+      // User not authenticated, redirect to register page with fromCall state
+      console.log('User not authenticated, redirecting to register...');
+      navigate("/register", {
+        state: { 
+          fromCall: true,
+          redirectTo: "/westfield", 
+          property: property 
+        }
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
@@ -48,12 +90,14 @@ const PropertyDetails = () => {
             <div className="flex items-center justify-end space-x-2 mb-1">
               <span className="text-2xl font-bold text-green-700">₹3.0 Cr - 3.81 Cr</span>
             </div>
-            {/* Contact Button */}
+            {/* Dynamic Call Button Based on Authentication */}
             <button 
-              onClick={() => window.location.href = "tel:+911234567890"}
-              className="mt-3 px-8 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition ml-auto shadow-md bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={handleCall}
+              className={`mt-3 px-8 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition ml-auto shadow-md ${
+                isAuthenticated ? 'bg-teal-600 hover:bg-teal-700' : 'bg-blue-600 hover:bg-blue-700'
+              } text-white`}
             >
-              <Phone size={18} /> Call Now
+              {isAuthenticated ? <><Phone size={18} /> Call Now</> : <><Mail size={18} /> Enquire Now</>}
             </button>
           </div>
         </div>
