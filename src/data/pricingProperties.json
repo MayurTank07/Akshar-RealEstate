@@ -11,7 +11,8 @@
     {
       "id": 1,
       "title": "Anant Skies",
-      "location": "Worli, Mumbai",
+      "location": "Bodakdev, Ahmedabad",
+      "type": "Apartments",
       "price": "8.5 Cr",
       "beds": 4,
       "baths": 3,
@@ -23,7 +24,8 @@
     {
       "id": 2,
       "title": "Contemporary Apartment",
-      "location": "Lower Parel, Mumbai",
+      "location": "Vesu, Surat",
+      "type": "Apartments",
       "price": "2.8 Cr",
       "beds": 3,
       "baths": 2,
@@ -35,7 +37,8 @@
     {
       "id": 3,
       "title": "Gorbs & Pele Towers",
-      "location": "Worli, Mumbai",
+      "location": "Alkapuri, Vadodara",
+      "type": "Villas",
       "price": "5.2 Cr",
       "beds": 3,
       "baths": 4,
@@ -47,7 +50,8 @@
     {
       "id": 4,
       "title": "Gurukrupa Heights",
-      "location": "Worli, Mumbai",
+      "location": "Kalawad Road, Rajkot",
+      "type": "Apartments",
       "price": "6.5 Cr",
       "beds": 4,
       "baths": 3,
@@ -59,7 +63,8 @@
     {
       "id": 5,
       "title": "Residential Tower",
-      "location": "Worli, Mumbai",
+      "location": "Gift City, Gandhinagar",
+      "type": "Commercials",
       "price": "1.8 Cr",
       "beds": 2,
       "baths": 2,
@@ -71,7 +76,8 @@
     {
       "id": 6,
       "title": "Cozy Family Home",
-      "location": "Worli, Mumbai",
+      "location": "Bharuch City, Bharuch",
+      "type": "Villas",
       "price": "3.2 Cr",
       "beds": 3,
       "baths": 2,

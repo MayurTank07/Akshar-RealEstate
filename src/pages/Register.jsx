@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import useAuth from "../contexts/useAuth";
 import { User, Mail, Phone, ArrowLeft } from "lucide-react";
 
 export default function Register() {
@@ -9,6 +9,7 @@ export default function Register() {
   const { login } = useAuth();
 
   const redirectTo = location.state?.redirectTo || "/";
+  const redirectState = location.state?.redirectState;
   const fromCall = location.state?.fromCall || false;
   const property = location.state?.property || null;
 
@@ -40,37 +41,35 @@ export default function Register() {
       navigate(redirectTo, { state: redirectState });
     } else {
       // Normal registration flow
-      navigate(redirectTo, { state: { enquiry: true } });
+      navigate(redirectTo, { state: redirectState || { enquiry: true } });
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-gray-50 px-4">
-      
-      {/* Back Button */}
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-24">
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-4 left-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center gap-2 hover:scale-105"
+        className="wf-btn wf-btn-secondary fixed left-4 top-4 z-50"
       >
         <ArrowLeft className="w-4 h-4" />
         <span className="text-sm font-medium">Back</span>
       </button>
 
-      <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-100">
+      <div className="wf-card w-full max-w-md p-6 shadow-2xl sm:p-8">
         
-        <h2 className="text-3xl font-bold text-center text-slate-900 mb-2">
+        <h2 className="mb-2 text-center text-3xl font-extrabold tracking-tight text-slate-950">
           Create Account
         </h2>
 
-        <p className="text-center text-slate-500 mb-8">
-          Register to continue with Westfield
+        <p className="mb-8 text-center text-sm text-slate-500">
+          Register to continue with Akshar Real Estate
         </p>
 
         <form onSubmit={handleRegister} className="space-y-6">
           
           {/* Name */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="wf-label">
               Full Name
             </label>
 
@@ -84,14 +83,14 @@ export default function Register() {
                 onChange={handleChange}
                 required
                 placeholder="Enter your full name"
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-slate-900 placeholder-slate-400"
+                className="wf-input bg-slate-50 pl-10 pr-4"
               />
             </div>
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="wf-label">
               Email Address
             </label>
 
@@ -105,14 +104,14 @@ export default function Register() {
                 onChange={handleChange}
                 required
                 placeholder="Enter your email"
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-slate-900 placeholder-slate-400"
+                className="wf-input bg-slate-50 pl-10 pr-4"
               />
             </div>
           </div>
 
           {/* Phone */}
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="wf-label">
               Phone Number
             </label>
 
@@ -126,16 +125,13 @@ export default function Register() {
                 onChange={handleChange}
                 required
                 placeholder="Enter your phone number"
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-slate-900 placeholder-slate-400"
+                className="wf-input bg-slate-50 pl-10 pr-4"
               />
             </div>
           </div>
 
           {/* Submit Button */}
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-          >
+          <button type="submit" className="wf-btn wf-btn-primary w-full">
             Create Account
           </button>
         </form>
@@ -143,7 +139,7 @@ export default function Register() {
         <p className="text-sm text-center text-slate-500 mt-8">
           Already have an account?{" "}
           <span
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/login", { state: { redirectTo, redirectState } })}
             className="font-medium text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
           >
             Sign In

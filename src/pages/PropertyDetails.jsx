@@ -5,7 +5,7 @@ import Amenities from "../componetswest/Amenities";
 import MapForm from "../componetswest/MapForm";
 import Footer from "../components/Footer";
 
-export default function Westfield() {
+export default function PropertyDetails() {
   const location = useLocation();
   
   // Get property from navigation state first, then fallback to URL params

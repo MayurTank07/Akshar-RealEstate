@@ -1,4 +1,3 @@
-import React from 'react';
 import { Play, MapPin, Bookmark, ChevronDown } from 'lucide-react';
 
 export default function PropertyInformation() {
@@ -12,7 +11,7 @@ export default function PropertyInformation() {
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">Description</h2>
             <p className="text-gray-500 text-[14px] leading-relaxed">
-              Experience luxury living at its finest in this stunning modern villa located in the prestigious Palm Jumeirah. 
+              Experience luxury living at its finest in this stunning modern villa located in Ahmedabad's premium residential corridor. 
               This meticulously designed property features contemporary architecture, premium finishes, and 
               breathtaking views. With spacious interiors, smart home technology, and resort-style amenities, this villa 
               offers the perfect blend of comfort and sophistication.

@@ -39,15 +39,15 @@ export default function PropertyTypes() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8 sm:py-12 lg:py-16">
+    <section className="bg-slate-50 py-14 sm:py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
         
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl md:text-4xl">
             Explore Property Types
           </h2>
-          <p className="text-gray-500 mt-2 sm:mt-3 text-base sm:text-lg max-w-2xl mx-auto">
+          <p className="mx-auto mt-2 max-w-2xl text-base text-slate-500 sm:mt-3 sm:text-lg">
             Find the perfect property that matches your needs
           </p>
         </div>
@@ -194,6 +194,6 @@ export default function PropertyTypes() {
         </div>
 
       </div>
-    </div>
+    </section>
   );
 }

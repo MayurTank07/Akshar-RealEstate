@@ -4,11 +4,11 @@ import Footer from "../components/Footer";
 
 export default function Pricing() {
   const location = useLocation();
-  const { category, type } = location.state || {};
+  const { category, type, city, filters } = location.state || {};
 
   return (
     <div>
-      <Hero category={category} type={type} />
+      <Hero category={category} type={type} city={city} filters={filters} />
       <Footer />
     </div>
   );

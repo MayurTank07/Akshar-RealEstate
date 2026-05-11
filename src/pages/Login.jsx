@@ -1,11 +1,18 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import useAuth from "../contexts/useAuth";
+import { findCredential } from "../data/authUsers";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+  const redirectTo = location.state?.redirectTo || "/";
+  const redirectState = location.state?.redirectState;
+  const message = location.state?.message;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -13,31 +20,53 @@ export default function LoginPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Login Data:", form);
+    const matchedCredential = findCredential(form.email, form.password);
+    const userData = matchedCredential
+      ? {
+          email: matchedCredential.email,
+          name: matchedCredential.name,
+          role: matchedCredential.role,
+        }
+      : {
+          email: form.email,
+          name: form.email.split("@")[0] || "Akshar Real Estate User",
+          role: "user",
+        };
+
+    const nextPath = matchedCredential && redirectTo === "/" ? matchedCredential.dashboardPath : redirectTo;
+    login({
+      ...userData,
+    });
+    navigate(nextPath, { replace: true, state: redirectState });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-gray-50">
-      {/* Back Button */}
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-24">
       <button
         onClick={() => navigate(-1)}
-        className="fixed top-4 left-4 z-50 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 flex items-center gap-2 hover:scale-105"
+        className="wf-btn wf-btn-secondary fixed left-4 top-4 z-50"
       >
         <ArrowLeft className="w-4 h-4" />
         <span className="text-sm font-medium">Back</span>
       </button>
 
-      <div className="bg-white shadow-2xl rounded-2xl p-8 w-full max-w-md border border-gray-100">
-        <h2 className="text-3xl font-bold text-center text-slate-900 mb-2">
-          Login to Westfield
+      <div className="wf-card w-full max-w-md p-6 shadow-2xl sm:p-8">
+        <h2 className="mb-2 text-center text-3xl font-extrabold tracking-tight text-slate-950">
+          Login to Akshar Real Estate
         </h2>
-        <p className="text-center text-slate-500 mb-8">
+        <p className="mb-8 text-center text-sm text-slate-500">
           Enter your credentials to access your account
         </p>
 
+        {message && (
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
+            {message}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="wf-label">
               Email Address
             </label>
             <div className="relative">
@@ -48,14 +77,14 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={handleChange}
                 required
-                className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-slate-900 placeholder-slate-400"
+                className="wf-input bg-slate-50 pl-10 pr-4"
                 placeholder="Enter your email"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
+            <label className="wf-label">
               Password
             </label>
             <div className="relative">
@@ -66,7 +95,7 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={handleChange}
                 required
-                className="w-full pl-10 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-slate-900 placeholder-slate-400"
+                className="wf-input bg-slate-50 pl-10 pr-12"
                 placeholder="Enter your password"
               />
               <button
@@ -95,19 +124,16 @@ export default function LoginPage() {
             </a>
           </div>
 
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
-          >
+          <button type="submit" className="wf-btn wf-btn-primary w-full">
             Sign In
           </button>
         </form>
 
         <p className="text-sm text-center text-slate-500 mt-8">
           Don't have an account?{" "}
-          <a href="#" className="font-medium text-blue-600 hover:text-blue-700 transition-colors">
+          <button type="button" onClick={() => navigate("/register", { state: { redirectTo, redirectState } })} className="font-bold text-blue-600 transition-colors hover:text-blue-700">
             Sign up
-          </a>
+          </button>
         </p>
       </div>
     </div>

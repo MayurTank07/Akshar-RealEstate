@@ -1,7 +1,7 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import BrandLogo from '../components/BrandLogo';
 
 const AboutUs = () => {
   const navigate = useNavigate();
@@ -37,12 +37,12 @@ const AboutUs = () => {
         <div className="flex flex-col md:flex-row items-end justify-between gap-8">
           <div className="md:w-2/3">
             <h1 className="text-5xl md:text-7xl font-light tracking-tight leading-tight">
-              Real Estate with <span className="font-semibold text-blue-600">WestField</span> Confidence.
+              Real Estate with <span className="font-semibold text-blue-600">Akshar Real Estate</span> Confidence.
             </h1>
           </div>
           <div className="md:w-1/3 pb-2 border-l-2 border-blue-600 pl-6">
             <p className="text-slate-500 text-lg leading-relaxed">
-              WestField is a modern brokerage committed to helping clients find the right property with transparency and ease.
+              Akshar Real Estate is a Gujarat-focused brokerage committed to helping clients find the right property with transparency and ease.
             </p>
           </div>
         </div>
@@ -53,7 +53,7 @@ const AboutUs = () => {
         <div className="h-[500px] w-full bg-slate-200 rounded-2xl overflow-hidden relative group">
           <img 
             src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000" 
-            alt="WestField Office" 
+            alt="Akshar Real Estate office" 
             className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
           />
           <div className="absolute bottom-10 left-10 bg-white p-8 rounded-xl shadow-2xl hidden md:block">
@@ -79,7 +79,7 @@ const AboutUs = () => {
       {/* Why Choose Us */}
       <section className="py-24 bg-slate-50 px-6">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-semibold mb-16 tracking-tight">Why Choose WestField</h2>
+          <h2 className="text-4xl font-semibold mb-16 tracking-tight">Why Choose Akshar Real Estate</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((item, index) => (
               <div key={index} className="group p-8 bg-white rounded-xl shadow-sm border border-transparent hover:border-blue-100 hover:shadow-md transition-all duration-300">
@@ -92,27 +92,32 @@ const AboutUs = () => {
         </div>
       </section>
 
-      {/* Founder Section */}
       <section className="py-24 px-6 max-w-7xl mx-auto">
+        <div className="mb-12 flex items-center gap-3">
+          <BrandLogo />
+        </div>
         <div className="flex flex-col md:flex-row gap-16 items-center">
           <div className="md:w-1/2">
             <div className="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden shadow-2xl">
                <img 
                 src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=1000" 
-                alt="Founder" 
+                alt="Hitesh Patel, Founder of Akshar Real Estate" 
                 className="w-full h-full object-cover"
               />
             </div>
           </div>
           <div className="md:w-1/2">
             <h2 className="text-sm uppercase tracking-[0.2em] text-blue-600 font-bold mb-4">Our Leadership</h2>
-            <h3 className="text-4xl font-bold mb-6">Building trust, not just deals.</h3>
+            <h3 className="text-4xl font-bold mb-2">Hitesh Patel</h3>
+            <p className="mb-6 text-sm font-extrabold uppercase tracking-[0.2em] text-slate-400">
+              Founder, Akshar Real Estate
+            </p>
             <p className="text-slate-600 text-lg mb-8 leading-relaxed">
-              WestField is led by a passionate founder who believes in transparency and client satisfaction to drive long-term growth in the market.
+              Hitesh Patel leads Akshar Real Estate with a practical, client-first approach built around verified opportunities, clear advice, and long-term property value across Gujarat.
             </p>
             <div className="bg-slate-900 text-white p-8 rounded-tr-[50px] shadow-xl">
               <p className="italic text-xl">"Our goal is simple — to make real estate decisions smarter, faster, and more profitable for our clients."</p>
-              <p className="mt-4 font-bold text-blue-400">— The WestField Philosophy</p>
+              <p className="mt-4 font-bold text-blue-400">— Hitesh Patel</p>
             </div>
           </div>
         </div>

@@ -1,5 +1,5 @@
-import React from 'react';
 import { Share2, Globe, Users, Link, ExternalLink, MapPin, Phone, Mail } from 'lucide-react';
+import BrandLogo from './BrandLogo';
 
 const Footer = () => {
   return (
@@ -11,9 +11,11 @@ const Footer = () => {
           
           {/* Brand */}
           <div className="space-y-4 sm:space-y-6 lg:col-span-1 sm:col-span-2">
-            <h2 className="text-white text-xl sm:text-2xl font-bold">Westfield</h2>
+            <div className="text-xl sm:text-2xl">
+              <BrandLogo light />
+            </div>
             <p className="text-sm leading-relaxed max-w-xs sm:max-w-sm">
-              Your trusted partner in finding the perfect property.
+              Your trusted Gujarat partner for verified homes, commercial spaces, and real estate guidance.
             </p>
 
             <div className="flex space-x-3">
@@ -59,7 +61,7 @@ const Footer = () => {
             <ul className="space-y-3 sm:space-y-4 text-sm">
               <li className="flex items-start gap-2 sm:gap-3">
                 <MapPin size={14} className="sm:size-[18px] text-blue-500 mt-0.5 sm:mt-1 flex-shrink-0" />
-                <span className="break-words">123 Real Estate Ave, Mumbai, India 400001</span>
+                <span className="break-words">SG Highway, Ahmedabad, Gujarat 380054</span>
               </li>
               <li className="flex items-center gap-2 sm:gap-3">
                 <Phone size={14} className="sm:size-[18px] text-blue-500 flex-shrink-0" />
@@ -67,7 +69,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center gap-2 sm:gap-3">
                 <Mail size={14} className="sm:size-[18px] text-blue-500 flex-shrink-0" />
-                <span>info@housing.com</span>
+                <span>info@aksharrealestate.com</span>
               </li>
             </ul>
           </div>
@@ -75,7 +77,7 @@ const Footer = () => {
 
         {/* Bottom */}
         <div className="border-t border-slate-800 pt-6 sm:pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
-          <p className="text-center sm:text-left"> 2026 Housing.com. All rights reserved.</p>
+          <p className="text-center sm:text-left">2026 Akshar Real Estate. All rights reserved.</p>
           <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-6">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>

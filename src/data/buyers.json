@@ -1,23 +1,23 @@
 {
   "menus": [
     {
-      "title": "Top Metropolitans in India",
+      "title": "Top Cities in Gujarat",
       "items": [
-        "Properties for sale in Mumbai",
-        "Properties for sale in Kolkata",
-        "Properties for sale in Delhi",
-        "Properties for sale in Pune",
-        "Properties for sale in Bangalore"
+        "Properties for sale in Ahmedabad",
+        "Properties for sale in Surat",
+        "Properties for sale in Vadodara",
+        "Properties for sale in Rajkot",
+        "Properties for sale in Gandhinagar"
       ]
     },
     {
       "title": "Top Emerging Cities in Gujarat",
       "items": [
-        "Properties for sale in Mumbai",
-        "Properties for sale in Kolkata",
-        "Properties for sale in Delhi",
-        "Properties for sale in Pune",
-        "Properties for sale in Bangalore"
+        "Properties for sale in Bhavnagar",
+        "Properties for sale in Jamnagar",
+        "Properties for sale in Junagadh",
+        "Properties for sale in Anand",
+        "Properties for sale in Bharuch"
       ]
     },
     {

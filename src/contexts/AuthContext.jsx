@@ -1,27 +1,39 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { useState } from 'react';
+import AuthContext from './AuthContextCore';
 
-const AuthContext = createContext();
+function getStoredUser() {
+  const storedUser = localStorage.getItem('user');
+  if (!storedUser) return null;
 
-export function useAuth() {
-  return useContext(AuthContext);
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    localStorage.removeItem('user');
+    return null;
+  }
+}
+
+function getStoredSavedProperties() {
+  const storedSaved = localStorage.getItem('savedProperties');
+  if (!storedSaved) return [];
+
+  try {
+    return JSON.parse(storedSaved);
+  } catch {
+    localStorage.removeItem('savedProperties');
+    return [];
+  }
+}
+
+function getSavedKey(property) {
+  return `${property.source || 'property'}-${property.id}`;
 }
 
 export function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [guestLoggedIn, setGuestLoggedIn] = useState(false);
-
-  useEffect(() => {
-    const storedAuth = localStorage.getItem('isAuthenticated') === 'true';
-    const storedUser = localStorage.getItem('user');
-    const storedGuestLoggedIn = localStorage.getItem('guestLoggedIn') === 'true';
-    
-    setIsAuthenticated(storedAuth);
-    setGuestLoggedIn(storedGuestLoggedIn);
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('isAuthenticated') === 'true');
+  const [user, setUser] = useState(() => getStoredUser());
+  const [guestLoggedIn, setGuestLoggedIn] = useState(() => localStorage.getItem('guestLoggedIn') === 'true');
+  const [savedProperties, setSavedProperties] = useState(() => getStoredSavedProperties());
 
   const login = (userData) => {
     setIsAuthenticated(true);
@@ -44,13 +56,38 @@ export function AuthProvider({ children }) {
     localStorage.setItem('guestLoggedIn', 'true');
   };
 
+  const isPropertySaved = (property) => {
+    const key = getSavedKey(property);
+    return savedProperties.some((item) => getSavedKey(item) === key);
+  };
+
+  const toggleSavedProperty = (property) => {
+    if (!isAuthenticated) return false;
+
+    const key = getSavedKey(property);
+    setSavedProperties((current) => {
+      const exists = current.some((item) => getSavedKey(item) === key);
+      const nextSaved = exists
+        ? current.filter((item) => getSavedKey(item) !== key)
+        : [{ ...property, source: property.source || 'property' }, ...current];
+
+      localStorage.setItem('savedProperties', JSON.stringify(nextSaved));
+      return nextSaved;
+    });
+
+    return true;
+  };
+
   const value = {
     isAuthenticated,
     user,
     guestLoggedIn,
+    savedProperties,
     login,
     logout,
     guestAccess,
+    isPropertySaved,
+    toggleSavedProperty,
   };
 
   return (

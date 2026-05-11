@@ -1,4 +1,3 @@
-import React from 'react';
 import { CheckCircle2, Mail, Phone, Calendar } from 'lucide-react';
 
 export default function PropertyAmenities() {

@@ -9,18 +9,18 @@ const videos = [
   },
   {
     title: "Bungalow for Sale",
-    location: "Kuhu, Ahmedabad",
+    location: "Koba, Gandhinagar",
     image: "/v2.jpg",
   },
   {
     title: "Land for Sale",
-    location: "Kuhu, Ahmedabad",
+    location: "Adajan, Surat",
     image: "/v3.jpg",
     overlay: "Property Video",
   },
   {
     title: "Villa for Sale",
-    location: "Kuhu, Ahmedabad",
+    location: "Alkapuri, Vadodara",
     image: "/v4.jpg",
     overlay: "FOR SALE - DREAM HOME",
     button: "CONTACT AGENT",

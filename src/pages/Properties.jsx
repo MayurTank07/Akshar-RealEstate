@@ -6,7 +6,9 @@ export default function PropertiesPage() {
   return (
     <div>
       <Navbar />
-      <Properties />
+      <main className="pt-24">
+        <Properties />
+      </main>
       <Footer />
     </div>
   );

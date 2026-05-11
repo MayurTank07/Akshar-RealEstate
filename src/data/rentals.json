@@ -1,23 +1,23 @@
 {
   "menus": [
     {
-      "title": "Top Metropolitans in India",
+      "title": "Top Rental Cities in Gujarat",
       "items": [
-        "Properties for Rent in Mumbai",
-        "Properties for Rent in Kolkata",
-        "Properties for Rent in Delhi",
-        "Properties for Rent in Pune",
-        "Properties for Rent in Bangalore"
+        "Properties for Rent in Ahmedabad",
+        "Properties for Rent in Surat",
+        "Properties for Rent in Vadodara",
+        "Properties for Rent in Rajkot",
+        "Properties for Rent in Gandhinagar"
       ]
     },
     {
-      "title": "Top Emerging Cities in India",
+      "title": "Top Emerging Rental Cities in Gujarat",
       "items": [
-        "Properties for Rent in Mumbai",
-        "Properties for Rent in Kolkata",
-        "Properties for Rent in Delhi",
-        "Properties for Rent in Pune",
-        "Properties for Rent in Bangalore"
+        "Properties for Rent in Bhavnagar",
+        "Properties for Rent in Jamnagar",
+        "Properties for Rent in Junagadh",
+        "Properties for Rent in Anand",
+        "Properties for Rent in Bharuch"
       ]
     },
     {

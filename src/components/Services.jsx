@@ -6,76 +6,85 @@ const services = [
     title: "Legal Assistance",
     desc: "Get expert legal support for all your property documentation and registration needs",
     bg: "bg-blue-100 text-blue-600",
+    stat: "Docs",
+    layout: "min-h-44",
   },
   {
     icon: <ShieldCheck size={20} />,
     title: "Verified Listings",
     desc: "All properties are thoroughly verified for authenticity and legal compliance",
     bg: "bg-purple-100 text-purple-600",
+    stat: "100%",
+    layout: "min-h-72 row-span-2",
   },
   {
     icon: <TrendingUp size={20} />,
     title: "Property Valuation",
     desc: "Accurate market analysis and property valuation from certified experts",
     bg: "bg-green-100 text-green-600",
+    stat: "Market",
+    layout: "min-h-72 row-span-2",
   },
   {
     icon: <Headphones size={20} />,
     title: "24/7 Support",
     desc: "Round-the-clock customer support to assist you at every step of your journey",
     bg: "bg-orange-100 text-orange-600",
+    stat: "24/7",
+    layout: "min-h-44",
   },
 ];
 
 export default function Services() {
   return (
-    <div className="w-full bg-#fffff py-20 px-6 md:px-12 lg:px-20">
+    <section className="w-full overflow-hidden bg-white py-12 sm:py-16">
+      <div className="wf-container">
+        <div className="mb-7 flex flex-col gap-3 sm:mb-10 sm:max-w-4xl">
+          <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blue-600">
+            Our Services
+          </p>
 
-      {/* Header */}
-      <div className="mb-12 max-w-4xl">
-        <p className="text-blue-600 text-xs font-semibold uppercase tracking-wider">
-          Our Services
-        </p>
+          <h2 className="max-w-3xl text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">
+            Why Choose Akshar Real Estate
+          </h2>
 
-        <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mt-2">
-          Why Choose Westfield
-        </h2>
+          <p className="max-w-2xl text-base leading-relaxed text-slate-600">
+            Expert help for verification, valuation, legal checks, and property visits across Gujarat.
+          </p>
+        </div>
 
-        <p className="text-gray-500 mt-3">
-          We provide comprehensive services to make your property journey
-          seamless and stress-free
-        </p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+          {services.map((s) => (
+            <article
+              key={s.title}
+              className={`wf-card wf-card-hover flex flex-col justify-between p-4 sm:p-6 lg:min-h-64 ${s.layout}`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl sm:h-12 sm:w-12 ${s.bg}`}>
+                  {s.icon}
+                </div>
+                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-slate-500 sm:px-3 sm:text-[11px]">
+                  {s.stat}
+                </span>
+              </div>
+
+              <div>
+                <h3 className="mt-5 text-xl font-extrabold leading-tight text-slate-950 sm:text-2xl lg:text-lg">
+                  {s.title}
+                </h3>
+
+                <p className="mt-2 hidden text-sm leading-relaxed text-slate-500 sm:block">
+                  {s.desc}
+                </p>
+              </div>
+
+              <div className="mt-5 h-1.5 rounded-full bg-slate-100">
+                <div className="h-full w-2/3 rounded-full bg-blue-600/80" />
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
-
-      {/* Cards FULL WIDTH */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-
-        {services.map((s, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300"
-          >
-
-            {/* Icon */}
-            <div className={`w-12 h-12 flex items-center justify-center rounded-lg ${s.bg}`}>
-              {s.icon}
-            </div>
-
-            {/* Title */}
-            <h3 className="mt-5 font-semibold text-gray-900 text-lg">
-              {s.title}
-            </h3>
-
-            {/* Description */}
-            <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-              {s.desc}
-            </p>
-
-          </div>
-        ))}
-
-      </div>
-
-    </div>
+    </section>
   );
 }

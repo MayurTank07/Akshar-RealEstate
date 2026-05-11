@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
 
 export default function GuestForm({ onClose, onContinue }) {
   const [formData, setFormData] = useState({
@@ -73,13 +74,27 @@ export default function GuestForm({ onClose, onContinue }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200] backdrop-blur-sm">
-      <div className="bg-white rounded-2xl p-8 w-96 shadow-2xl">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">Guest Information</h2>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
+      <div className="wf-card w-full max-w-md p-6 shadow-2xl sm:p-8">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-950">Guest Information</h2>
+            <p className="mt-1 text-sm text-slate-500">Share your details once to continue browsing curated results.</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            aria-label="Close guest form"
+          >
+            <X size={20} />
+          </button>
+        </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="wf-label">
               Name *
             </label>
             <input
@@ -87,7 +102,7 @@ export default function GuestForm({ onClose, onContinue }) {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              className={`wf-input ${
                 errors.name ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Enter your name"
@@ -98,7 +113,7 @@ export default function GuestForm({ onClose, onContinue }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="wf-label">
               Phone Number *
             </label>
             <input
@@ -106,7 +121,7 @@ export default function GuestForm({ onClose, onContinue }) {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              className={`wf-input ${
                 errors.phone ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Enter your phone number"
@@ -117,7 +132,7 @@ export default function GuestForm({ onClose, onContinue }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="wf-label">
               Email *
             </label>
             <input
@@ -125,7 +140,7 @@ export default function GuestForm({ onClose, onContinue }) {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              className={`wf-input ${
                 errors.email ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Enter your email"
@@ -135,14 +150,14 @@ export default function GuestForm({ onClose, onContinue }) {
             )}
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col gap-3 pt-4 sm:flex-row">
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`flex-1 py-2.5 rounded-xl font-medium transition-all ${
+              className={`wf-btn flex-1 ${
                 isSubmitting 
-                  ? 'bg-blue-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  ? 'bg-blue-400 text-white' 
+                  : 'wf-btn-primary'
               }`}
             >
               {isSubmitting ? (
@@ -161,10 +176,10 @@ export default function GuestForm({ onClose, onContinue }) {
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className={`flex-1 py-2.5 rounded-xl font-medium transition-all ${
+              className={`wf-btn flex-1 ${
                 isSubmitting 
-                  ? 'bg-gray-100 cursor-not-allowed text-gray-400' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                  ? 'bg-gray-100 text-gray-400' 
+                  : 'wf-btn-secondary'
               }`}
             >
               Cancel
