@@ -20,7 +20,7 @@ export default function Properties() {
     {
       title: "Popular Properties",
       eyebrow: "High demand",
-      description: "Homes getting strong attention across Akshar Real Estate searches.",
+      description: "Homes getting strong attention across Akshar Estate The Property HUB searches.",
       items: properties.filter((property) => property.tag === "Hot"),
     },
   ];

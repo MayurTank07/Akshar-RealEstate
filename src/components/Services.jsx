@@ -45,7 +45,7 @@ export default function Services() {
           </p>
 
           <h2 className="max-w-3xl text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">
-            Why Choose Akshar Real Estate
+            Why Choose Akshar Estate The Property HUB
           </h2>
 
           <p className="max-w-2xl text-base leading-relaxed text-slate-600">

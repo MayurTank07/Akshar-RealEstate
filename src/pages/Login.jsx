@@ -29,7 +29,7 @@ export default function LoginPage() {
         }
       : {
           email: form.email,
-          name: form.email.split("@")[0] || "Akshar Real Estate User",
+          name: form.email.split("@")[0] || "Akshar Estate The Property HUB User",
           role: "user",
         };
 
@@ -52,7 +52,7 @@ export default function LoginPage() {
 
       <div className="wf-card w-full max-w-md p-6 shadow-2xl sm:p-8">
         <h2 className="mb-2 text-center text-3xl font-extrabold tracking-tight text-slate-950">
-          Login to Akshar Real Estate
+          Login to Akshar Estate The Property HUB
         </h2>
         <p className="mb-8 text-center text-sm text-slate-500">
           Enter your credentials to access your account

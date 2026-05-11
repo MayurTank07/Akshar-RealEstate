@@ -68,7 +68,7 @@ const PropertyDetails = ({ property }) => {
               <span className="text-gray-400">{title}</span>
             </nav>
             <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">{title}</h1>
-            <p className="mt-1 text-sm font-semibold text-blue-600">Verified Akshar Real Estate Listing</p>
+            <p className="mt-1 text-sm font-semibold text-blue-600">Verified Akshar Estate The Property HUB Listing</p>
             <div className="mt-2 flex items-center text-sm text-slate-500">
               <MapPin size={14} className="mr-1" />
               {propertyLocation}

@@ -77,7 +77,7 @@ const Footer = () => {
 
         {/* Bottom */}
         <div className="border-t border-slate-800 pt-6 sm:pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
-          <p className="text-center sm:text-left">2026 Akshar Real Estate. All rights reserved.</p>
+          <p className="text-center sm:text-left">2026 Akshar Estate The Property HUB. All rights reserved.</p>
           <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-6">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>

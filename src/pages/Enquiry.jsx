@@ -181,7 +181,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
           <div className="min-h-0 grow overflow-y-auto p-4 sm:p-6 lg:p-8">
             {step === 1 && (
               <section className="space-y-5 sm:space-y-6">
-                <SectionTitle title="Basic Details" subtitle="Your contact information stays private with Akshar Real Estate." />
+                <SectionTitle title="Basic Details" subtitle="Your contact information stays private with Akshar Estate The Property HUB." />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
                   <InputGroup label="Full Name" icon={<User size={18} />} name="name" value={form.name} onChange={update} error={errors.name} placeholder="Mayur Tank" />
                   <InputGroup label="Email Address" icon={<Mail size={18} />} name="email" value={form.email} onChange={update} error={errors.email} placeholder="mayur@example.com" />

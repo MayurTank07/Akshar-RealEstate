@@ -62,7 +62,7 @@ export default function Register() {
         </h2>
 
         <p className="mb-8 text-center text-sm text-slate-500">
-          Register to continue with Akshar Real Estate
+          Register to continue with Akshar Estate The Property HUB
         </p>
 
         <form onSubmit={handleRegister} className="space-y-6">

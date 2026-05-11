@@ -32,7 +32,7 @@ export default function Hero() {
     <section className="relative min-h-[760px] w-full overflow-hidden bg-slate-950 sm:min-h-[720px] lg:min-h-[760px]">
       <img
         src="/house.jpg"
-        alt="Modern Akshar Real Estate home exterior"
+        alt="Modern Akshar Estate The Property HUB home exterior"
         className="absolute inset-0 h-full w-full object-cover object-center"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-blue-950/80 via-blue-800/45 to-blue-950/85 sm:bg-gradient-to-r sm:from-blue-950/85 sm:via-blue-900/55 sm:to-blue-500/30" />

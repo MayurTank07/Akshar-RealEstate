@@ -31,7 +31,7 @@ export default function SplashScreen() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(37,99,235,0.28),transparent_38%),linear-gradient(135deg,rgba(15,23,42,0.94),rgba(3,7,18,1))]" />
       <div className="relative w-full max-w-md rounded-[2rem] border border-white/10 bg-white/[0.06] p-8 text-center shadow-2xl shadow-blue-950/40 backdrop-blur-xl">
         <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white p-2 shadow-2xl shadow-blue-950/30">
-          <img src="/akshar-logo-512.jpeg" alt="Akshar Real Estate logo" className="h-full w-full rounded-[1.5rem] object-cover" />
+          <img src="/akshar-logo-512.jpeg" alt="Akshar Estate The Property HUB logo" className="h-full w-full rounded-[1.5rem] object-cover" />
         </div>
         <div className="flex justify-center text-2xl">
           <BrandLogo light />

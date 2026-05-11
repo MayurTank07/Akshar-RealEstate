@@ -66,7 +66,7 @@ export default function SavedProperties() {
               Saved Properties
             </h1>
             <p className="mt-3 max-w-2xl text-slate-600">
-              Your shortlisted Akshar Real Estate homes and investment options.
+              Your shortlisted Akshar Estate The Property HUB homes and investment options.
             </p>
           </div>
           <Link to="/pricing" className="wf-btn wf-btn-secondary w-fit">

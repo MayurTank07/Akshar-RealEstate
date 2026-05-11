@@ -15,7 +15,7 @@ export default function AdminDashboard() {
       <Navbar />
       <main className="wf-container pt-28 pb-16">
         <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blue-600">Admin Dashboard</p>
-        <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-950">Akshar Real Estate Admin Control</h1>
+        <h1 className="mt-2 text-4xl font-extrabold tracking-tight text-slate-950">Akshar Estate The Property HUB Admin Control</h1>
         <p className="mt-3 max-w-2xl text-slate-600">
           Test admin workspace for listing oversight, enquiries, users, and property operations.
         </p>
