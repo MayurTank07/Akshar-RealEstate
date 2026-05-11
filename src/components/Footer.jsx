@@ -11,9 +11,7 @@ const Footer = () => {
           
           {/* Brand */}
           <div className="space-y-4 sm:space-y-6 lg:col-span-1 sm:col-span-2">
-            <div className="text-xl sm:text-2xl">
-              <BrandLogo light />
-            </div>
+            <BrandLogo light large />
             <p className="text-sm leading-relaxed max-w-xs sm:max-w-sm">
               Your trusted Gujarat partner for verified homes, commercial spaces, and real estate guidance.
             </p>

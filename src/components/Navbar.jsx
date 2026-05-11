@@ -137,7 +137,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="flex min-w-0 items-center rounded-xl text-xl transition hover:opacity-90"
+            className="flex min-w-0 items-center rounded-xl transition hover:opacity-90"
           >
             <BrandLogo />
           </button>
@@ -213,7 +213,7 @@ export default function Navbar() {
 
           <aside className="absolute right-0 top-0 flex h-full w-[min(88vw,390px)] flex-col bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-              <div className="min-w-0 text-lg">
+              <div className="min-w-0">
                 <BrandLogo />
               </div>
               <button

@@ -1,14 +1,31 @@
-export default function BrandLogo({ compact = false, light = false }) {
+export default function BrandLogo({ compact = false, light = false, large = false }) {
   return (
-    <span className="inline-flex min-w-0 items-center gap-2.5">
+    <span className="inline-flex min-w-0 items-center gap-3">
       <img
         src="/akshar-logo-512.jpeg"
         alt="Akshar Estate The Property HUB logo"
-        className="h-10 w-10 shrink-0 rounded-2xl object-cover shadow-lg shadow-slate-950/10 ring-1 ring-white/50"
+        className={`shrink-0 object-cover shadow-md ring-1 ${
+          large
+            ? "h-11 w-11 rounded-2xl shadow-slate-950/15 ring-white/40"
+            : "h-9 w-9 rounded-xl shadow-slate-950/10 ring-white/50"
+        }`}
       />
       {!compact && (
-        <span className={`truncate text-left font-extrabold tracking-tight ${light ? "text-white" : "text-slate-950"}`}>
-          Akshar Estate The Property HUB
+        <span className="flex min-w-0 flex-col leading-none">
+          <span
+            className={`font-extrabold tracking-tight ${
+              large ? "text-[18px]" : "text-[14px]"
+            } ${light ? "text-white" : "text-slate-950"}`}
+          >
+            Akshar Estate
+          </span>
+          <span
+            className={`font-semibold tracking-wide ${
+              large ? "mt-[5px] text-[12px]" : "mt-[3px] text-[10px]"
+            } ${light ? "text-blue-200" : "text-slate-500"}`}
+          >
+            The Property HUB
+          </span>
         </span>
       )}
     </span>
