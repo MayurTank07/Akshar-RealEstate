@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../contexts/useAuth";
-import GuestForm from "./GuestForm";
 import EnquiryModal from "./EnquiryModal";
 import BrandLogo from "./BrandLogo";
 import { Bookmark, ChevronDown, LogIn, LogOut, Menu, X } from "lucide-react";
@@ -13,15 +12,13 @@ import servicesData from "../data/services.json";
 
 export default function Navbar() {
   const [activeMenu, setActiveMenu] = useState(null);
-  const [showGuestForm, setShowGuestForm] = useState(false);
   const [showEnquiryModal, setShowEnquiryModal] = useState(false);
-  const [selectedMenu, setSelectedMenu] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, logout, guestAccess, guestLoggedIn } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   const dataMap = {
     buyers: buyersData,
@@ -49,11 +46,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const openGuestGate = (key) => {
-    setSelectedMenu(key);
-    setShowGuestForm(true);
-  };
-
   const handleMenuClick = (key) => {
     if (key === "about") {
       navigate("/about");
@@ -62,11 +54,6 @@ export default function Navbar() {
 
     if (key === "sellers" && !isAuthenticated) {
       navigate("/login");
-      return;
-    }
-
-    if ((key === "buyers" || key === "rentals") && !guestLoggedIn) {
-      openGuestGate(key);
       return;
     }
 
@@ -181,7 +168,7 @@ export default function Navbar() {
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
-            <button type="button" onClick={() => setShowEnquiryModal(true)} className="wf-btn wf-btn-primary">
+            <button type="button" onClick={() => { if (!isAuthenticated) { navigate("/login"); return; } setShowEnquiryModal(true); }} className="wf-btn wf-btn-primary">
               Enquiry
             </button>
 
@@ -265,7 +252,7 @@ export default function Navbar() {
             </nav>
 
             <div className="space-y-3 border-t border-slate-200 p-4">
-              <button type="button" onClick={() => setShowEnquiryModal(true)} className="wf-btn wf-btn-primary w-full">
+              <button type="button" onClick={() => { if (!isAuthenticated) { navigate("/login"); return; } setShowEnquiryModal(true); }} className="wf-btn wf-btn-primary w-full">
                 Enquiry
               </button>
               <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary w-full">
@@ -286,17 +273,6 @@ export default function Navbar() {
             </div>
           </aside>
         </div>
-      )}
-
-      {showGuestForm && (
-        <GuestForm
-          onClose={() => setShowGuestForm(false)}
-          onContinue={(guestData) => {
-            guestAccess(guestData);
-            setShowGuestForm(false);
-            setActiveMenu(selectedMenu);
-          }}
-        />
       )}
 
       <EnquiryModal isOpen={showEnquiryModal} onClose={() => setShowEnquiryModal(false)} />
