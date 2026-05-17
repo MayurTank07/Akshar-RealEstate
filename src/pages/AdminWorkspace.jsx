@@ -281,7 +281,7 @@ export default function AdminWorkspace({ scope = "admin" }) {
           </div>
         </header>
 
-        <main className="px-4 py-6 sm:py-8 md:px-8">
+        <main className="px-3 py-5 sm:px-5 sm:py-7 md:px-8 md:py-8">
           {activeSection === "dashboard" && <DashboardSection />}
           {activeSection === "properties" && <PropertiesSection canDelete={canDeleteProperty} canCreate={canCreateProperty} />}
           {activeSection === "supervisors" && <SupervisorsSection />}
@@ -298,10 +298,10 @@ export default function AdminWorkspace({ scope = "admin" }) {
 
 function PageTitle({ title, subtitle, action }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-6 flex flex-col gap-3 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{title}</h2>
-        <p className="mt-2 text-sm text-slate-500 sm:text-base">{subtitle}</p>
+        <h2 className="text-xl font-extrabold tracking-tight text-slate-950 sm:text-2xl lg:text-3xl">{title}</h2>
+        <p className="mt-1 text-xs text-slate-500 sm:mt-1.5 sm:text-sm">{subtitle}</p>
       </div>
       {action && <div className="w-full sm:w-auto">{action}</div>}
     </div>
@@ -331,14 +331,14 @@ function SidebarContent({ staffUser, allowedItems, activeSection, scope, onNavig
         )}
       </div>
 
-      <nav className="flex-1 space-y-2 px-3 py-7">
+      <nav className="flex-1 space-y-1.5 overflow-y-auto px-3 py-6">
         {allowedItems.map(({ key, label, icon: Icon }) => (
           <Link
             key={key}
             to={`/${scope}/${key}`}
             onClick={onNavigate}
-            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
-              activeSection === key ? "bg-white/20 shadow-lg shadow-blue-950/20" : "text-blue-50 hover:bg-white/10"
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200 ${
+              activeSection === key ? "bg-white/20 shadow-lg shadow-blue-950/20 scale-[1.02]" : "text-blue-50 hover:bg-white/10 active:scale-[0.98]"
             }`}
           >
             <Icon size={18} />
@@ -366,15 +366,16 @@ function StatCard({ icon: Icon, label, value, trend, color = "blue" }) {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
+    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] transition-shadow duration-200 hover:shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-5">
       <div className="flex items-start justify-between">
-        <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${colors[color]} text-white`}>
-          <Icon size={23} />
+        <div className={`grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br ${colors[color]} text-white sm:h-12 sm:w-12`}>
+          <Icon size={20} className="sm:hidden" />
+          <Icon size={23} className="hidden sm:block" />
         </div>
-        {trend && <span className="text-sm font-semibold text-emerald-600">{trend}</span>}
+        {trend && <span className="text-xs font-semibold text-emerald-600 sm:text-sm">{trend}</span>}
       </div>
-      <p className="mt-4 text-sm text-slate-500 sm:mt-5">{label}</p>
-      <p className="mt-1 text-2xl font-light tracking-tight text-slate-950 sm:text-3xl">{value}</p>
+      <p className="mt-3 text-xs text-slate-500 sm:mt-4 sm:text-sm">{label}</p>
+      <p className="mt-0.5 text-xl font-semibold tracking-tight text-slate-950 sm:text-2xl">{value}</p>
     </div>
   );
 }
@@ -540,7 +541,7 @@ function DashboardSection() {
         action={<button className="wf-btn wf-btn-primary w-full sm:w-auto">Generate Report</button>}
       />
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard icon={Building2} color="purple" label={supervisorMode ? "My Properties" : "Total Properties"} value={metrics.totalProperties ?? 0} />
         <StatCard icon={MessageSquare} label={supervisorMode ? "My Enquiries" : "Total Enquiries"} value={metrics.totalEnquiries ?? 0} />
         <StatCard icon={Users} color="green" label="Conversion Rate" value={`${metrics.conversionRate ?? 0}%`} />
@@ -548,38 +549,41 @@ function DashboardSection() {
         <StatCard icon={Check} color="green" label="Sold / Rented" value={metrics.soldRented ?? 0} />
       </div>
 
-      <div className="mt-8 grid gap-8 xl:grid-cols-[1fr_0.95fr]">
-        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-          <h3 className="text-xl font-bold">Recent Activity</h3>
-          <div className="mt-7 space-y-8">
+      <div className="mt-8 grid gap-6 xl:grid-cols-[1fr_0.9fr]">
+        <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-6">
+          <h3 className="text-lg font-bold sm:text-xl">Recent Activity</h3>
+          <div className="mt-5 space-y-4 sm:mt-6 sm:space-y-5">
+            {(data?.recentActivity || []).length === 0 && <p className="py-6 text-center text-sm text-slate-500">No recent activity.</p>}
             {(data?.recentActivity || []).map((item) => (
-              <div key={item._id} className="grid grid-cols-[32px_1fr] gap-3 sm:grid-cols-[42px_1fr_auto] sm:gap-4">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-blue-50 sm:h-10 sm:w-10">
-                  <span className="h-3 w-3 rounded-full bg-blue-600" />
+              <div key={item._id} className="flex gap-3">
+                <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-blue-50 sm:h-9 sm:w-9">
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-600" />
                 </span>
-                <div>
-                  <p className="text-sm font-semibold text-blue-600">{item.title}</p>
-                  <p className="mt-1 text-slate-950">{item.description}</p>
-                  <p className="mt-1 text-sm text-slate-500">{item.actorName}</p>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-blue-600">{item.title}</p>
+                    <p className="shrink-0 text-[11px] text-slate-400">{formatDate(item.createdAt)}</p>
+                  </div>
+                  <p className="mt-0.5 text-sm text-slate-700">{item.description}</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{item.actorName}</p>
                 </div>
-                <p className="text-xs text-slate-500 sm:text-right">{formatDate(item.createdAt)}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-2xl bg-blue-800 p-6 text-white shadow-[0_10px_28px_rgba(15,23,42,0.22)]">
-          <h3 className="text-xl font-bold">Quick Stats</h3>
-          <div className="mt-7 space-y-7">
+        <div className="rounded-2xl bg-blue-800 p-5 text-white shadow-[0_10px_28px_rgba(15,23,42,0.22)] sm:p-6">
+          <h3 className="text-lg font-bold sm:text-xl">Quick Stats</h3>
+          <div className="mt-5 space-y-5 sm:mt-6 sm:space-y-6">
             <QuickStat label={supervisorMode ? "Assigned Properties" : "Pending Approvals"} value={quick.pendingApprovals ?? 0} />
             <QuickStat label={supervisorMode ? "Active My Listings" : "Active Supervisors"} value={supervisorMode ? quick.activeSupervisors ?? 0 : quick.activeSupervisors ?? 0} />
             <QuickStat label="New Enquiries Today" value={quick.newEnquiriesToday ?? 0} />
           </div>
-          <button className="mt-7 w-full rounded-xl border border-white/20 bg-white/15 px-4 py-3 text-sm font-bold sm:text-base">View All Details</button>
+          <button className="mt-6 w-full rounded-xl border border-white/20 bg-white/15 px-4 py-3 text-sm font-semibold transition-colors hover:bg-white/25 active:scale-[0.98]">View All Details</button>
         </div>
       </div>
 
-      <div className="mt-8 grid gap-8 xl:grid-cols-3">
+      <div className="mt-8 grid gap-5 sm:gap-6 md:grid-cols-2 xl:grid-cols-3">
         <DashboardList title="Recent Leads" items={(data?.recentLeads || []).map((item) => ({
           id: item._id,
           title: item.name,
@@ -613,23 +617,43 @@ function DashboardSection() {
       {(data?.supervisorPerformance || []).length > 0 && (
         <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
           <h3 className="text-xl font-bold">Supervisor Performance</h3>
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm sm:text-base">
-              <thead className="text-xs text-slate-500 sm:text-sm">
-                <tr><th className="py-3">Supervisor</th><th>Properties Added</th><th>Leads Handled</th><th>Conversions</th><th>Status</th></tr>
+          {/* Desktop Table */}
+          <div className="mt-6 hidden md:block">
+            <table className="w-full text-left text-sm">
+              <thead className="text-xs text-slate-500">
+                <tr><th className="py-3">Supervisor</th><th className="px-3 py-3">Properties</th><th className="px-3 py-3">Leads</th><th className="px-3 py-3">Conversions</th><th className="px-3 py-3">Status</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {data.supervisorPerformance.map((item) => (
-                  <tr key={item._id}>
-                    <td className="py-4"><p className="font-bold text-slate-950">{item.name}</p><p className="text-sm text-slate-500">{item.email}</p></td>
-                    <td className="font-semibold text-blue-600">{item.propertiesAdded}</td>
-                    <td>{item.leadsHandled}</td>
-                    <td>{item.convertedLeads}</td>
-                    <td><span className={`rounded-full px-3 py-1 text-sm ${statusClass(item.status)}`}>{item.status}</span></td>
+                  <tr key={item._id} className="transition-colors hover:bg-slate-50/60">
+                    <td className="py-4"><p className="font-bold text-slate-950">{item.name}</p><p className="text-xs text-slate-500">{item.email}</p></td>
+                    <td className="px-3 py-4 font-semibold text-blue-600">{item.propertiesAdded}</td>
+                    <td className="px-3 py-4">{item.leadsHandled}</td>
+                    <td className="px-3 py-4">{item.convertedLeads}</td>
+                    <td className="px-3 py-4"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass(item.status)}`}>{item.status}</span></td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Mobile Card View */}
+          <div className="mt-5 space-y-3 md:hidden">
+            {data.supervisorPerformance.map((item) => (
+              <div key={item._id} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-950">{item.name}</p>
+                    <p className="text-xs text-slate-500">{item.email}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass(item.status)}`}>{item.status}</span>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2 rounded-lg bg-white p-3 text-center">
+                  <div><p className="text-lg font-semibold text-blue-600">{item.propertiesAdded}</p><p className="text-[11px] text-slate-500">Properties</p></div>
+                  <div><p className="text-lg font-semibold text-slate-800">{item.leadsHandled}</p><p className="text-[11px] text-slate-500">Leads</p></div>
+                  <div><p className="text-lg font-semibold text-emerald-600">{item.convertedLeads}</p><p className="text-[11px] text-slate-500">Converted</p></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -640,26 +664,26 @@ function DashboardSection() {
 function QuickStat({ label, value }) {
   return (
     <div>
-      <p className="text-sm text-blue-100">{label}</p>
-      <p className="mt-1 text-3xl font-light sm:text-4xl">{value}</p>
+      <p className="text-xs text-blue-200 sm:text-sm">{label}</p>
+      <p className="mt-0.5 text-2xl font-semibold sm:text-3xl">{value}</p>
     </div>
   );
 }
 
 function DashboardList({ title, items }) {
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-      <h3 className="text-xl font-bold">{title}</h3>
-      <div className="mt-6 space-y-4">
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-6">
+      <h3 className="text-lg font-bold sm:text-xl">{title}</h3>
+      <div className="mt-5 space-y-3">
         {items.length ? items.map((item) => (
-          <div key={item.id} className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-slate-950">{item.title}</p>
-              <p className="truncate text-sm text-slate-500">{item.subtitle}</p>
+          <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 p-3.5 transition-colors hover:bg-slate-100/70 sm:p-4">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-slate-950">{item.title}</p>
+              <p className="mt-0.5 truncate text-xs text-slate-500">{item.subtitle}</p>
             </div>
-            <span className={`shrink-0 rounded-full px-3 py-1 text-xs capitalize ${statusClass(item.meta)}`}>{item.meta}</span>
+            <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${statusClass(item.meta)}`}>{item.meta}</span>
           </div>
-        )) : <p className="text-sm text-slate-500">No data yet.</p>}
+        )) : <p className="py-4 text-center text-sm text-slate-500">No data yet.</p>}
       </div>
     </div>
   );
@@ -713,13 +737,13 @@ function PropertiesSection({ canDelete, canCreate }) {
         subtitle="Manage all properties and listings"
         action={canCreate ? <button onClick={() => setEditing(emptyProperty)} className="wf-btn wf-btn-primary w-full sm:w-auto"><Plus size={18} /> Add Property</button> : null}
       />
-      <div className="mb-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+      <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input className="wf-input pl-12" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search properties..." />
+            <Search className="absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
+            <input className="wf-input pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search properties..." />
           </div>
-          <select className="wf-input w-full sm:w-40" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select className="wf-input w-full sm:w-36" value={status} onChange={(event) => setStatus(event.target.value)}>
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="pending">Pending</option>
@@ -731,47 +755,77 @@ function PropertiesSection({ canDelete, canCreate }) {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm sm:text-base">
-            <thead className="bg-slate-50 text-xs text-slate-600 sm:text-sm">
-              <tr>
-                <th className="px-6 py-4">Property</th>
-                <th>Location</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Owner</th>
-                <th className="text-right pr-6">Actions</th>
+      {/* Desktop Table - hidden on mobile/tablet */}
+      <div className="hidden lg:block overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs text-slate-600">
+            <tr>
+              <th className="px-6 py-4">Property</th>
+              <th className="px-4 py-4">Location</th>
+              <th className="px-4 py-4">Price</th>
+              <th className="px-4 py-4">Status</th>
+              <th className="px-4 py-4">Owner</th>
+              <th className="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {properties.map((property) => (
+              <tr key={property._id} className="align-middle transition-colors hover:bg-slate-50/60">
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <img src={property.image || property.gallery?.[0] || "https://placehold.co/120x120?text=Property"} alt={property.title} className="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-100" />
+                    <div>
+                      <p className="font-semibold text-slate-950">{property.title}</p>
+                      <p className="text-xs text-slate-400">ID: {property._id.slice(-6).toUpperCase()}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-4 py-4 text-sm text-slate-600">{property.location}</td>
+                <td className="px-4 py-4 font-semibold text-blue-600">{property.price}</td>
+                <td className="px-4 py-4"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass(property.status)}`}>{property.status}</span></td>
+                <td className="px-4 py-4 text-sm text-slate-700">{property.ownerName}</td>
+                <td className="px-6 py-4">
+                  <div className="flex justify-end gap-3">
+                    <button onClick={() => setEditing(property)} className="grid h-9 w-9 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50" aria-label="Edit property"><Edit3 size={17} /></button>
+                    {canDelete && <button onClick={() => remove(property._id)} className="grid h-9 w-9 place-items-center rounded-lg text-red-500 transition hover:bg-red-50" aria-label="Delete property"><Trash2 size={17} /></button>}
+                  </div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {properties.map((property) => (
-                <tr key={property._id} className="align-middle">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <img src={property.image || property.gallery?.[0] || "https://placehold.co/120x120?text=Property"} alt={property.title} className="h-16 w-16 rounded-xl object-cover" />
-                      <div>
-                        <p className="font-semibold text-slate-950">{property.title}</p>
-                        <p className="text-sm text-slate-500">ID: {property._id.slice(-6).toUpperCase()}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-sm text-slate-600">{property.location}</td>
-                  <td className="font-semibold text-blue-600">{property.price}</td>
-                  <td><span className={`rounded-full px-3 py-1 text-sm ${statusClass(property.status)}`}>{property.status}</span></td>
-                  <td className="text-slate-700">{property.ownerName}</td>
-                  <td className="pr-6">
-                    <div className="flex justify-end gap-4">
-                      <button onClick={() => setEditing(property)} className="text-blue-600" aria-label="Edit property"><Edit3 size={18} /></button>
-                      {canDelete && <button onClick={() => remove(property._id)} className="text-red-500" aria-label="Delete property"><Trash2 size={18} /></button>}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
         {loading && <p className="p-6 text-sm font-bold text-slate-500">Loading properties...</p>}
+      </div>
+
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-4">
+        {loading && <p className="p-6 text-center text-sm font-bold text-slate-500">Loading properties...</p>}
+        {properties.map((property) => (
+          <div key={property._id} className="group rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.12)]">
+            <div className="flex gap-4">
+              <img src={property.image || property.gallery?.[0] || "https://placehold.co/120x120?text=Property"} alt={property.title} className="h-20 w-20 shrink-0 rounded-xl object-cover ring-1 ring-slate-100 sm:h-24 sm:w-24" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <h4 className="truncate text-base font-bold text-slate-950">{property.title}</h4>
+                    <p className="mt-0.5 text-xs text-slate-400">ID: {property._id.slice(-6).toUpperCase()}</p>
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass(property.status)}`}>{property.status}</span>
+                </div>
+                <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
+                  <span className="flex items-center gap-1.5 text-slate-600"><Building2 size={14} className="text-slate-400" />{property.location || "—"}</span>
+                  <span className="font-semibold text-blue-600">{property.price || "—"}</span>
+                </div>
+                {property.ownerName && <p className="mt-1.5 text-xs text-slate-500">Owner: {property.ownerName}</p>}
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">
+              <button onClick={() => setEditing(property)} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-600 transition hover:bg-blue-100"><Edit3 size={15} /> Edit</button>
+              {canDelete && <button onClick={() => remove(property._id)} className="flex items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"><Trash2 size={15} /> Delete</button>}
+            </div>
+          </div>
+        ))}
+        {!loading && !properties.length && <p className="rounded-2xl bg-slate-50 py-12 text-center text-sm font-semibold text-slate-500">No properties found.</p>}
       </div>
 
       {editing && <PropertyModal property={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
@@ -1277,20 +1331,20 @@ function SupervisorsSection() {
         action={<button onClick={() => setEditing({ role: "supervisor", status: "active", permissions: defaultSupervisorPermissions })} className="wf-btn wf-btn-primary w-full sm:w-auto"><Plus size={18} /> Create Supervisor</button>}
       />
 
-      <div className="mb-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         <StatCard icon={Shield} label="Total Supervisors" value={supervisors.length} />
         <StatCard icon={UserCheck} color="green" label="Active Supervisors" value={activeCount} />
         <StatCard icon={Building2} color="purple" label="Properties Added" value={totals.properties} />
         <StatCard icon={MessageSquare} color="teal" label="Leads Handled" value={totals.leads} />
       </div>
 
-      <div className="mb-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
+      <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input className="wf-input pl-12" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search supervisors by name, email, phone..." />
+            <Search className="absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
+            <input className="wf-input pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search supervisors..." />
           </div>
-          <select className="wf-input w-full sm:w-44" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select className="wf-input w-full sm:w-40" value={status} onChange={(event) => setStatus(event.target.value)}>
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="disabled">Disabled</option>
@@ -1298,40 +1352,40 @@ function SupervisorsSection() {
         </div>
       </div>
 
-      <div className="grid gap-8 xl:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-2">
         {visibleSupervisors.map((item) => (
-          <div key={item._id} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <span className="grid h-16 w-16 place-items-center rounded-full bg-gradient-to-br from-purple-600 to-teal-600 text-white"><Shield size={32} /></span>
-                <div>
-                  <h3 className="text-xl font-bold">{item.name}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{item.email}</p>
-                  {item.designation && <p className="mt-1 text-xs font-semibold text-blue-600">{item.designation}</p>}
+          <div key={item._id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] transition-shadow hover:shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3 sm:gap-4">
+                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-purple-600 to-teal-600 text-white sm:h-14 sm:w-14"><Shield size={24} className="sm:hidden" /><Shield size={28} className="hidden sm:block" /></span>
+                <div className="min-w-0">
+                  <h3 className="truncate text-base font-bold sm:text-lg">{item.name}</h3>
+                  <p className="mt-0.5 truncate text-xs text-slate-500 sm:text-sm">{item.email}</p>
+                  {item.designation && <p className="mt-0.5 text-xs font-semibold text-blue-600">{item.designation}</p>}
                 </div>
               </div>
-              <span className={`rounded-full px-3 py-1 text-sm ${statusClass(item.status)}`}>{item.status}</span>
+              <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass(item.status)}`}>{item.status}</span>
             </div>
-            <div className="mt-6 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-4 md:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3 sm:grid-cols-4 sm:p-4">
               <MiniMetric label="Properties" value={item.performance?.propertiesAdded || 0} />
               <MiniMetric label="Leads" value={item.performance?.leadsHandled || 0} />
               <MiniMetric label="Closed" value={item.performance?.convertedLeads || 0} />
               <MiniMetric label="Conversion" value={`${item.performance?.conversionRate || 0}%`} />
             </div>
-            <div className="mt-5 flex flex-wrap gap-2">
-              {(item.permissions || []).slice(0, 4).map((permission) => (
-                <span key={permission} className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">{permissionLabel(permission)}</span>
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {(item.permissions || []).slice(0, 3).map((permission) => (
+                <span key={permission} className="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">{permissionLabel(permission)}</span>
               ))}
-              {(item.permissions || []).length > 4 && <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">+{item.permissions.length - 4} more</span>}
+              {(item.permissions || []).length > 3 && <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-500">+{item.permissions.length - 3} more</span>}
             </div>
-            <div className="mt-5">
+            <div className="mt-4">
               <PasswordReveal value={item.passwordPlain} />
             </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto]">
-              <button onClick={() => setViewing(item)} className="wf-btn wf-btn-secondary w-full sm:w-auto"><Eye size={17} /> View</button>
-              <button onClick={() => setEditing(item)} className="wf-btn wf-btn-primary w-full sm:w-auto"><Edit3 size={17} /> Edit</button>
-              <button onClick={() => toggleStatus(item)} className={`wf-btn w-full border bg-white sm:w-auto ${item.status === "active" ? "border-red-500 text-red-600" : "border-emerald-500 text-emerald-600"}`}>{item.status === "active" ? "Disable" : "Activate"}</button>
-              <button onClick={() => remove(item)} className="wf-btn w-full border border-red-100 bg-red-50 text-red-600 sm:w-auto"><Trash2 size={17} /></button>
+            <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4 sm:grid-cols-4">
+              <button onClick={() => setViewing(item)} className="flex items-center justify-center gap-1.5 rounded-xl bg-slate-100 px-3 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 sm:text-sm"><Eye size={15} /> View</button>
+              <button onClick={() => setEditing(item)} className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-700 sm:text-sm"><Edit3 size={15} /> Edit</button>
+              <button onClick={() => toggleStatus(item)} className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2.5 text-xs font-semibold transition sm:text-sm ${item.status === "active" ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"}`}>{item.status === "active" ? "Disable" : "Activate"}</button>
+              <button onClick={() => remove(item)} className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 px-3 py-2.5 text-xs font-semibold text-red-600 transition hover:bg-red-100 sm:text-sm"><Trash2 size={15} /></button>
             </div>
           </div>
         ))}
@@ -1345,7 +1399,7 @@ function SupervisorsSection() {
 }
 
 function MiniMetric({ label, value }) {
-  return <div><p className="text-xs font-semibold text-slate-500">{label}</p><p className="mt-1 text-2xl font-light text-blue-600">{value}</p></div>;
+  return <div className="text-center sm:text-left"><p className="text-[11px] font-semibold text-slate-500 sm:text-xs">{label}</p><p className="mt-0.5 text-lg font-semibold text-blue-600 sm:text-xl">{value}</p></div>;
 }
 
 function permissionLabel(permission) {
@@ -1520,26 +1574,48 @@ function OwnersSection() {
     <>
       <PageTitle title="Owner Management" subtitle="Review and approve property owner applications" />
       <div className="rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="grid grid-cols-3 border-b border-slate-200 text-xs sm:text-sm">
+        <div className="grid grid-cols-3 border-b border-slate-200">
           {["pending", "approved", "rejected"].map((key) => (
-            <button key={key} onClick={() => setTab(key)} className={`px-2 py-3 font-semibold capitalize sm:px-4 sm:py-4 ${tab === key ? "bg-blue-50 text-blue-600 ring-1 ring-blue-200" : "text-slate-500"}`}>
-              {key} <span className="rounded-full bg-slate-200 px-2 text-[10px] sm:text-sm">{counts[key] || 0}</span>
+            <button key={key} onClick={() => setTab(key)} className={`relative px-2 py-3.5 text-sm font-semibold capitalize transition-colors sm:px-4 sm:py-4 ${tab === key ? "text-blue-600" : "text-slate-500 hover:text-slate-700"}`}>
+              {key} <span className={`ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-bold ${tab === key ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500"}`}>{counts[key] || 0}</span>
+              {tab === key && <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-blue-600" />}
             </button>
           ))}
         </div>
-        <div className="space-y-4 p-6">
+        <div className="space-y-3 p-4 sm:p-6">
+          {visible.length === 0 && <p className="py-8 text-center text-sm text-slate-500">No {tab} owners found.</p>}
           {visible.map((owner) => (
-            <div key={owner._id} className="grid gap-4 rounded-xl border border-slate-100 p-5 md:grid-cols-[1.2fr_1fr_1fr_0.6fr_auto] md:items-center">
-              <OwnerCell label="Name" value={owner.name} />
-              <OwnerCell label="Email" value={owner.email} />
-              <OwnerCell label="Phone" value={owner.phone} />
-              <OwnerCell label="Properties" value={owner.propertyCount} />
-              {tab === "pending" && (
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <button onClick={() => staffApi.updateOwnerStatus(owner._id, "approved").then(load)} className="wf-btn w-full bg-emerald-600 text-white sm:w-auto"><Check size={16} /> Approve</button>
-                  <button onClick={() => staffApi.updateOwnerStatus(owner._id, "rejected").then(load)} className="wf-btn w-full bg-red-600 text-white sm:w-auto"><X size={16} /> Reject</button>
+            <div key={owner._id} className="rounded-xl border border-slate-100 p-4 transition-shadow hover:shadow-[0_4px_12px_rgba(15,23,42,0.06)] sm:p-5">
+              {/* Desktop row layout */}
+              <div className="hidden md:grid md:grid-cols-[1.2fr_1fr_1fr_0.6fr_auto] md:items-center md:gap-4">
+                <OwnerCell label="Name" value={owner.name} />
+                <OwnerCell label="Email" value={owner.email} />
+                <OwnerCell label="Phone" value={owner.phone} />
+                <OwnerCell label="Properties" value={owner.propertyCount} />
+                {tab === "pending" && (
+                  <div className="flex gap-2">
+                    <button onClick={() => staffApi.updateOwnerStatus(owner._id, "approved").then(load)} className="wf-btn bg-emerald-600 text-white"><Check size={16} /> Approve</button>
+                    <button onClick={() => staffApi.updateOwnerStatus(owner._id, "rejected").then(load)} className="wf-btn bg-red-600 text-white"><X size={16} /> Reject</button>
+                  </div>
+                )}
+              </div>
+              {/* Mobile card layout */}
+              <div className="md:hidden">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-bold text-slate-950">{owner.name}</p>
+                    <p className="mt-0.5 text-xs text-slate-500">{owner.email}</p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{owner.propertyCount} props</span>
                 </div>
-              )}
+                {owner.phone && <p className="mt-2 text-sm text-slate-600">{owner.phone}</p>}
+                {tab === "pending" && (
+                  <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
+                    <button onClick={() => staffApi.updateOwnerStatus(owner._id, "approved").then(load)} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"><Check size={15} /> Approve</button>
+                    <button onClick={() => staffApi.updateOwnerStatus(owner._id, "rejected").then(load)} className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"><X size={15} /> Reject</button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -1585,31 +1661,61 @@ function EnquiriesSection({ canDelete, canManage }) {
           </div>
         )}
       />
-      <div className="mb-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
-          <div className="relative flex-1"><Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" /><input className="wf-input pl-12" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by user or property..." /></div>
+      <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="relative flex-1"><Search className="absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" /><input className="wf-input pl-10" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search enquiries..." /></div>
+          <select className="wf-input w-full sm:w-36" value={status} onChange={(e) => setStatus(e.target.value)}><option value="all">All Status</option><option value="new">New</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select>
           <button onClick={load} className="wf-btn wf-btn-secondary w-full sm:w-auto"><Filter size={17} /> Filter</button>
-          <select className="wf-input w-full sm:w-40" value={status} onChange={(e) => setStatus(e.target.value)}><option value="all">All Status</option><option value="new">New</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select>
         </div>
       </div>
-      <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-left text-sm sm:text-base">
-            <thead className="bg-slate-50 text-xs text-slate-600 sm:text-sm"><tr><th className="px-6 py-4">User</th><th>Property</th><th>Date</th><th>Status</th><th>Message</th><th className="pr-6 text-right">Action</th></tr></thead>
-            <tbody className="divide-y divide-slate-100">
-              {enquiries.map((item) => (
-                <tr key={item._id}>
-                  <td className="px-6 py-4"><p className="font-semibold">{item.name}</p><p className="text-sm text-slate-500">{item.email}</p></td>
-                  <td className="text-slate-700">{item.propertyTitle || item.preferredLocation || item.propertyType || "General enquiry"}</td>
-                  <td className="text-slate-600"><Calendar size={15} className="mr-2 inline" />{formatDate(item.createdAt)}</td>
-                  <td>{canManage ? <select value={item.status} onChange={(event) => staffApi.updateEnquiry(item._id, { status: event.target.value }).then(load)} className={`rounded-full border-0 px-3 py-1 text-sm ${statusClass(item.status)}`}><option value="new">New</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select> : <span className={`rounded-full px-3 py-1 text-sm ${statusClass(item.status)}`}>{item.status}</span>}</td>
-                  <td className="max-w-[220px] truncate text-sm text-slate-600 sm:max-w-sm">{item.message || "No message"}</td>
-                  <td className="pr-6 text-right">{canDelete && <button onClick={() => staffApi.deleteEnquiry(item._id).then(load)} className="text-red-500"><Trash2 size={18} /></button>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Desktop Table */}
+      <div className="hidden lg:block overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-slate-50 text-xs text-slate-600"><tr><th className="px-6 py-4">User</th><th className="px-4 py-4">Property</th><th className="px-4 py-4">Date</th><th className="px-4 py-4">Status</th><th className="px-4 py-4">Message</th><th className="px-6 py-4 text-right">Action</th></tr></thead>
+          <tbody className="divide-y divide-slate-100">
+            {enquiries.map((item) => (
+              <tr key={item._id} className="transition-colors hover:bg-slate-50/60">
+                <td className="px-6 py-4"><p className="font-semibold text-slate-950">{item.name}</p><p className="text-xs text-slate-500">{item.email}</p></td>
+                <td className="px-4 py-4 text-sm text-slate-700">{item.propertyTitle || item.preferredLocation || item.propertyType || "General enquiry"}</td>
+                <td className="px-4 py-4 text-sm text-slate-600"><Calendar size={14} className="mr-1.5 inline text-slate-400" />{formatDate(item.createdAt)}</td>
+                <td className="px-4 py-4">{canManage ? <select value={item.status} onChange={(event) => staffApi.updateEnquiry(item._id, { status: event.target.value }).then(load)} className={`rounded-full border-0 px-3 py-1 text-xs font-semibold ${statusClass(item.status)}`}><option value="new">New</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select> : <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass(item.status)}`}>{item.status}</span>}</td>
+                <td className="max-w-xs truncate px-4 py-4 text-sm text-slate-600">{item.message || "No message"}</td>
+                <td className="px-6 py-4 text-right">{canDelete && <button onClick={() => staffApi.deleteEnquiry(item._id).then(load)} className="grid h-9 w-9 place-items-center rounded-lg text-red-500 transition hover:bg-red-50"><Trash2 size={17} /></button>}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-3">
+        {enquiries.map((item) => (
+          <div key={item._id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] transition-shadow hover:shadow-[0_8px_24px_rgba(15,23,42,0.12)]">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-bold text-slate-950">{item.name}</p>
+                <p className="mt-0.5 text-xs text-slate-500">{item.email}</p>
+              </div>
+              {canManage ? (
+                <select value={item.status} onChange={(event) => staffApi.updateEnquiry(item._id, { status: event.target.value }).then(load)} className={`shrink-0 rounded-full border-0 px-2.5 py-1 text-xs font-semibold ${statusClass(item.status)}`}><option value="new">New</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select>
+              ) : (
+                <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass(item.status)}`}>{item.status}</span>
+              )}
+            </div>
+            <div className="mt-3 rounded-xl bg-slate-50 px-3 py-2.5">
+              <p className="text-xs font-semibold text-slate-500">Property</p>
+              <p className="mt-0.5 text-sm text-slate-800">{item.propertyTitle || item.preferredLocation || item.propertyType || "General enquiry"}</p>
+            </div>
+            {item.message && (
+              <p className="mt-3 line-clamp-2 text-sm text-slate-600">{item.message}</p>
+            )}
+            <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+              <span className="flex items-center gap-1.5 text-xs text-slate-500"><Calendar size={13} className="text-slate-400" />{formatDate(item.createdAt)}</span>
+              {canDelete && <button onClick={() => staffApi.deleteEnquiry(item._id).then(load)} className="flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-100"><Trash2 size={13} /> Remove</button>}
+            </div>
+          </div>
+        ))}
+        {!enquiries.length && <p className="rounded-2xl bg-slate-50 py-12 text-center text-sm font-semibold text-slate-500">No enquiries found.</p>}
       </div>
     </>
   );
@@ -1617,7 +1723,7 @@ function EnquiriesSection({ canDelete, canManage }) {
 
 function BadgeCount({ label, value, tone = "blue" }) {
   const tones = { blue: "border-blue-200 bg-blue-50 text-blue-600", yellow: "border-yellow-200 bg-yellow-50 text-yellow-700", green: "border-emerald-200 bg-emerald-50 text-emerald-700" };
-  return <div className={`w-full rounded-xl border px-4 py-2 text-center sm:w-auto sm:px-5 sm:py-3 ${tones[tone]}`}><p className="text-xl font-light sm:text-2xl">{value}</p><p className="text-xs">{label}</p></div>;
+  return <div className={`flex-1 rounded-xl border px-3 py-2 text-center sm:flex-none sm:px-5 sm:py-2.5 ${tones[tone]}`}><p className="text-lg font-semibold sm:text-xl">{value}</p><p className="text-[10px] font-medium sm:text-xs">{label}</p></div>;
 }
 
 function AnalyticsSection() {
@@ -1656,7 +1762,7 @@ function AnalyticsSection() {
         subtitle="Track performance and conversion metrics"
         action={<div className="flex flex-wrap gap-3"><button onClick={() => exportAnalytics("pdf")} className="wf-btn wf-btn-primary w-full sm:w-auto" disabled={Boolean(exporting)}><Download size={17} /> PDF</button><button onClick={() => exportAnalytics("excel")} className="wf-btn wf-btn-secondary w-full sm:w-auto" disabled={Boolean(exporting)}><Download size={17} /> Excel</button></div>}
       />
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         <StatCard icon={Users} color="purple" label="Total Leads" value={cards.totalLeads ?? 0} />
         <StatCard icon={ClipboardList} color="teal" label="Conversion Rate" value={`${cards.conversionRate ?? 0}%`} />
         <StatCard icon={FileText} color="green" label="Revenue Generated" value={cards.revenueGenerated ?? "₹0 Cr"} />
@@ -1666,9 +1772,9 @@ function AnalyticsSection() {
         <LineChartCard title="Weekly Enquiries & Conversions" points={data?.weekly || []} />
         <BarChartCard title="Lead Sources" points={data?.sources || []} />
       </div>
-      <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <h3 className="text-xl font-bold">Conversion Funnel</h3>
-        <div className="mt-6 space-y-4">{(data?.funnel || []).map((item) => <div key={item.label} className="grid gap-3 md:grid-cols-[140px_1fr_90px] md:items-center"><span className="text-sm text-slate-600">{item.label}</span><div className="h-12 overflow-hidden rounded-xl bg-slate-100"><div className="h-full rounded-xl bg-gradient-to-r from-blue-600 to-teal-600" style={{ width: `${Math.max(item.percent, 4)}%` }} /></div><span className="text-right font-semibold">{item.value}</span></div>)}</div>
+      <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-6">
+        <h3 className="text-lg font-bold sm:text-xl">Conversion Funnel</h3>
+        <div className="mt-5 space-y-4 sm:mt-6">{(data?.funnel || []).map((item) => <div key={item.label} className="space-y-1.5 sm:grid sm:grid-cols-[130px_1fr_80px] sm:items-center sm:gap-3 sm:space-y-0"><span className="block text-sm font-medium text-slate-600">{item.label}</span><div className="h-9 overflow-hidden rounded-lg bg-slate-100 sm:h-10"><div className="h-full rounded-lg bg-gradient-to-r from-blue-600 to-teal-500 transition-all duration-500" style={{ width: `${Math.max(item.percent, 4)}%` }} /></div><span className="block text-right text-sm font-bold text-slate-800">{item.value}</span></div>)}</div>
       </div>
     </>
   );
@@ -1677,12 +1783,12 @@ function AnalyticsSection() {
 function LineChartCard({ title, points }) {
   const max = Math.max(...points.map((point) => point.enquiries || 0), 1);
   const polyline = points.map((point, index) => `${(index / Math.max(points.length - 1, 1)) * 100},${100 - ((point.enquiries || 0) / max) * 80}`).join(" ");
-  return <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]"><h3 className="text-xl font-bold">{title}</h3><svg viewBox="0 0 100 100" className="mt-6 h-48 w-full overflow-visible sm:h-64"><polyline points={polyline} fill="none" stroke="#14b8a6" strokeWidth="3" /><line x1="0" y1="100" x2="100" y2="100" stroke="#cbd5e1" /></svg></div>;
+  return <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-6"><h3 className="text-lg font-bold sm:text-xl">{title}</h3><svg viewBox="0 0 100 100" className="mt-5 h-44 w-full overflow-visible sm:mt-6 sm:h-56 lg:h-64"><polyline points={polyline} fill="none" stroke="#14b8a6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /><line x1="0" y1="100" x2="100" y2="100" stroke="#e2e8f0" /></svg></div>;
 }
 
 function BarChartCard({ title, points }) {
   const max = Math.max(...points.map((point) => point.value || 1), 1);
-  return <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]"><h3 className="text-xl font-bold">{title}</h3><div className="mt-6 flex h-52 items-end gap-3 sm:mt-8 sm:h-64 sm:gap-5">{points.map((point) => <div key={point.label} className="flex flex-1 flex-col items-center gap-2"><div className="w-full rounded-t-lg bg-blue-600" style={{ height: `${(point.value / max) * 100}%` }} /><span className="text-xs text-slate-400">{point.label}</span></div>)}</div></div>;
+  return <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-6"><h3 className="text-lg font-bold sm:text-xl">{title}</h3><div className="mt-5 flex h-44 items-end gap-2 sm:mt-6 sm:h-56 sm:gap-4 lg:h-64">{points.map((point) => <div key={point.label} className="flex flex-1 flex-col items-center gap-1.5"><div className="w-full rounded-t-lg bg-gradient-to-t from-blue-600 to-blue-500 transition-all duration-300" style={{ height: `${(point.value / max) * 100}%` }} /><span className="text-[10px] text-slate-500 sm:text-xs">{point.label}</span></div>)}</div></div>;
 }
 
 function ReportsSection({ token, role }) {
@@ -1710,11 +1816,11 @@ function ReportsSection({ token, role }) {
   return (
     <>
       <PageTitle title="Reports & Export" subtitle="Generate and download platform reports" action={<button onClick={exportCsv} className="wf-btn wf-btn-primary w-full sm:w-auto"><Download size={17} /> Export CSV</button>} />
-      <div className="mx-auto max-w-4xl rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-8">
-        <h3 className="text-lg font-bold">Select Data Type</h3>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">{reportTypes.map((item) => <button key={item} onClick={() => setType(item)} className={`rounded-xl border p-5 text-sm font-bold capitalize sm:p-8 sm:text-base ${type === item ? "border-blue-500 bg-blue-50 text-blue-600" : "border-slate-200 text-slate-600"}`}><FileText className="mx-auto mb-3" />{item}</button>)}</div>
-        <h3 className="mt-8 text-lg font-bold">Select Date Range</h3>
-        <div className="mt-5 space-y-3">{["today", "this-week", "this-month", "last-month", "this-year"].map((item) => <button key={item} onClick={() => setRange(item)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-sm font-semibold capitalize sm:p-4 sm:text-base ${range === item ? "border-blue-500 bg-blue-50" : "border-slate-200"}`}><Calendar size={18} />{item.replace("-", " ")}</button>)}</div>
+      <div className="mx-auto max-w-4xl rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-6 lg:p-8">
+        <h3 className="text-base font-bold sm:text-lg">Select Data Type</h3>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">{reportTypes.map((item) => <button key={item} onClick={() => setType(item)} className={`rounded-xl border p-4 text-center text-sm font-bold capitalize transition-all sm:p-6 ${type === item ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}><FileText size={20} className="mx-auto mb-2 sm:mb-3" />{item}</button>)}</div>
+        <h3 className="mt-6 text-base font-bold sm:mt-8 sm:text-lg">Select Date Range</h3>
+        <div className="mt-4 space-y-2 sm:space-y-3">{["today", "this-week", "this-month", "last-month", "this-year"].map((item) => <button key={item} onClick={() => setRange(item)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-sm font-semibold capitalize transition-all sm:p-4 ${range === item ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}><Calendar size={16} className="shrink-0 sm:h-[18px] sm:w-[18px]" />{item.replace("-", " ")}</button>)}</div>
       </div>
     </>
   );
