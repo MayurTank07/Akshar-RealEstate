@@ -16,6 +16,7 @@ import {
   Filter,
   Home,
   LogOut,
+  Menu,
   MessageSquare,
   Plus,
   Save,
@@ -151,6 +152,7 @@ export default function AdminWorkspace({ scope = "admin" }) {
   const { staffUser, staffToken, logoutStaff, saveStaffUser } = useStaffAuth();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifications, setNotifications] = useState({ unreadCount: 0, notifications: [] });
   const section = location.pathname.split("/")[2] || "dashboard";
   const allowedItems = navItems.filter((item) => item.roles.includes(staffUser.role) && hasStaffPermission(staffUser, item.permission));
@@ -164,6 +166,10 @@ export default function AdminWorkspace({ scope = "admin" }) {
       navigate(`/${scope}/${activeSection}`, { replace: true });
     }
   }, [activeSection, navigate, scope, section]);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [activeSection]);
 
   const loadNotifications = async () => {
     const response = await staffApi.notifications();
@@ -193,46 +199,50 @@ export default function AdminWorkspace({ scope = "admin" }) {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
+      <div
+        className={`fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+          sidebarOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        onClick={() => setSidebarOpen(false)}
+        aria-hidden={!sidebarOpen}
+      />
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-blue-600 text-white shadow-2xl transition-transform duration-300 ease-out lg:hidden ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <SidebarContent
+          staffUser={staffUser}
+          allowedItems={allowedItems}
+          activeSection={activeSection}
+          scope={scope}
+          onNavigate={() => setSidebarOpen(false)}
+          showClose
+        />
+      </aside>
+
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-72 flex-col bg-blue-600 text-white lg:flex">
-        <div className="flex h-[88px] items-center gap-3 border-b border-blue-500/60 px-6">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-teal-500 text-lg font-bold">A</div>
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-extrabold">Akshar Estate</h1>
-            <p className="text-xs text-blue-100">{staffUser.role === "admin" ? "Admin Panel" : "Supervisor Panel"}</p>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-2 px-3 py-7">
-          {allowedItems.map(({ key, label, icon: Icon }) => (
-            <Link
-              key={key}
-              to={`/${scope}/${key}`}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
-                activeSection === key ? "bg-white/20 shadow-lg shadow-blue-950/20" : "text-blue-50 hover:bg-white/10"
-              }`}
-            >
-              <Icon size={18} />
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="border-t border-blue-500/70 p-6">
-          <div className="rounded-xl bg-white/15 p-4">
-            <p className="text-xs">Need Help?</p>
-            <p className="mt-2 text-sm font-bold">View Documentation</p>
-          </div>
-        </div>
+        <SidebarContent staffUser={staffUser} allowedItems={allowedItems} activeSection={activeSection} scope={scope} />
       </aside>
 
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-30 flex h-[88px] items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur md:px-8">
-          <div className="relative hidden w-full max-w-[450px] sm:block">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input className="wf-input rounded-xl pl-12" placeholder="Search properties, owners, enquiries..." />
+        <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-slate-200 bg-white/95 px-4 backdrop-blur sm:h-[88px] md:px-8">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 text-slate-600 hover:bg-slate-100 lg:hidden"
+              aria-label="Open menu"
+            >
+              <Menu size={20} />
+            </button>
+            <div className="relative hidden w-full max-w-[420px] sm:block">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input className="wf-input rounded-xl pl-12" placeholder="Search properties, owners, enquiries..." />
+            </div>
           </div>
-          <div className="flex flex-1 items-center justify-between gap-3 sm:justify-end">
-            <Link to="/" className="wf-btn wf-btn-secondary lg:hidden">
+          <div className="flex flex-1 items-center justify-end gap-3">
+            <Link to="/" className="wf-btn wf-btn-secondary hidden sm:inline-flex lg:hidden">
               <Home size={16} />
               Site
             </Link>
@@ -271,7 +281,7 @@ export default function AdminWorkspace({ scope = "admin" }) {
           </div>
         </header>
 
-        <main className="px-4 py-8 md:px-8">
+        <main className="px-4 py-6 sm:py-8 md:px-8">
           {activeSection === "dashboard" && <DashboardSection />}
           {activeSection === "properties" && <PropertiesSection canDelete={canDeleteProperty} canCreate={canCreateProperty} />}
           {activeSection === "supervisors" && <SupervisorsSection />}
@@ -290,11 +300,60 @@ function PageTitle({ title, subtitle, action }) {
   return (
     <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h2 className="text-3xl font-extrabold tracking-tight text-slate-950">{title}</h2>
-        <p className="mt-2 text-slate-500">{subtitle}</p>
+        <h2 className="text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl">{title}</h2>
+        <p className="mt-2 text-sm text-slate-500 sm:text-base">{subtitle}</p>
       </div>
-      {action}
+      {action && <div className="w-full sm:w-auto">{action}</div>}
     </div>
+  );
+}
+
+function SidebarContent({ staffUser, allowedItems, activeSection, scope, onNavigate, showClose = false }) {
+  return (
+    <>
+      <div className="flex h-[88px] items-center justify-between gap-3 border-b border-blue-500/60 px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-teal-500 text-lg font-bold">A</div>
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-extrabold">Akshar Estate</h1>
+            <p className="text-xs text-blue-100">{staffUser.role === "admin" ? "Admin Panel" : "Supervisor Panel"}</p>
+          </div>
+        </div>
+        {showClose && (
+          <button
+            type="button"
+            onClick={onNavigate}
+            className="grid h-9 w-9 place-items-center rounded-lg text-white/80 hover:bg-white/10"
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
+        )}
+      </div>
+
+      <nav className="flex-1 space-y-2 px-3 py-7">
+        {allowedItems.map(({ key, label, icon: Icon }) => (
+          <Link
+            key={key}
+            to={`/${scope}/${key}`}
+            onClick={onNavigate}
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+              activeSection === key ? "bg-white/20 shadow-lg shadow-blue-950/20" : "text-blue-50 hover:bg-white/10"
+            }`}
+          >
+            <Icon size={18} />
+            {label}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="border-t border-blue-500/70 p-6">
+        <div className="rounded-xl bg-white/15 p-4">
+          <p className="text-xs">Need Help?</p>
+          <p className="mt-2 text-sm font-bold">View Documentation</p>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -307,15 +366,15 @@ function StatCard({ icon: Icon, label, value, trend, color = "blue" }) {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
+    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
       <div className="flex items-start justify-between">
         <div className={`grid h-12 w-12 place-items-center rounded-xl bg-gradient-to-br ${colors[color]} text-white`}>
           <Icon size={23} />
         </div>
         {trend && <span className="text-sm font-semibold text-emerald-600">{trend}</span>}
       </div>
-      <p className="mt-5 text-sm text-slate-500">{label}</p>
-      <p className="mt-1 text-3xl font-light tracking-tight text-slate-950">{value}</p>
+      <p className="mt-4 text-sm text-slate-500 sm:mt-5">{label}</p>
+      <p className="mt-1 text-2xl font-light tracking-tight text-slate-950 sm:text-3xl">{value}</p>
     </div>
   );
 }
@@ -331,7 +390,7 @@ function NotificationsPanel({ data, onReload }) {
   };
 
   return (
-    <div className="fixed right-20 top-20 z-50 w-[min(92vw,390px)] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl">
+    <div className="fixed left-4 right-4 top-20 z-50 w-[min(92vw,390px)] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl sm:left-auto sm:right-6">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div>
           <p className="text-sm font-extrabold text-slate-950">Notifications</p>
@@ -341,7 +400,7 @@ function NotificationsPanel({ data, onReload }) {
           Mark all read
         </button>
       </div>
-      <div className="max-h-[420px] overflow-y-auto">
+      <div className="max-h-[70vh] overflow-y-auto sm:max-h-[420px]">
         {data.notifications?.length ? (
           data.notifications.map((item) => (
             <button
@@ -423,7 +482,7 @@ function ProfilePanel({ user, onClose, onSaved, onLogout }) {
   };
 
   return (
-    <div className="fixed right-6 top-20 z-50 w-[min(94vw,430px)] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl">
+    <div className="fixed left-4 right-4 top-20 z-50 w-[min(94vw,430px)] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl sm:left-auto sm:right-6">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
         <div className="flex items-center gap-3">
           <span className="grid h-12 w-12 place-items-center overflow-hidden rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white">
@@ -436,7 +495,7 @@ function ProfilePanel({ user, onClose, onSaved, onLogout }) {
         </div>
         <button type="button" onClick={onClose} className="grid h-8 w-8 place-items-center rounded-lg hover:bg-slate-100"><X size={17} /></button>
       </div>
-      <div className="max-h-[72vh] overflow-y-auto p-5">
+      <div className="max-h-[75vh] overflow-y-auto p-5 sm:max-h-[72vh]">
         {message && <p className="mb-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">{message}</p>}
         {error && <p className="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{error}</p>}
         <form onSubmit={saveProfile} className="space-y-4">
@@ -478,10 +537,10 @@ function DashboardSection() {
       <PageTitle
         title="Dashboard Overview"
         subtitle="Welcome back! Here's what's happening today."
-        action={<button className="wf-btn wf-btn-primary">Generate Report</button>}
+        action={<button className="wf-btn wf-btn-primary w-full sm:w-auto">Generate Report</button>}
       />
 
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard icon={Building2} color="purple" label={supervisorMode ? "My Properties" : "Total Properties"} value={metrics.totalProperties ?? 0} />
         <StatCard icon={MessageSquare} label={supervisorMode ? "My Enquiries" : "Total Enquiries"} value={metrics.totalEnquiries ?? 0} />
         <StatCard icon={Users} color="green" label="Conversion Rate" value={`${metrics.conversionRate ?? 0}%`} />
@@ -494,8 +553,8 @@ function DashboardSection() {
           <h3 className="text-xl font-bold">Recent Activity</h3>
           <div className="mt-7 space-y-8">
             {(data?.recentActivity || []).map((item) => (
-              <div key={item._id} className="grid grid-cols-[42px_1fr_auto] gap-4">
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-blue-50">
+              <div key={item._id} className="grid grid-cols-[32px_1fr] gap-3 sm:grid-cols-[42px_1fr_auto] sm:gap-4">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-blue-50 sm:h-10 sm:w-10">
                   <span className="h-3 w-3 rounded-full bg-blue-600" />
                 </span>
                 <div>
@@ -503,7 +562,7 @@ function DashboardSection() {
                   <p className="mt-1 text-slate-950">{item.description}</p>
                   <p className="mt-1 text-sm text-slate-500">{item.actorName}</p>
                 </div>
-                <p className="text-xs text-slate-500">{formatDate(item.createdAt)}</p>
+                <p className="text-xs text-slate-500 sm:text-right">{formatDate(item.createdAt)}</p>
               </div>
             ))}
           </div>
@@ -516,7 +575,7 @@ function DashboardSection() {
             <QuickStat label={supervisorMode ? "Active My Listings" : "Active Supervisors"} value={supervisorMode ? quick.activeSupervisors ?? 0 : quick.activeSupervisors ?? 0} />
             <QuickStat label="New Enquiries Today" value={quick.newEnquiriesToday ?? 0} />
           </div>
-          <button className="mt-7 w-full rounded-xl border border-white/20 bg-white/15 px-4 py-3 font-bold">View All Details</button>
+          <button className="mt-7 w-full rounded-xl border border-white/20 bg-white/15 px-4 py-3 text-sm font-bold sm:text-base">View All Details</button>
         </div>
       </div>
 
@@ -555,8 +614,8 @@ function DashboardSection() {
         <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
           <h3 className="text-xl font-bold">Supervisor Performance</h3>
           <div className="mt-6 overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left">
-              <thead className="text-sm text-slate-500">
+            <table className="w-full min-w-[760px] text-left text-sm sm:text-base">
+              <thead className="text-xs text-slate-500 sm:text-sm">
                 <tr><th className="py-3">Supervisor</th><th>Properties Added</th><th>Leads Handled</th><th>Conversions</th><th>Status</th></tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -582,7 +641,7 @@ function QuickStat({ label, value }) {
   return (
     <div>
       <p className="text-sm text-blue-100">{label}</p>
-      <p className="mt-1 text-4xl font-light">{value}</p>
+      <p className="mt-1 text-3xl font-light sm:text-4xl">{value}</p>
     </div>
   );
 }
@@ -593,7 +652,7 @@ function DashboardList({ title, items }) {
       <h3 className="text-xl font-bold">{title}</h3>
       <div className="mt-6 space-y-4">
         {items.length ? items.map((item) => (
-          <div key={item.id} className="flex items-center justify-between gap-4 rounded-xl bg-slate-50 p-4">
+          <div key={item.id} className="flex flex-col gap-3 rounded-xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <p className="truncate font-semibold text-slate-950">{item.title}</p>
               <p className="truncate text-sm text-slate-500">{item.subtitle}</p>
@@ -652,15 +711,15 @@ function PropertiesSection({ canDelete, canCreate }) {
       <PageTitle
         title="Property Management"
         subtitle="Manage all properties and listings"
-        action={canCreate ? <button onClick={() => setEditing(emptyProperty)} className="wf-btn wf-btn-primary"><Plus size={18} /> Add Property</button> : null}
+        action={canCreate ? <button onClick={() => setEditing(emptyProperty)} className="wf-btn wf-btn-primary w-full sm:w-auto"><Plus size={18} /> Add Property</button> : null}
       />
       <div className="mb-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="flex flex-col gap-4 md:flex-row">
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input className="wf-input pl-12" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search properties..." />
           </div>
-          <select className="wf-input md:w-40" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select className="wf-input w-full sm:w-40" value={status} onChange={(event) => setStatus(event.target.value)}>
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="pending">Pending</option>
@@ -668,14 +727,14 @@ function PropertiesSection({ canDelete, canCreate }) {
             <option value="sold">Sold</option>
             <option value="rented">Rented</option>
           </select>
-          <button onClick={load} className="wf-btn wf-btn-secondary">Filter</button>
+          <button onClick={load} className="wf-btn wf-btn-secondary w-full sm:w-auto">Filter</button>
         </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left">
-            <thead className="bg-slate-50 text-sm text-slate-600">
+          <table className="w-full min-w-[900px] text-left text-sm sm:text-base">
+            <thead className="bg-slate-50 text-xs text-slate-600 sm:text-sm">
               <tr>
                 <th className="px-6 py-4">Property</th>
                 <th>Location</th>
@@ -863,8 +922,8 @@ function PropertyModal({ property, onClose, onSaved }) {
 
   return (
     <div className="fixed inset-0 z-[500] grid place-items-center bg-slate-950/50 p-4">
-      <form onSubmit={save} className="wf-smooth-scroll max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
+      <form onSubmit={save} className="wf-smooth-scroll max-h-[92vh] w-full max-w-6xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-2xl font-extrabold">{form._id ? "Edit Property" : "Add Property"}</h3>
           <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
         </div>
@@ -936,15 +995,17 @@ function PropertyModal({ property, onClose, onSaved }) {
               <div>
                 <Field label="Primary Image URL" name="image" value={form.image} onChange={update} placeholder="Optional if selecting image files" />
                 <div className="mt-4 rounded-2xl border border-dashed border-slate-200 p-4">
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200">
-                    <Upload size={17} />
-                    Select Images
-                    <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
-                  </label>
-                  <button type="button" onClick={addGalleryUrl} className="ml-3 inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
-                    <Plus size={17} />
-                    Add URL
-                  </button>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-slate-100 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200">
+                      <Upload size={17} />
+                      Select Images
+                      <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
+                    </label>
+                    <button type="button" onClick={addGalleryUrl} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                      <Plus size={17} />
+                      Add URL
+                    </button>
+                  </div>
                   <p className="mt-3 text-xs font-semibold text-slate-500">Up to 12 images, 15MB each. Files are uploaded separately, so property save will not hit JSON payload limits.</p>
                   {pendingFiles.length > 0 && (
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -976,7 +1037,7 @@ function PropertyModal({ property, onClose, onSaved }) {
                 </div>
               </div>
               <div className="overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
-                <img src={form.image || form.gallery[0] || "https://placehold.co/500x420?text=Preview"} alt="Preview" className="h-48 w-full object-cover" />
+                <img src={form.image || form.gallery[0] || "https://placehold.co/500x420?text=Preview"} alt="Preview" className="h-40 w-full object-cover sm:h-48" />
                 <div className="p-4">
                   <p className="font-bold text-slate-950">{form.title || "Property preview"}</p>
                   <p className="mt-1 text-sm text-slate-500">{form.location || "Location"}</p>
@@ -1057,9 +1118,9 @@ function PropertyModal({ property, onClose, onSaved }) {
             </div>
           </FormSection>
         </div>
-        <div className="mt-6 flex justify-end gap-3">
-          <button type="button" onClick={onClose} className="wf-btn wf-btn-secondary" disabled={uploading}>Cancel</button>
-          <button type="submit" className="wf-btn wf-btn-primary" disabled={uploading}>{uploading ? "Saving..." : "Save Property"}</button>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} className="wf-btn wf-btn-secondary w-full sm:w-auto" disabled={uploading}>Cancel</button>
+          <button type="submit" className="wf-btn wf-btn-primary w-full sm:w-auto" disabled={uploading}>{uploading ? "Saving..." : "Save Property"}</button>
         </div>
       </form>
     </div>
@@ -1068,10 +1129,10 @@ function PropertyModal({ property, onClose, onSaved }) {
 
 function FormSection({ title, subtitle, children }) {
   return (
-    <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-5">
-        <h4 className="text-lg font-extrabold text-slate-950">{title}</h4>
-        {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+        <h4 className="text-base font-extrabold text-slate-950 sm:text-lg">{title}</h4>
+        {subtitle && <p className="mt-1 text-xs text-slate-500 sm:text-sm">{subtitle}</p>}
       </div>
       {children}
     </section>
@@ -1119,9 +1180,9 @@ function SelectableTagGroup({ label, value = [], options, onChange }) {
           <p className="text-sm font-extrabold text-slate-800">{label}</p>
           <p className="mt-1 text-xs text-slate-500">{value.length} selected</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <input className="wf-input h-10 min-w-0 sm:w-56" value={custom} onChange={(event) => setCustom(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addCustom(); } }} placeholder={`Add custom ${label.toLowerCase()}`} />
-          <button type="button" onClick={addCustom} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white">Add</button>
+          <button type="button" onClick={addCustom} className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white sm:w-auto">Add</button>
         </div>
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -1147,7 +1208,7 @@ function SelectableTagGroup({ label, value = [], options, onChange }) {
 
 function ToggleField({ label, name, checked, onChange }) {
   return (
-    <label className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 px-4 py-3">
+    <label className="flex flex-col gap-2 rounded-xl border border-slate-200 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <span className="text-sm font-bold text-slate-700">{label}</span>
       <input name={name} type="checkbox" checked={Boolean(checked)} onChange={onChange} className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
     </label>
@@ -1213,10 +1274,10 @@ function SupervisorsSection() {
       <PageTitle
         title="Supervisor Management"
         subtitle="Create, permission, monitor, and manage property supervisors"
-        action={<button onClick={() => setEditing({ role: "supervisor", status: "active", permissions: defaultSupervisorPermissions })} className="wf-btn wf-btn-primary"><Plus size={18} /> Create Supervisor</button>}
+        action={<button onClick={() => setEditing({ role: "supervisor", status: "active", permissions: defaultSupervisorPermissions })} className="wf-btn wf-btn-primary w-full sm:w-auto"><Plus size={18} /> Create Supervisor</button>}
       />
 
-      <div className="mb-8 grid gap-5 md:grid-cols-4">
+      <div className="mb-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Shield} label="Total Supervisors" value={supervisors.length} />
         <StatCard icon={UserCheck} color="green" label="Active Supervisors" value={activeCount} />
         <StatCard icon={Building2} color="purple" label="Properties Added" value={totals.properties} />
@@ -1224,12 +1285,12 @@ function SupervisorsSection() {
       </div>
 
       <div className="mb-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="flex flex-col gap-4 md:flex-row">
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input className="wf-input pl-12" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search supervisors by name, email, phone..." />
           </div>
-          <select className="wf-input md:w-44" value={status} onChange={(event) => setStatus(event.target.value)}>
+          <select className="wf-input w-full sm:w-44" value={status} onChange={(event) => setStatus(event.target.value)}>
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="disabled">Disabled</option>
@@ -1267,10 +1328,10 @@ function SupervisorsSection() {
               <PasswordReveal value={item.passwordPlain} />
             </div>
             <div className="mt-6 grid gap-3 sm:grid-cols-[1fr_1fr_auto_auto]">
-              <button onClick={() => setViewing(item)} className="wf-btn wf-btn-secondary"><Eye size={17} /> View</button>
-              <button onClick={() => setEditing(item)} className="wf-btn wf-btn-primary"><Edit3 size={17} /> Edit</button>
-              <button onClick={() => toggleStatus(item)} className={`wf-btn border bg-white ${item.status === "active" ? "border-red-500 text-red-600" : "border-emerald-500 text-emerald-600"}`}>{item.status === "active" ? "Disable" : "Activate"}</button>
-              <button onClick={() => remove(item)} className="wf-btn border border-red-100 bg-red-50 text-red-600"><Trash2 size={17} /></button>
+              <button onClick={() => setViewing(item)} className="wf-btn wf-btn-secondary w-full sm:w-auto"><Eye size={17} /> View</button>
+              <button onClick={() => setEditing(item)} className="wf-btn wf-btn-primary w-full sm:w-auto"><Edit3 size={17} /> Edit</button>
+              <button onClick={() => toggleStatus(item)} className={`wf-btn w-full border bg-white sm:w-auto ${item.status === "active" ? "border-red-500 text-red-600" : "border-emerald-500 text-emerald-600"}`}>{item.status === "active" ? "Disable" : "Activate"}</button>
+              <button onClick={() => remove(item)} className="wf-btn w-full border border-red-100 bg-red-50 text-red-600 sm:w-auto"><Trash2 size={17} /></button>
             </div>
           </div>
         ))}
@@ -1355,8 +1416,8 @@ function SupervisorModal({ supervisor, onClose, onSaved }) {
   };
   return (
     <div className="fixed inset-0 z-[500] grid place-items-center bg-slate-950/50 p-4">
-      <form onSubmit={save} className="wf-smooth-scroll max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="flex items-center justify-between gap-4">
+      <form onSubmit={save} className="wf-smooth-scroll max-h-[92vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-2xl font-extrabold">{isEdit ? "Edit Supervisor" : "Create Supervisor"}</h3>
           <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
         </div>
@@ -1394,7 +1455,10 @@ function SupervisorModal({ supervisor, onClose, onSaved }) {
             </div>
           </FormSection>
         </div>
-        <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={onClose} className="wf-btn wf-btn-secondary">Cancel</button><button className="wf-btn wf-btn-primary">{isEdit ? "Save Supervisor" : "Create Supervisor"}</button></div>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onClose} className="wf-btn wf-btn-secondary w-full sm:w-auto">Cancel</button>
+          <button className="wf-btn wf-btn-primary w-full sm:w-auto">{isEdit ? "Save Supervisor" : "Create Supervisor"}</button>
+        </div>
       </form>
     </div>
   );
@@ -1404,8 +1468,8 @@ function SupervisorDetails({ supervisor, onClose }) {
   const performance = supervisor.performance || {};
   return (
     <div className="fixed inset-0 z-[500] grid place-items-center bg-slate-950/50 p-4">
-      <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="flex items-start justify-between gap-4">
+      <div className="w-full max-w-3xl rounded-2xl bg-white p-4 shadow-2xl sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex items-center gap-4">
             <span className="grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-purple-600 to-teal-600 text-white"><Shield size={28} /></span>
             <div>
@@ -1456,9 +1520,11 @@ function OwnersSection() {
     <>
       <PageTitle title="Owner Management" subtitle="Review and approve property owner applications" />
       <div className="rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="grid grid-cols-3 border-b border-slate-200">
+        <div className="grid grid-cols-3 border-b border-slate-200 text-xs sm:text-sm">
           {["pending", "approved", "rejected"].map((key) => (
-            <button key={key} onClick={() => setTab(key)} className={`px-4 py-4 font-semibold capitalize ${tab === key ? "bg-blue-50 text-blue-600 ring-1 ring-blue-200" : "text-slate-500"}`}>{key} <span className="rounded-full bg-slate-200 px-2 text-sm">{counts[key] || 0}</span></button>
+            <button key={key} onClick={() => setTab(key)} className={`px-2 py-3 font-semibold capitalize sm:px-4 sm:py-4 ${tab === key ? "bg-blue-50 text-blue-600 ring-1 ring-blue-200" : "text-slate-500"}`}>
+              {key} <span className="rounded-full bg-slate-200 px-2 text-[10px] sm:text-sm">{counts[key] || 0}</span>
+            </button>
           ))}
         </div>
         <div className="space-y-4 p-6">
@@ -1468,7 +1534,12 @@ function OwnersSection() {
               <OwnerCell label="Email" value={owner.email} />
               <OwnerCell label="Phone" value={owner.phone} />
               <OwnerCell label="Properties" value={owner.propertyCount} />
-              {tab === "pending" && <div className="flex gap-2"><button onClick={() => staffApi.updateOwnerStatus(owner._id, "approved").then(load)} className="wf-btn bg-emerald-600 text-white"><Check size={16} /> Approve</button><button onClick={() => staffApi.updateOwnerStatus(owner._id, "rejected").then(load)} className="wf-btn bg-red-600 text-white"><X size={16} /> Reject</button></div>}
+              {tab === "pending" && (
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <button onClick={() => staffApi.updateOwnerStatus(owner._id, "approved").then(load)} className="wf-btn w-full bg-emerald-600 text-white sm:w-auto"><Check size={16} /> Approve</button>
+                  <button onClick={() => staffApi.updateOwnerStatus(owner._id, "rejected").then(load)} className="wf-btn w-full bg-red-600 text-white sm:w-auto"><X size={16} /> Reject</button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -1478,7 +1549,7 @@ function OwnersSection() {
 }
 
 function OwnerCell({ label, value }) {
-  return <div><p className="text-sm text-slate-500">{label}</p><p className="mt-1 font-medium text-slate-900">{value}</p></div>;
+  return <div><p className="text-xs text-slate-500 sm:text-sm">{label}</p><p className="mt-1 font-medium text-slate-900">{value}</p></div>;
 }
 
 function EnquiriesSection({ canDelete, canManage }) {
@@ -1503,18 +1574,28 @@ function EnquiriesSection({ canDelete, canManage }) {
   const counts = { new: enquiries.filter((item) => item.status === "new").length, "in-progress": enquiries.filter((item) => item.status === "in-progress").length, closed: enquiries.filter((item) => item.status === "closed").length };
   return (
     <>
-      <PageTitle title="Enquiry Overview" subtitle="Manage and track all property enquiries" action={<div className="flex gap-3"><BadgeCount label="New" value={counts.new} /><BadgeCount label="In Progress" value={counts["in-progress"]} tone="yellow" /><BadgeCount label="Closed" value={counts.closed} tone="green" /></div>} />
+      <PageTitle
+        title="Enquiry Overview"
+        subtitle="Manage and track all property enquiries"
+        action={(
+          <div className="flex flex-wrap gap-3">
+            <BadgeCount label="New" value={counts.new} />
+            <BadgeCount label="In Progress" value={counts["in-progress"]} tone="yellow" />
+            <BadgeCount label="Closed" value={counts.closed} tone="green" />
+          </div>
+        )}
+      />
       <div className="mb-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
-        <div className="flex flex-col gap-4 md:flex-row">
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
           <div className="relative flex-1"><Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" /><input className="wf-input pl-12" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by user or property..." /></div>
-          <button onClick={load} className="wf-btn wf-btn-secondary"><Filter size={17} /> Filter</button>
-          <select className="wf-input md:w-40" value={status} onChange={(e) => setStatus(e.target.value)}><option value="all">All Status</option><option value="new">New</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select>
+          <button onClick={load} className="wf-btn wf-btn-secondary w-full sm:w-auto"><Filter size={17} /> Filter</button>
+          <select className="wf-input w-full sm:w-40" value={status} onChange={(e) => setStatus(e.target.value)}><option value="all">All Status</option><option value="new">New</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select>
         </div>
       </div>
       <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] text-left">
-            <thead className="bg-slate-50 text-sm text-slate-600"><tr><th className="px-6 py-4">User</th><th>Property</th><th>Date</th><th>Status</th><th>Message</th><th className="pr-6 text-right">Action</th></tr></thead>
+          <table className="w-full min-w-[980px] text-left text-sm sm:text-base">
+            <thead className="bg-slate-50 text-xs text-slate-600 sm:text-sm"><tr><th className="px-6 py-4">User</th><th>Property</th><th>Date</th><th>Status</th><th>Message</th><th className="pr-6 text-right">Action</th></tr></thead>
             <tbody className="divide-y divide-slate-100">
               {enquiries.map((item) => (
                 <tr key={item._id}>
@@ -1522,7 +1603,7 @@ function EnquiriesSection({ canDelete, canManage }) {
                   <td className="text-slate-700">{item.propertyTitle || item.preferredLocation || item.propertyType || "General enquiry"}</td>
                   <td className="text-slate-600"><Calendar size={15} className="mr-2 inline" />{formatDate(item.createdAt)}</td>
                   <td>{canManage ? <select value={item.status} onChange={(event) => staffApi.updateEnquiry(item._id, { status: event.target.value }).then(load)} className={`rounded-full border-0 px-3 py-1 text-sm ${statusClass(item.status)}`}><option value="new">New</option><option value="in-progress">In Progress</option><option value="closed">Closed</option></select> : <span className={`rounded-full px-3 py-1 text-sm ${statusClass(item.status)}`}>{item.status}</span>}</td>
-                  <td className="max-w-sm truncate text-sm text-slate-600">{item.message || "No message"}</td>
+                  <td className="max-w-[220px] truncate text-sm text-slate-600 sm:max-w-sm">{item.message || "No message"}</td>
                   <td className="pr-6 text-right">{canDelete && <button onClick={() => staffApi.deleteEnquiry(item._id).then(load)} className="text-red-500"><Trash2 size={18} /></button>}</td>
                 </tr>
               ))}
@@ -1536,7 +1617,7 @@ function EnquiriesSection({ canDelete, canManage }) {
 
 function BadgeCount({ label, value, tone = "blue" }) {
   const tones = { blue: "border-blue-200 bg-blue-50 text-blue-600", yellow: "border-yellow-200 bg-yellow-50 text-yellow-700", green: "border-emerald-200 bg-emerald-50 text-emerald-700" };
-  return <div className={`rounded-xl border px-5 py-3 text-center ${tones[tone]}`}><p className="text-2xl font-light">{value}</p><p className="text-xs">{label}</p></div>;
+  return <div className={`w-full rounded-xl border px-4 py-2 text-center sm:w-auto sm:px-5 sm:py-3 ${tones[tone]}`}><p className="text-xl font-light sm:text-2xl">{value}</p><p className="text-xs">{label}</p></div>;
 }
 
 function AnalyticsSection() {
@@ -1573,15 +1654,15 @@ function AnalyticsSection() {
       <PageTitle
         title="Lead Analytics"
         subtitle="Track performance and conversion metrics"
-        action={<div className="flex flex-wrap gap-3"><button onClick={() => exportAnalytics("pdf")} className="wf-btn wf-btn-primary" disabled={Boolean(exporting)}><Download size={17} /> PDF</button><button onClick={() => exportAnalytics("excel")} className="wf-btn wf-btn-secondary" disabled={Boolean(exporting)}><Download size={17} /> Excel</button></div>}
+        action={<div className="flex flex-wrap gap-3"><button onClick={() => exportAnalytics("pdf")} className="wf-btn wf-btn-primary w-full sm:w-auto" disabled={Boolean(exporting)}><Download size={17} /> PDF</button><button onClick={() => exportAnalytics("excel")} className="wf-btn wf-btn-secondary w-full sm:w-auto" disabled={Boolean(exporting)}><Download size={17} /> Excel</button></div>}
       />
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <StatCard icon={Users} color="purple" label="Total Leads" value={cards.totalLeads ?? 0} />
         <StatCard icon={ClipboardList} color="teal" label="Conversion Rate" value={`${cards.conversionRate ?? 0}%`} />
         <StatCard icon={FileText} color="green" label="Revenue Generated" value={cards.revenueGenerated ?? "₹0 Cr"} />
         <StatCard icon={BarChart3} label="Avg Response Time" value={cards.avgResponseTime ?? "0 hrs"} />
       </div>
-      <div className="mt-8 grid gap-6 xl:grid-cols-2">
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <LineChartCard title="Weekly Enquiries & Conversions" points={data?.weekly || []} />
         <BarChartCard title="Lead Sources" points={data?.sources || []} />
       </div>
@@ -1596,12 +1677,12 @@ function AnalyticsSection() {
 function LineChartCard({ title, points }) {
   const max = Math.max(...points.map((point) => point.enquiries || 0), 1);
   const polyline = points.map((point, index) => `${(index / Math.max(points.length - 1, 1)) * 100},${100 - ((point.enquiries || 0) / max) * 80}`).join(" ");
-  return <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]"><h3 className="text-xl font-bold">{title}</h3><svg viewBox="0 0 100 100" className="mt-6 h-64 w-full overflow-visible"><polyline points={polyline} fill="none" stroke="#14b8a6" strokeWidth="3" /><line x1="0" y1="100" x2="100" y2="100" stroke="#cbd5e1" /></svg></div>;
+  return <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]"><h3 className="text-xl font-bold">{title}</h3><svg viewBox="0 0 100 100" className="mt-6 h-48 w-full overflow-visible sm:h-64"><polyline points={polyline} fill="none" stroke="#14b8a6" strokeWidth="3" /><line x1="0" y1="100" x2="100" y2="100" stroke="#cbd5e1" /></svg></div>;
 }
 
 function BarChartCard({ title, points }) {
   const max = Math.max(...points.map((point) => point.value || 1), 1);
-  return <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]"><h3 className="text-xl font-bold">{title}</h3><div className="mt-8 flex h-64 items-end gap-5">{points.map((point) => <div key={point.label} className="flex flex-1 flex-col items-center gap-2"><div className="w-full rounded-t-lg bg-blue-600" style={{ height: `${(point.value / max) * 100}%` }} /><span className="text-xs text-slate-400">{point.label}</span></div>)}</div></div>;
+  return <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]"><h3 className="text-xl font-bold">{title}</h3><div className="mt-6 flex h-52 items-end gap-3 sm:mt-8 sm:h-64 sm:gap-5">{points.map((point) => <div key={point.label} className="flex flex-1 flex-col items-center gap-2"><div className="w-full rounded-t-lg bg-blue-600" style={{ height: `${(point.value / max) * 100}%` }} /><span className="text-xs text-slate-400">{point.label}</span></div>)}</div></div>;
 }
 
 function ReportsSection({ token, role }) {
@@ -1628,12 +1709,12 @@ function ReportsSection({ token, role }) {
   };
   return (
     <>
-      <PageTitle title="Reports & Export" subtitle="Generate and download platform reports" action={<button onClick={exportCsv} className="wf-btn wf-btn-primary"><Download size={17} /> Export CSV</button>} />
-      <div className="mx-auto max-w-4xl rounded-2xl border border-slate-100 bg-white p-8 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
+      <PageTitle title="Reports & Export" subtitle="Generate and download platform reports" action={<button onClick={exportCsv} className="wf-btn wf-btn-primary w-full sm:w-auto"><Download size={17} /> Export CSV</button>} />
+      <div className="mx-auto max-w-4xl rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-8">
         <h3 className="text-lg font-bold">Select Data Type</h3>
-        <div className="mt-5 grid gap-4 sm:grid-cols-2">{reportTypes.map((item) => <button key={item} onClick={() => setType(item)} className={`rounded-xl border p-8 font-bold capitalize ${type === item ? "border-blue-500 bg-blue-50 text-blue-600" : "border-slate-200 text-slate-600"}`}><FileText className="mx-auto mb-3" />{item}</button>)}</div>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">{reportTypes.map((item) => <button key={item} onClick={() => setType(item)} className={`rounded-xl border p-5 text-sm font-bold capitalize sm:p-8 sm:text-base ${type === item ? "border-blue-500 bg-blue-50 text-blue-600" : "border-slate-200 text-slate-600"}`}><FileText className="mx-auto mb-3" />{item}</button>)}</div>
         <h3 className="mt-8 text-lg font-bold">Select Date Range</h3>
-        <div className="mt-5 space-y-3">{["today", "this-week", "this-month", "last-month", "this-year"].map((item) => <button key={item} onClick={() => setRange(item)} className={`flex w-full items-center gap-3 rounded-xl border p-4 text-left font-semibold capitalize ${range === item ? "border-blue-500 bg-blue-50" : "border-slate-200"}`}><Calendar size={18} />{item.replace("-", " ")}</button>)}</div>
+        <div className="mt-5 space-y-3">{["today", "this-week", "this-month", "last-month", "this-year"].map((item) => <button key={item} onClick={() => setRange(item)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-sm font-semibold capitalize sm:p-4 sm:text-base ${range === item ? "border-blue-500 bg-blue-50" : "border-slate-200"}`}><Calendar size={18} />{item.replace("-", " ")}</button>)}</div>
       </div>
     </>
   );
@@ -1662,15 +1743,15 @@ function SettingsSection() {
 
   return (
     <>
-      <PageTitle title="Platform Settings" subtitle="Configure platform preferences and branding" action={<button onClick={save} className="wf-btn wf-btn-primary"><Save size={17} /> Save Changes</button>} />
+      <PageTitle title="Platform Settings" subtitle="Configure platform preferences and branding" action={<button onClick={save} className="wf-btn wf-btn-primary w-full sm:w-auto"><Save size={17} /> Save Changes</button>} />
       {message && <p className="mb-4 rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{message}</p>}
-      <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
         <h3 className="text-xl font-bold">Branding</h3>
         <label className="mt-6 block"><span className="wf-label">Site Name</span><input className="wf-input" value={siteName} onChange={(event) => setSiteName(event.target.value)} /></label>
-        <div className="mt-6"><p className="wf-label">Platform Logo</p><div className="flex items-center gap-4"><span className="grid h-20 w-20 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-teal-600 text-3xl text-white">A</span><button className="wf-btn wf-btn-secondary"><Upload size={18} /> Upload New Logo</button></div></div>
-        <div className="mt-6"><p className="wf-label">Brand Colors</p><div className="flex gap-3"><span className="h-12 w-12 rounded-lg bg-blue-600 ring-1 ring-slate-200" /><span className="h-12 w-12 rounded-lg bg-teal-600 ring-1 ring-slate-200" /></div></div>
+        <div className="mt-6"><p className="wf-label">Platform Logo</p><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"><span className="grid h-20 w-20 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-teal-600 text-3xl text-white">A</span><button className="wf-btn wf-btn-secondary w-full sm:w-auto"><Upload size={18} /> Upload New Logo</button></div></div>
+        <div className="mt-6"><p className="wf-label">Brand Colors</p><div className="flex flex-wrap gap-3"><span className="h-12 w-12 rounded-lg bg-blue-600 ring-1 ring-slate-200" /><span className="h-12 w-12 rounded-lg bg-teal-600 ring-1 ring-slate-200" /></div></div>
       </div>
-      <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-6 shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
+      <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
         <h3 className="text-xl font-bold">Website Content & Email Templates</h3>
         <div className="mt-6 space-y-5">{content.filter((item) => item.key !== "siteName").map((item) => <label key={item._id} className="block"><span className="wf-label">{item.label}</span>{item.type === "textarea" ? <textarea className="wf-input min-h-28" value={item.value} onChange={(event) => updateLocal(item._id, event.target.value)} /> : <input className="wf-input" value={item.value} onChange={(event) => updateLocal(item._id, event.target.value)} />}</label>)}</div>
       </div>
