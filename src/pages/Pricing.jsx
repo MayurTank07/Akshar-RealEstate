@@ -8,7 +8,7 @@ export default function Pricing() {
 
   return (
     <div>
-      <Hero category={category} type={type} city={city} filters={filters} />
+      <Hero key={`${location.pathname}-${JSON.stringify(location.state || {})}`} category={category} type={type} city={city} filters={filters} />
       <Footer />
     </div>
   );

@@ -1,9 +1,25 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Bath, BedDouble, Heart, MapPin, Maximize2 } from "lucide-react";
 import useAuth from "../contexts/useAuth";
-import properties from "../data/properties.json";
+import fallbackProperties from "../data/properties.json";
+import { publicApi } from "../services/api";
+import { mergeProperties } from "../utils/propertyData";
 
 export default function Properties() {
+  const [properties, setProperties] = useState(fallbackProperties);
+
+  useEffect(() => {
+    publicApi
+      .properties()
+      .then((response) => {
+        if (response.data?.length) {
+          setProperties(mergeProperties(response.data, fallbackProperties, "home"));
+        }
+      })
+      .catch(() => setProperties(fallbackProperties));
+  }, []);
+
   const sections = [
     {
       title: "Recently Added",
@@ -89,7 +105,7 @@ function PropertyRail({ section }) {
 
       <div className="wf-scrollbar-none flex snap-x gap-4 overflow-x-auto pb-4 sm:gap-5">
         {section.items.map((property) => (
-          <PropertyCard key={property.id} property={property} />
+          <PropertyCard key={property._id || property.id} property={property} />
         ))}
       </div>
     </section>
@@ -122,7 +138,8 @@ function PropertyCard({ property }) {
 
   return (
     <Link
-      to={`/property/${property.id}`}
+      to={`/property/${property._id || property.id}`}
+      state={{ property }}
       className="wf-card wf-card-hover group min-w-[84vw] snap-start overflow-hidden sm:min-w-[360px] lg:min-w-[390px]"
     >
       <div className="relative h-56 overflow-hidden bg-slate-100 sm:h-60">
@@ -177,7 +194,7 @@ function PropertyCard({ property }) {
           </span>
           <span className="flex items-center gap-1.5">
             <Maximize2 size={16} />
-            <span className="line-clamp-1">{property.area}</span>
+            <span className="line-clamp-1">{property.area || `${property.sqft} sq.ft`}</span>
           </span>
         </div>
 
@@ -187,7 +204,7 @@ function PropertyCard({ property }) {
           <div>
             <p className="text-xs font-semibold text-slate-400">Price</p>
             <p className="text-xl font-extrabold text-blue-600">
-              {property.price}
+            {property.price}
             </p>
           </div>
 

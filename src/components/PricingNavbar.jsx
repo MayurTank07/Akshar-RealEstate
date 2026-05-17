@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Bookmark, ChevronDown, Home, Menu, Search, SlidersHorizontal } from "lucide-react";
 import BrandLogo from "./BrandLogo";
+import SavedBadge from "./SavedBadge";
+import useAuth from "../contexts/useAuth";
 
 const categories = ["Buy", "Rent"];
 const cities = ["All", "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Anand", "Bharuch"];
@@ -16,6 +18,8 @@ export default function PricingNavbar({
   onToggleFilters,
 }) {
   const navigate = useNavigate();
+  const { savedProperties } = useAuth();
+  const savedCount = savedProperties.length;
   const [openMenu, setOpenMenu] = useState(null);
   const toggleMenu = (menu) => setOpenMenu((current) => (current === menu ? null : menu));
 
@@ -120,6 +124,7 @@ export default function PricingNavbar({
           <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
             <Bookmark size={16} />
             Saved
+            <SavedBadge count={savedCount} />
           </button>
         </div>
         <div className="flex items-center gap-2 lg:hidden">
@@ -130,6 +135,7 @@ export default function PricingNavbar({
           <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary flex-1">
             <Bookmark size={16} />
             Saved
+            <SavedBadge count={savedCount} />
           </button>
         </div>
       </div>

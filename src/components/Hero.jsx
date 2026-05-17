@@ -1,14 +1,16 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
+import useSiteContent from "../hooks/useSiteContent";
 
 export default function Hero() {
   const navigate = useNavigate();
+  const { heroTitle, heroSubtitle } = useSiteContent();
   const [activeTab, setActiveTab] = useState("Buy");
   const [query, setQuery] = useState("");
 
   const localities = ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Anand"];
-  const tabs = ["Buy", "Rent", "Sell"];
+  const tabs = ["Buy", "Rent", "Sell", "Pre Leased", "Barter", "ROI"];
   const highlights = ["Verified homes", "Gujarat focused", "Site visits"];
 
   const handleSearch = (city = query) => {
@@ -19,11 +21,20 @@ export default function Hero() {
       return;
     }
 
+    const isInvestmentMode = ["Pre Leased", "Barter", "ROI"].includes(activeTab);
+
     navigate("/pricing", {
       state: {
-        category: activeTab === "Rent" ? "Rentals" : "Buy",
-        type: cleanCity ? `Properties in ${cleanCity}` : "Apartments",
+        category: activeTab === "Rent" ? "Rentals" : activeTab,
+        type: "All",
         city: cleanCity || "Ahmedabad",
+        filters: {
+          activeCity: cleanCity || "Ahmedabad",
+          activeType: "All",
+          query: "",
+          searchType: activeTab === "Rent" ? "Rent" : isInvestmentMode ? activeTab : "Buy",
+          intentLabel: isInvestmentMode ? activeTab : "",
+        },
       },
     });
   };
@@ -46,11 +57,11 @@ export default function Hero() {
           </p>
 
           <h1 className="max-w-3xl text-[2.7rem] font-extrabold leading-[1.06] tracking-tight text-white sm:text-6xl lg:text-6xl">
-            We Turn Spaces into Places You Call Home
+            {heroTitle}
           </h1>
 
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-blue-50/90 sm:mt-5 sm:text-lg">
-            Discover verified homes, apartments, and investment-ready properties across Ahmedabad, Surat, Vadodara, and nearby Gujarat cities.
+            {heroSubtitle}
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2 sm:mt-6 sm:gap-2.5">
@@ -72,13 +83,13 @@ export default function Hero() {
           }}
           className="mt-6 w-full rounded-[1.6rem] border border-white/70 bg-white/95 p-4 text-slate-700 shadow-2xl shadow-blue-950/30 backdrop-blur sm:mt-9 sm:max-w-4xl sm:p-6"
         >
-          <div className="flex gap-6 border-b border-slate-200 pb-3 text-sm">
+          <div className="wf-scrollbar-none flex gap-3 overflow-x-auto border-b border-slate-200 pb-3 text-sm sm:gap-6">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 type="button"
                 onClick={() => setActiveTab(tab)}
-                className={`whitespace-nowrap border-b-2 pb-2 font-extrabold transition ${
+                className={`whitespace-nowrap border-b-2 px-1 pb-2 font-extrabold transition ${
                   activeTab === tab
                     ? "border-blue-600 text-blue-600"
                     : "border-transparent text-slate-500 hover:text-slate-900"
@@ -95,12 +106,12 @@ export default function Hero() {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search Ahmedabad, Surat, Vadodara..."
-              className="h-12 w-full min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:h-14"
+              className="h-12 w-full min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 text-base text-slate-800 outline-none transition duration-200 placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 sm:h-14"
             />
 
             <button
               type="submit"
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-6 text-base font-extrabold text-white shadow-xl shadow-blue-600/25 transition hover:bg-blue-700 sm:h-14 sm:w-auto sm:min-w-40"
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-6 text-base font-extrabold text-white shadow-xl shadow-blue-600/25 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-blue-600/35 active:translate-y-0 sm:h-14 sm:w-auto sm:min-w-40"
             >
               <Search size={20} />
               Search

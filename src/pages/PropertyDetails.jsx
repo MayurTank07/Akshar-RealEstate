@@ -1,17 +1,44 @@
-import { useLocation, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, Link, useParams } from "react-router-dom";
 import properties from "../data/properties.json";
 import Hero from "../componetswest/Hero";
 import Amenities from "../componetswest/Amenities";
 import MapForm from "../componetswest/MapForm";
 import Footer from "../components/Footer";
+import { publicApi } from "../services/api";
 
 export default function PropertyDetails() {
   const location = useLocation();
-  
-  // Get property from navigation state first, then fallback to URL params
-  const property = location.state?.property || properties.find(p => p.id === parseInt(location.pathname.split('/').pop()));
+  const { id } = useParams();
+  const initialProperty = location.state?.property || properties.find(p => p.id === parseInt(location.pathname.split('/').pop()));
+  const remoteId = id || (/^[a-f\d]{24}$/i.test(initialProperty?._id || "") ? initialProperty._id : null);
+  const [property, setProperty] = useState(initialProperty);
+  const [loading, setLoading] = useState(Boolean(remoteId));
+
+  useEffect(() => {
+    if (!remoteId) return;
+    let active = true;
+    publicApi
+      .property(remoteId)
+      .then((response) => {
+        if (active) setProperty(response.data);
+      })
+      .catch(() => {
+        if (active && !initialProperty) setProperty(null);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [initialProperty, remoteId]);
   
   // Handle property not found
+  if (loading) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-slate-500 font-bold">Loading property...</div>;
+  }
+
   if (!property) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -35,10 +62,10 @@ export default function PropertyDetails() {
       <Hero property={property} />
 
       {/* Map Form Section from componetswest */}
-      <MapForm />
+      <MapForm property={property} />
 
       {/* Amenities Section from componetswest */}
-      <Amenities />
+      <Amenities property={property} />
 
       {/* Back Button */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

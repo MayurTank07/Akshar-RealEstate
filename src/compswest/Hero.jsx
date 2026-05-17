@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Bed, Bath, Maximize, Heart } from 'lucide-react';
 import useAuth from "../contexts/useAuth";
 
 import propertyData from "../data/pricingProperties.json";
 import Navbar from "../components/PricingNavbar";
+import { publicApi } from "../services/api";
+import { parsePurchaseRoute } from "../utils/propertyRouting";
+import { mergeProperties } from "../utils/propertyData";
 
 export default function PricingPage({ category, type, city: selectedCity, filters }) {
   const { category: routeCategory, slug } = useParams();
@@ -12,31 +15,53 @@ export default function PricingPage({ category, type, city: selectedCity, filter
   const location = useLocation();
   const { isAuthenticated, isPropertySaved, toggleSavedProperty } = useAuth();
 
-  const initialType = filters?.activeType || (propertyData.propertyTypes.includes(type) ? type : "All");
+  const [remoteListings, setRemoteListings] = useState(null);
+  const availableTypes = useMemo(() => {
+    const types = remoteListings ? [...new Set(remoteListings.map((item) => item.type).filter(Boolean))] : propertyData.propertyTypes;
+    return types.length ? types : propertyData.propertyTypes;
+  }, [remoteListings]);
+  const routeIntent = parsePurchaseRoute(routeCategory, slug);
+  const routeFilters = slug ? routeIntent.filters : {};
+  const mergedFilters = { ...routeFilters, ...(filters || {}) };
+  const listings = remoteListings ? mergeProperties(remoteListings, propertyData.listings, "pricing") : propertyData.listings;
+  const initialType = mergedFilters.activeType || (availableTypes.includes(type) ? type : "All");
   const [activeType, setActiveType] = useState(initialType);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [query, setQuery] = useState(filters?.query || (type && !propertyData.propertyTypes.includes(type) ? type : ""));
-  const [minBeds, setMinBeds] = useState(filters?.minBeds || "Any");
-  const [priceRange, setPriceRange] = useState(filters?.priceRange || "Any");
+  const [query, setQuery] = useState(mergedFilters.query || "");
+  const [minBeds, setMinBeds] = useState(mergedFilters.minBeds || "Any");
+  const [priceRange, setPriceRange] = useState(mergedFilters.priceRange || "Any");
   const [activeCity, setActiveCity] = useState(
-    filters?.activeCity ||
+    mergedFilters.activeCity ||
     selectedCity ||
-    (slug ? slug.split('-').pop().replace(/^\w/, (char) => char.toUpperCase()) : "All")
+    routeIntent.city ||
+    "All"
   );
   const [searchType, setSearchType] = useState(
-    filters?.searchType ||
-    (category === "rentals" || category === "Rentals" || routeCategory === "rentals" ? "Rent" : "Buy")
+    mergedFilters.searchType ||
+    category ||
+    routeIntent.category ||
+    (routeCategory === "rentals" ? "Rent" : "Buy")
   );
-  const filterTypes = ["All", ...propertyData.propertyTypes];
+  const filterTypes = ["All", ...availableTypes];
+
+  useEffect(() => {
+    publicApi
+      .properties()
+      .then((response) => {
+        if (response.data?.length) setRemoteListings(response.data);
+      })
+      .catch(() => setRemoteListings(null));
+  }, []);
 
   const parseCrores = (price) => Number.parseFloat(String(price).replace(/[^\d.]/g, "")) || 0;
 
   const filteredListings = useMemo(() => {
     const normalizedQuery = query.toLowerCase().replace("properties in", "").trim();
 
-    return propertyData.listings.filter((item) => {
+    return listings.filter((item) => {
       const matchesType = activeType === "All" || item.type === activeType;
-      const matchesCity = activeCity === "All" || !activeCity || item.location.toLowerCase().includes(activeCity.toLowerCase());
+      const itemCity = item.city || item.location;
+      const matchesCity = activeCity === "All" || !activeCity || itemCity.toLowerCase().includes(activeCity.toLowerCase()) || item.location.toLowerCase().includes(activeCity.toLowerCase());
       const matchesQuery =
         !normalizedQuery ||
         item.title.toLowerCase().includes(normalizedQuery) ||
@@ -52,10 +77,11 @@ export default function PricingPage({ category, type, city: selectedCity, filter
 
       return matchesType && matchesCity && matchesQuery && matchesBeds && matchesPrice;
     });
-  }, [activeCity, activeType, minBeds, priceRange, query]);
+  }, [activeCity, activeType, listings, minBeds, priceRange, query]);
 
   const handlePropertyClick = (item) => {
-    navigate("/property-detail", { state: { property: item } });
+    const dbId = /^[a-f\d]{24}$/i.test(item?._id || "") ? item._id : null;
+    navigate(dbId ? `/property/${dbId}` : "/property-detail", { state: { property: item } });
   };
 
   const handleSaveClick = (item) => {
@@ -156,7 +182,7 @@ export default function PricingPage({ category, type, city: selectedCity, filter
 
             return (
             <div
-              key={item.id}
+              key={item._id || item.id}
               className="bg-white rounded-[20px] overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300"
             >
               <div className="relative h-44"> 
@@ -195,14 +221,14 @@ export default function PricingPage({ category, type, city: selectedCity, filter
                 <div className="flex justify-start gap-5 text-[11px] text-gray-500 mb-6">
                   <div className="flex items-center gap-1"><Bed className="w-3.5 h-3.5" /> {item.beds}</div>
                   <div className="flex items-center gap-1"><Bath className="w-3.5 h-3.5" /> {item.baths}</div>
-                  <div className="flex items-center gap-1"><Maximize className="w-3.5 h-3.5" /> {item.sqft} sq.ft</div>
+                    <div className="flex items-center gap-1"><Maximize className="w-3.5 h-3.5" /> {item.sqft || item.area} {item.sqft ? "sq.ft" : ""}</div>
                 </div>
 
                 <div className="flex justify-between items-end">
                   <div>
                     <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Price</div>
-                    <div className="text-lg font-extrabold text-blue-600">
-                      ₹{item.price}
+                <div className="text-lg font-extrabold text-blue-600">
+                      {String(item.price).startsWith("₹") ? item.price : `₹${item.price}`}
                     </div>
                   </div>
 

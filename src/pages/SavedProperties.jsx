@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 
 export default function SavedProperties() {
   const navigate = useNavigate();
-  const { isAuthenticated, savedProperties } = useAuth();
+  const { isAuthenticated, savedProperties, toggleSavedProperty } = useAuth();
 
   if (!isAuthenticated) {
     return (
@@ -83,7 +83,7 @@ export default function SavedProperties() {
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
             {savedProperties.map((property) => (
-              <SavedPropertyCard key={`${property.source}-${property.id}`} property={property} />
+              <SavedPropertyCard key={`${property.source}-${property._id || property.id}`} property={property} onUnsave={toggleSavedProperty} />
             ))}
           </div>
         )}
@@ -93,25 +93,30 @@ export default function SavedProperties() {
   );
 }
 
-function SavedPropertyCard({ property }) {
-  const detailsPath = property.source === "pricing" ? "/property-detail" : `/property/${property.id}`;
+function SavedPropertyCard({ property, onUnsave }) {
+  const detailsPath = property.source === "pricing" ? "/property-detail" : `/property/${property._id || property.id}`;
   const area = property.sqft ? `${property.sqft} sq.ft` : property.area;
   const price = property.price?.startsWith("₹") ? property.price : `₹${property.price}`;
+  const removeSaved = () => {
+    onUnsave(property);
+  };
 
   return (
-    <Link
-      to={detailsPath}
-      state={{ property }}
-      className="wf-card wf-card-hover group overflow-hidden"
-    >
+    <article className="wf-card wf-card-hover group overflow-hidden">
       <div className="relative h-56 overflow-hidden bg-slate-100">
         <img src={property.image} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
         <span className="absolute left-3 top-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-extrabold text-white">
           {property.badge || property.tag || "Saved"}
         </span>
-        <span className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white text-rose-500 shadow-lg">
+        <button
+          type="button"
+          onClick={removeSaved}
+          className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-white text-rose-500 shadow-lg transition duration-200 hover:scale-105 hover:bg-rose-50"
+          aria-label="Unsave property"
+          title="Unsave property"
+        >
           <Heart size={18} fill="currentColor" />
-        </span>
+        </button>
       </div>
 
       <div className="p-5">
@@ -131,12 +136,20 @@ function SavedPropertyCard({ property }) {
             <p className="text-xs font-semibold text-slate-400">Price</p>
             <p className="text-xl font-extrabold text-blue-600">{price}</p>
           </div>
-          <span className="inline-flex items-center gap-1 text-sm font-extrabold text-blue-600">
+          <Link to={detailsPath} state={{ property }} className="inline-flex items-center gap-1 text-sm font-extrabold text-blue-600">
             Details
             <ArrowRight size={16} />
-          </span>
+          </Link>
         </div>
+        <button
+          type="button"
+          onClick={removeSaved}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-100 bg-rose-50 px-4 py-2.5 text-sm font-extrabold text-rose-600 transition hover:border-rose-200 hover:bg-rose-100"
+        >
+          <Heart size={16} fill="currentColor" />
+          Unsave
+        </button>
       </div>
-    </Link>
+    </article>
   );
 }

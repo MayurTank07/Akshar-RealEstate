@@ -1,5 +1,7 @@
 import { Share2, Globe, Users, Link, ExternalLink, MapPin, Phone, Mail } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 import BrandLogo from './BrandLogo';
+import { pricingPathFor, pricingStateFromLabel } from '../utils/propertyRouting';
 
 const Footer = () => {
   return (
@@ -33,11 +35,11 @@ const Footer = () => {
           <div>
             <h3 className="text-white font-semibold mb-4 sm:mb-6">Services</h3>
             <ul className="space-y-3 sm:space-y-4 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">Buy Property</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Rent Property</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Sell Property</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Home Loans</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Property Valuation</a></li>
+              <li><RouterLink to={pricingPathFor("Properties for sale in Ahmedabad", "buyers")} state={pricingStateFromLabel("Properties for sale in Ahmedabad", "buyers")} className="hover:text-white transition-colors">Buy Property</RouterLink></li>
+              <li><RouterLink to={pricingPathFor("Properties for Rent in Ahmedabad", "rentals")} state={pricingStateFromLabel("Properties for Rent in Ahmedabad", "rentals")} className="hover:text-white transition-colors">Rent Property</RouterLink></li>
+              <li><RouterLink to="/enquiry" className="hover:text-white transition-colors">Sell Property</RouterLink></li>
+              <li><RouterLink to="/services" className="hover:text-white transition-colors">Services</RouterLink></li>
+              <li><RouterLink to="/properties" className="hover:text-white transition-colors">Properties</RouterLink></li>
             </ul>
           </div>
 
@@ -45,11 +47,11 @@ const Footer = () => {
           <div>
             <h3 className="text-white font-semibold mb-4 sm:mb-6">Quick Links</h3>
             <ul className="space-y-3 sm:space-y-4 text-sm">
-              <li><a href="#" className="hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-              <li><a href="#" className="hover:text-white transition-colors">Testimonials</a></li>
+              <li><RouterLink to="/about" className="hover:text-white transition-colors">About Us</RouterLink></li>
+              <li><RouterLink to="/contact" className="hover:text-white transition-colors">Contact</RouterLink></li>
+              <li><RouterLink to="/services" className="hover:text-white transition-colors">Services</RouterLink></li>
+              <li><RouterLink to="/properties" className="hover:text-white transition-colors">Properties</RouterLink></li>
+              <li><RouterLink to="/stafflogin" className="hover:text-white transition-colors">Staff Login</RouterLink></li>
             </ul>
           </div>
 
@@ -77,9 +79,9 @@ const Footer = () => {
         <div className="border-t border-slate-800 pt-6 sm:pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
           <p className="text-center sm:text-left">2026 Akshar Estate The Property HUB. All rights reserved.</p>
           <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-6">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
+            <RouterLink to="/about" className="hover:text-white transition-colors">Privacy Policy</RouterLink>
+            <RouterLink to="/services" className="hover:text-white transition-colors">Terms of Service</RouterLink>
+            <RouterLink to="/contact" className="hover:text-white transition-colors">Contact</RouterLink>
           </div>
         </div>
       </div>

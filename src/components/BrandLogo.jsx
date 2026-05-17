@@ -1,4 +1,11 @@
+import useSiteContent from "../hooks/useSiteContent";
+
 export default function BrandLogo({ compact = false, light = false, large = false }) {
+  const { siteName } = useSiteContent();
+  const words = siteName.split(" ");
+  const primary = words.slice(0, 2).join(" ") || "Akshar Estate";
+  const secondary = words.slice(2).join(" ") || "The Property HUB";
+
   return (
     <span className="inline-flex min-w-0 items-center gap-3">
       <img
@@ -17,14 +24,14 @@ export default function BrandLogo({ compact = false, light = false, large = fals
               large ? "text-[18px]" : "text-[14px]"
             } ${light ? "text-white" : "text-slate-950"}`}
           >
-            Akshar Estate
+            {primary}
           </span>
           <span
             className={`font-semibold tracking-wide ${
               large ? "mt-[5px] text-[12px]" : "mt-[3px] text-[10px]"
             } ${light ? "text-blue-200" : "text-slate-500"}`}
           >
-            The Property HUB
+            {secondary}
           </span>
         </span>
       )}

@@ -3,12 +3,13 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../contexts/useAuth";
 import EnquiryModal from "./EnquiryModal";
 import BrandLogo from "./BrandLogo";
+import SavedBadge from "./SavedBadge";
 import { Bookmark, ChevronDown, LogIn, LogOut, Menu, X } from "lucide-react";
 
 import buyersData from "../data/buyers.json";
 import sellersData from "../data/sellers.json";
 import rentalsData from "../data/rentals.json";
-import servicesData from "../data/services.json";
+import { pricingPathFor, pricingStateFromLabel } from "../utils/propertyRouting";
 
 export default function Navbar() {
   const [activeMenu, setActiveMenu] = useState(null);
@@ -18,13 +19,13 @@ export default function Navbar() {
   const menuRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, savedProperties } = useAuth();
+  const savedCount = savedProperties.length;
 
   const dataMap = {
     buyers: buyersData,
     sellers: sellersData,
     rentals: rentalsData,
-    services: servicesData,
   };
 
   const navItems = [
@@ -47,8 +48,8 @@ export default function Navbar() {
   }, []);
 
   const handleMenuClick = (key) => {
-    if (key === "about") {
-      navigate("/about");
+    if (key === "about" || key === "services") {
+      navigate(key === "about" ? "/about" : "/services");
       return;
     }
 
@@ -63,7 +64,7 @@ export default function Navbar() {
   const getTargetPath = (navKey, label) => {
     const slug = label.toLowerCase().replace(/\s+/g, "-");
     return navKey === "buyers" || navKey === "rentals"
-      ? `/purchase/${navKey}/${slug}`
+      ? pricingPathFor(label, navKey)
       : `/${slug}`;
   };
 
@@ -71,10 +72,7 @@ export default function Navbar() {
     if (navKey === "buyers" || navKey === "rentals") {
       event.preventDefault();
       navigate("/pricing", {
-        state: {
-          category: navKey === "buyers" ? "Buy" : "Rentals",
-          type: label,
-        },
+        state: pricingStateFromLabel(label, navKey),
       });
     }
 
@@ -155,26 +153,27 @@ export default function Navbar() {
                   }`}
                 >
                   {nav.title}
-                  {nav.key !== "about" && (
+                  {nav.key !== "about" && nav.key !== "services" && (
                     <ChevronDown
                       size={15}
                       className={`transition ${activeMenu === nav.key ? "rotate-180" : ""}`}
                     />
                   )}
                 </button>
-                {nav.key !== "about" && activeMenu === nav.key && renderDropdown(nav)}
+                {nav.key !== "about" && nav.key !== "services" && activeMenu === nav.key && renderDropdown(nav)}
               </div>
             ))}
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
-            <button type="button" onClick={() => { if (!isAuthenticated) { navigate("/login"); return; } setShowEnquiryModal(true); }} className="wf-btn wf-btn-primary">
+            <button type="button" onClick={() => setShowEnquiryModal(true)} className="wf-btn wf-btn-primary">
               Enquiry
             </button>
 
             <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
               <Bookmark size={16} />
               Saved
+              <SavedBadge count={savedCount} />
             </button>
 
             {!isAuthenticated ? (
@@ -226,7 +225,7 @@ export default function Navbar() {
               </button>
             </div>
 
-            <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-5">
+            <nav className="wf-smooth-scroll flex-1 space-y-2 overflow-y-auto px-4 py-5">
               {navItems.map((nav) => (
                 <div key={nav.key}>
                   <button
@@ -239,25 +238,26 @@ export default function Navbar() {
                     }`}
                   >
                     {nav.title}
-                    {nav.key !== "about" && (
+                    {nav.key !== "about" && nav.key !== "services" && (
                       <ChevronDown
                         size={16}
                         className={`transition ${activeMenu === nav.key ? "rotate-180" : ""}`}
                       />
                     )}
                   </button>
-                  {nav.key !== "about" && activeMenu === nav.key && renderDropdown(nav, true)}
+                  {nav.key !== "about" && nav.key !== "services" && activeMenu === nav.key && renderDropdown(nav, true)}
                 </div>
               ))}
             </nav>
 
             <div className="space-y-3 border-t border-slate-200 p-4">
-              <button type="button" onClick={() => { if (!isAuthenticated) { navigate("/login"); return; } setShowEnquiryModal(true); }} className="wf-btn wf-btn-primary w-full">
+              <button type="button" onClick={() => { setMobileMenuOpen(false); setShowEnquiryModal(true); }} className="wf-btn wf-btn-primary w-full">
                 Enquiry
               </button>
               <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary w-full">
                 <Bookmark size={16} />
                 Saved
+                <SavedBadge count={savedCount} />
               </button>
               {!isAuthenticated ? (
                 <button type="button" onClick={() => navigate("/login")} className="wf-btn wf-btn-secondary w-full">

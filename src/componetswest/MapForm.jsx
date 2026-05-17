@@ -1,6 +1,47 @@
+import { useState } from 'react';
 import { Play, MapPin, Bookmark, ChevronDown } from 'lucide-react';
+import { publicApi } from '../services/api';
 
-export default function PropertyInformation() {
+export default function PropertyInformation({ property }) {
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", homeLoan: false });
+  const [message, setMessage] = useState("");
+  const contact = property?.contact || {};
+  const contactName = contact.name || property?.ownerName || "Akshar Estate Expert";
+  const contactPhone = contact.phone || "+91 12345 67890";
+  const initials = contactName.split(" ").map((item) => item[0]).join("").slice(0, 2).toUpperCase() || "AE";
+  const videoThumb = property?.image || property?.gallery?.[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1200";
+  const mapImage = "https://images.unsplash.com/photo-1524813686514-a57563d77965?auto=format&fit=crop&q=80&w=1200";
+  const description = property?.description?.trim()
+    || "Experience premium real estate designed for modern living, strong connectivity, practical layouts, and verified Akshar Estate assistance from enquiry to closure.";
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setMessage("");
+    try {
+      const propertyId = /^[a-f\d]{24}$/i.test(property?._id || "") ? property._id : undefined;
+      await publicApi.createEnquiry({
+        name: `${form.firstName} ${form.lastName}`.trim(),
+        email: form.email,
+        phone: form.phone,
+        preferredLocation: property?.city || property?.location || "",
+        propertyType: property?.type || "",
+        propertyTitle: property?.title || "",
+        propertyId,
+        message: `Contact details requested${form.homeLoan ? " with home loan interest" : ""}.`,
+        source: "property-detail",
+      });
+      setMessage("Thanks. Our team will contact you shortly.");
+      setForm({ firstName: "", lastName: "", email: "", phone: "", homeLoan: false });
+    } catch (error) {
+      setMessage(error.message || "Could not submit enquiry. Please try again.");
+    }
+  };
+
+  const update = (event) => {
+    const { name, value, type, checked } = event.target;
+    setForm((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 font-sans antialiased">
       <div className="flex flex-col lg:flex-row gap-10">
@@ -10,20 +51,21 @@ export default function PropertyInformation() {
           {/* Description */}
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-3">Description</h2>
-            <p className="text-gray-500 text-[14px] leading-relaxed">
-              Experience luxury living at its finest in this stunning modern villa located in Ahmedabad's premium residential corridor. 
-              This meticulously designed property features contemporary architecture, premium finishes, and 
-              breathtaking views. With spacious interiors, smart home technology, and resort-style amenities, this villa 
-              offers the perfect blend of comfort and sophistication.
+            <p className="whitespace-pre-line text-gray-500 text-[14px] leading-relaxed">
+              {description}
             </p>
           </section>
 
           {/* Video Tour */}
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Video Tour</h2>
-            <div className="relative rounded-2xl overflow-hidden group cursor-pointer shadow-lg">
+            <button
+              type="button"
+              onClick={() => property?.videoUrl && window.open(property.videoUrl, "_blank", "noopener,noreferrer")}
+              className="relative block w-full overflow-hidden rounded-2xl text-left shadow-lg group"
+            >
               <img 
-                src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1200" 
+                src={videoThumb}
                 className="w-full h-[350px] object-cover" 
                 alt="Property Video Thumbnail"
               />
@@ -37,24 +79,23 @@ export default function PropertyInformation() {
                    </h3>
                 </div>
               </div>
-            </div>
+            </button>
           </section>
 
           {/* Map View */}
           <section>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Map View</h2>
             <div className="relative rounded-2xl overflow-hidden shadow-lg h-[400px]">
-              {/* Mock Map Image */}
-              <img 
-                src="https://images.unsplash.com/photo-1524813686514-a57563d77965?auto=format&fit=crop&q=80&w=1200" 
-                className="w-full h-full object-cover" 
-                alt="Map View"
-              />
+              {property?.map?.embedUrl ? (
+                <iframe title="Property map" src={property.map.embedUrl} className="h-full w-full border-0" loading="lazy" />
+              ) : (
+                <img src={mapImage} className="w-full h-full object-cover" alt="Map View" />
+              )}
               {/* Custom Pin Overlay */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="flex flex-col items-center">
                    <div className="bg-white px-3 py-1 rounded shadow-md text-[10px] font-bold mb-1 border border-gray-100">
-                    Urban Living
+                    {property?.map?.address || property?.location || "Urban Living"}
                    </div>
                    <div className="relative">
                      <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-lg animate-pulse" />
@@ -79,30 +120,30 @@ export default function PropertyInformation() {
             {/* Agent Profile */}
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center font-bold text-gray-700 text-lg">
-                HP
+                {initials}
               </div>
               <div>
-                <h4 className="font-bold text-gray-900 leading-none mb-1">Hitesh Patel</h4>
+                <h4 className="font-bold text-gray-900 leading-none mb-1">{contactName}</h4>
                 <p className="text-xs text-gray-400">Real Estate Expert</p>
-                <p className="text-blue-600 text-xs font-semibold mt-1">+91 12345 67890</p>
+                <p className="text-blue-600 text-xs font-semibold mt-1">{contactPhone}</p>
               </div>
             </div>
 
-            <div className="space-y-4">
+            <form id="contact-form" onSubmit={submit} className="space-y-4">
               <h4 className="font-bold text-gray-900">Please share your Contact details</h4>
               
               <div className="flex gap-3">
-                <input placeholder="First Name*" className="w-1/2 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
-                <input placeholder="Last Name*" className="w-1/2 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
+                <input name="firstName" value={form.firstName} onChange={update} placeholder="First Name*" className="w-1/2 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
+                <input name="lastName" value={form.lastName} onChange={update} placeholder="Last Name*" className="w-1/2 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
               </div>
               
-              <input placeholder="E-mail*" className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
+              <input name="email" type="email" value={form.email} onChange={update} placeholder="E-mail*" className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
               
               <div className="flex gap-2">
                 <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white min-w-[80px]">
                   +91 <ChevronDown className="w-4 h-4 text-gray-400" />
                 </div>
-                <input placeholder="Phone number*" className="flex-1 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" />
+                <input name="phone" value={form.phone} onChange={update} placeholder="Phone number*" className="flex-1 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
               </div>
 
               {/* T&C */}
@@ -115,7 +156,7 @@ export default function PropertyInformation() {
                   </span>
                 </label>
                 <label className="flex gap-3 cursor-pointer group">
-                  <input type="checkbox" className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <input name="homeLoan" type="checkbox" checked={form.homeLoan} onChange={update} className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                   <span className="text-[12px] text-gray-500 leading-tight">
                     I am interested in Home loans
                   </span>
@@ -125,6 +166,7 @@ export default function PropertyInformation() {
               <button className="w-full bg-[#2563eb] text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-100">
                 Get Contact Details
               </button>
+              {message && <p className="rounded-xl bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-700">{message}</p>}
 
               <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                 <div className="text-[13px] leading-tight">
@@ -136,7 +178,7 @@ export default function PropertyInformation() {
                 </button>
               </div>
 
-            </div>
+            </form>
           </div>
         </div>
 

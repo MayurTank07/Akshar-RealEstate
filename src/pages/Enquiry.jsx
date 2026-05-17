@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { publicApi } from "../services/api";
 import {
   Building2,
   Calendar,
@@ -90,15 +91,22 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
     }
   };
 
-  const submit = () => {
+  const submit = async () => {
     const enquiryPayload = {
       ...form,
       location: form.location.trim(),
+      preferredLocation: form.location.trim(),
+      propertyType: form.type,
       budgetLabel: getActualBudget(form.budget),
     };
 
-    console.info("Enquiry submitted:", enquiryPayload);
-    setIsSubmitted(true);
+    try {
+      await publicApi.createEnquiry(enquiryPayload);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Enquiry submission failed:", error);
+      setErrors({ submit: "We could not submit your enquiry. Please try again." });
+    }
   };
 
   useEffect(() => {
@@ -178,7 +186,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
         </div>
 
         <div className="wf-card flex min-h-0 grow flex-col overflow-hidden shadow-sm">
-          <div className="min-h-0 grow overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="wf-smooth-scroll min-h-0 grow overflow-y-auto p-4 sm:p-6 lg:p-8">
             {step === 1 && (
               <section className="space-y-5 sm:space-y-6">
                 <SectionTitle title="Basic Details" subtitle="Your contact information stays private with Akshar Estate The Property HUB." />
@@ -296,6 +304,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
               <ChevronRight size={18} />
             </button>
           </footer>
+          {errors.submit && <p className="bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{errors.submit}</p>}
         </div>
       </div>
     </div>
