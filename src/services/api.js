@@ -1,8 +1,4 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ||
-  (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"
-    ? "https://akshar-realestate-backend.onrender.com/api"
-    : "http://127.0.0.1:5001/api");
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://akshar-realestate-backend.onrender.com/api";
 
 function getStaffToken() {
   return localStorage.getItem("staffToken");
