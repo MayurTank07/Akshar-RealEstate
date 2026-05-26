@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
 import { publicApi } from "../services/api";
+import { defaultAboutContent, defaultContactContent, defaultNavbarAreas, defaultTopLists } from "../config/navigationContent";
 
 const defaults = {
   siteName: "Akshar Estate The Property HUB",
   heroTitle: "We Turn Spaces into Places You Call Home",
   heroSubtitle: "Discover verified homes, apartments, and investment-ready properties across Ahmedabad, Surat, Vadodara, and nearby Gujarat cities.",
+  navbarAreas: defaultNavbarAreas,
+  navbarTopLists: defaultTopLists,
+  aboutContent: defaultAboutContent,
+  contactContent: defaultContactContent,
+  heroImage: "/house.jpg",
+  heroCtaText: "Search",
 };
 
 export default function useSiteContent() {

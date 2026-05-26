@@ -4,6 +4,7 @@ import {
 } from 'lucide-react';
 
 import Navbar from '../components/PricingNavbar';
+import { formatINR } from '../utils/currency';
 
 const PropertyDetails = ({ property }) => {
   const [selectedImage, setSelectedImage] = useState(0);
@@ -28,7 +29,7 @@ const PropertyDetails = ({ property }) => {
 
   const title = property?.title || "Nathani Heavens";
   const propertyLocation = property?.location || "Bodakdev, Ahmedabad";
-  const price = property?.price ? `₹${String(property.price).replace(/^₹/, "")}` : "₹3.0 Cr - 3.81 Cr";
+  const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "₹3 Cr - ₹3.81 Cr";
   const measurement = property?.measurement;
   const unit = measurement?.unit === "custom" ? measurement?.customUnit : measurement?.unit;
   const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "3 BHK");

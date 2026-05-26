@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { publicApi } from "../services/api";
+import { formatINR } from "../utils/currency";
 import {
   Building2,
   Calendar,
@@ -58,9 +59,9 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
 
   const getActualBudget = (val) => {
     const value = Number(val);
-    if (value <= 20) return `₹${value * 5}L`;
-    if (value <= 60) return `₹${((value - 20) * 0.1 + 1).toFixed(1)}Cr`;
-    return `₹${((value - 60) * 0.5 + 5).toFixed(1)}Cr`;
+    if (value <= 20) return formatINR(value * 500000);
+    if (value <= 60) return formatINR(((value - 20) * 0.1 + 1) * 10000000);
+    return formatINR(((value - 60) * 0.5 + 5) * 10000000);
   };
 
   const update = (event) => {
@@ -191,8 +192,8 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
               <section className="space-y-5 sm:space-y-6">
                 <SectionTitle title="Basic Details" subtitle="Your contact information stays private with Akshar Estate The Property HUB." />
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
-                  <InputGroup label="Full Name" icon={<User size={18} />} name="name" value={form.name} onChange={update} error={errors.name} placeholder="Mayur Tank" />
-                  <InputGroup label="Email Address" icon={<Mail size={18} />} name="email" value={form.email} onChange={update} error={errors.email} placeholder="mayur@example.com" />
+                  <InputGroup label="Full Name" icon={<User size={18} />} name="name" value={form.name} onChange={update} error={errors.name} placeholder="Raj Sharma" />
+                  <InputGroup label="Email Address" icon={<Mail size={18} />} name="email" value={form.email} onChange={update} error={errors.email} placeholder="customer@example.com" />
                   <InputGroup label="Phone Number" icon={<Phone size={18} />} name="phone" value={form.phone} onChange={update} error={errors.phone} placeholder="9876543210" />
                   <InputGroup label="Age" icon={<Calendar size={18} />} name="age" type="number" value={form.age} onChange={update} placeholder="25" />
                 </div>
@@ -246,9 +247,9 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
                     className="w-full cursor-pointer accent-blue-600"
                   />
                   <div className="mt-3 flex justify-between text-[10px] font-extrabold uppercase tracking-tight text-slate-400">
-                    <span>₹10 Lakhs</span>
-                    <span>₹5 Crores</span>
-                    <span>₹25 Crores+</span>
+                    <span>{formatINR(1000000)}</span>
+                    <span>{formatINR(50000000)}</span>
+                    <span>{formatINR(250000000)}+</span>
                   </div>
                 </div>
 

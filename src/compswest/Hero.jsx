@@ -6,6 +6,7 @@ import useAuth from "../contexts/useAuth";
 import propertyData from "../data/pricingProperties.json";
 import Navbar from "../components/PricingNavbar";
 import { publicApi } from "../services/api";
+import { formatINR, parseINRAmount } from "../utils/currency";
 import { parsePurchaseRoute } from "../utils/propertyRouting";
 import { mergeProperties } from "../utils/propertyData";
 
@@ -53,7 +54,7 @@ export default function PricingPage({ category, type, city: selectedCity, filter
       .catch(() => setRemoteListings(null));
   }, []);
 
-  const parseCrores = (price) => Number.parseFloat(String(price).replace(/[^\d.]/g, "")) || 0;
+  const parseCrores = (price) => parseINRAmount(price) / 10000000;
 
   const filteredListings = useMemo(() => {
     const normalizedQuery = query.toLowerCase().replace("properties in", "").trim();
@@ -65,8 +66,12 @@ export default function PricingPage({ category, type, city: selectedCity, filter
       const matchesQuery =
         !normalizedQuery ||
         item.title.toLowerCase().includes(normalizedQuery) ||
+        String(item.propertyCode || "").toLowerCase().includes(normalizedQuery) ||
         item.location.toLowerCase().includes(normalizedQuery) ||
-        item.type.toLowerCase().includes(normalizedQuery);
+        String(item.city || "").toLowerCase().includes(normalizedQuery) ||
+        item.type.toLowerCase().includes(normalizedQuery) ||
+        String(item.ownerName || item.developer || item.builder || "").toLowerCase().includes(normalizedQuery) ||
+        String(item.status || item.propertyStatus || "").toLowerCase().includes(normalizedQuery);
       const matchesBeds = minBeds === "Any" || item.beds >= Number(minBeds);
       const price = parseCrores(item.price);
       const matchesPrice =
@@ -228,7 +233,7 @@ export default function PricingPage({ category, type, city: selectedCity, filter
                   <div>
                     <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">Price</div>
                 <div className="text-lg font-extrabold text-blue-600">
-                      {String(item.price).startsWith("₹") ? item.price : `₹${item.price}`}
+                      {formatINR(item.priceAmount || item.price)}
                     </div>
                   </div>
 

@@ -79,8 +79,8 @@ const Footer = () => {
         <div className="border-t border-slate-800 pt-6 sm:pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
           <p className="text-center sm:text-left">2026 Akshar Estate The Property HUB. All rights reserved.</p>
           <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-6">
-            <RouterLink to="/about" className="hover:text-white transition-colors">Privacy Policy</RouterLink>
-            <RouterLink to="/services" className="hover:text-white transition-colors">Terms of Service</RouterLink>
+            <RouterLink to="/privacy-policy" className="hover:text-white transition-colors">Privacy Policy</RouterLink>
+            <RouterLink to="/terms-of-service" className="hover:text-white transition-colors">Terms of Service</RouterLink>
             <RouterLink to="/contact" className="hover:text-white transition-colors">Contact</RouterLink>
           </div>
         </div>

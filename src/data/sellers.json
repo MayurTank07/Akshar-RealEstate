@@ -1,11 +1,9 @@
 {
   "menus": [
     {
-      "title": "Packages for",
+      "title": "Seller",
       "items": [
-        { "name": "Developers", "desc": "Launch or sell homes" },
-        { "name": "Brokers", "desc": "List and grow business" },
-        { "name": "Owners", "desc": "Sell or rent easily" }
+        { "name": "Owner", "desc": "Submit your property for verification" }
       ]
     }
   ]

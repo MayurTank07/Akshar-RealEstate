@@ -1,23 +1,38 @@
-import { Mail, MapPin, Phone } from "lucide-react";
+import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import useSiteContent from "../hooks/useSiteContent";
+import { defaultContactContent } from "../config/navigationContent";
 
 export default function Contact() {
+  const siteContent = useSiteContent();
+  const contact = { ...defaultContactContent, ...(siteContent.contactContent || {}) };
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <main className="wf-container grid min-h-[70vh] gap-8 pt-32 pb-16 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
         <section>
           <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blue-600">Contact</p>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">Let’s discuss your next property move.</h1>
-          <p className="mt-4 max-w-xl text-slate-600">Share your requirement and our team will help with verified options across Gujarat.</p>
+          <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">{contact.title}</h1>
+          <p className="mt-4 max-w-xl text-slate-600">{contact.subtitle}</p>
         </section>
         <section className="wf-card p-6 shadow-xl">
           <div className="grid gap-4">
-            <ContactItem icon={MapPin} label="Office" value="SG Highway, Ahmedabad, Gujarat 380054" />
-            <ContactItem icon={Phone} label="Phone" value="+91 1800-123-4567" />
-            <ContactItem icon={Mail} label="Email" value="info@aksharrealestate.com" />
+            <ContactItem icon={MapPin} label="Office" value={contact.address} />
+            <ContactItem icon={Phone} label="Phone" value={contact.phone} />
+            <ContactItem icon={MessageCircle} label="WhatsApp" value={contact.whatsapp} />
+            <ContactItem icon={Mail} label="Email" value={contact.email} />
+            <ContactItem icon={Clock} label="Office Timing" value={contact.officeTiming} />
           </div>
+          {(contact.mapEmbed || contact.mapLink) && (
+            <div className="mt-5 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
+              {contact.mapEmbed ? (
+                <iframe title="Akshar Estate office map" src={contact.mapEmbed} className="h-72 w-full" loading="lazy" />
+              ) : (
+                <a className="block p-5 text-sm font-bold text-blue-600" href={contact.mapLink} target="_blank" rel="noreferrer">Open location in Google Maps</a>
+              )}
+            </div>
+          )}
         </section>
       </main>
       <Footer />

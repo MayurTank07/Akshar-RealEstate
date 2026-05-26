@@ -5,7 +5,7 @@ import useSiteContent from "../hooks/useSiteContent";
 
 export default function Hero() {
   const navigate = useNavigate();
-  const { heroTitle, heroSubtitle } = useSiteContent();
+  const { heroTitle, heroSubtitle, heroImage, heroCtaText } = useSiteContent();
   const [activeTab, setActiveTab] = useState("Buy");
   const [query, setQuery] = useState("");
 
@@ -42,7 +42,7 @@ export default function Hero() {
   return (
     <section className="relative min-h-[760px] w-full overflow-hidden bg-slate-950 sm:min-h-[720px] lg:min-h-[760px]">
       <img
-        src="/house.jpg"
+        src={heroImage || "/house.jpg"}
         alt="Modern Akshar Estate The Property HUB home exterior"
         className="absolute inset-0 h-full w-full object-cover object-center"
       />
@@ -114,7 +114,7 @@ export default function Hero() {
               className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-blue-600 px-6 text-base font-extrabold text-white shadow-xl shadow-blue-600/25 transition duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-blue-600/35 active:translate-y-0 sm:h-14 sm:w-auto sm:min-w-40"
             >
               <Search size={20} />
-              Search
+              {heroCtaText || "Search"}
             </button>
           </div>
 

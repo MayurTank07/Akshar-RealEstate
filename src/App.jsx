@@ -11,8 +11,10 @@ import Register from "./pages/Register";
 import About from "./pages/About";
 import ServicesPage from "./pages/ServicesPage";
 import Contact from "./pages/Contact";
+import LegalPage from "./pages/LegalPage";
 import PropertiesPage from "./pages/Properties";
 import SavedProperties from "./pages/SavedProperties";
+import Profile from "./pages/Profile";
 import ScrollToTop from "./components/ScrollToTop";
 import SplashScreen from "./components/SplashScreen";
 import StaffLogin from "./pages/StaffLogin";
@@ -33,6 +35,7 @@ function App() {
             <Route path="/home" element={<HomeWest />} />
             <Route path="/properties" element={<PropertiesPage />} />
             <Route path="/saved" element={<SavedProperties />} />
+            <Route path="/profile/*" element={<Profile />} />
             <Route path="/property/:id" element={<PropertyDetails />} />
             <Route path="/purchase/:category/:slug" element={<Pricing />} />
             <Route path="/enquiry" element={<Enquiry />} />
@@ -50,6 +53,8 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/services" element={<ServicesPage />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />
+            <Route path="/terms-of-service" element={<LegalPage type="terms" />} />
           </Routes>
         </Router>
       </StaffAuthProvider>

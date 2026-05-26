@@ -4,6 +4,7 @@ import { ArrowRight, Bath, BedDouble, Heart, MapPin, Maximize2 } from "lucide-re
 import useAuth from "../contexts/useAuth";
 import fallbackProperties from "../data/properties.json";
 import { publicApi } from "../services/api";
+import { formatINR } from "../utils/currency";
 import { mergeProperties } from "../utils/propertyData";
 
 export default function Properties() {
@@ -204,7 +205,7 @@ function PropertyCard({ property }) {
           <div>
             <p className="text-xs font-semibold text-slate-400">Price</p>
             <p className="text-xl font-extrabold text-blue-600">
-            {property.price}
+              {formatINR(property.priceAmount || property.price)}
             </p>
           </div>
 

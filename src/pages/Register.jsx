@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import useAuth from "../contexts/useAuth";
-import { User, Mail, Phone, ArrowLeft } from "lucide-react";
+import { User, Mail, Phone, ArrowLeft, Lock } from "lucide-react";
+import { userApi } from "../services/api";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -16,32 +17,37 @@ export default function Register() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    phone: ""
+    phone: "",
+    password: "",
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = (e) => {
+  const handleRegister = async (e) => {
     e.preventDefault();
-
-    // Save user using AuthContext
-    login(form);
-
-    // Check if this registration is from a Call Now button click
-    if (fromCall) {
-      // Redirect back to property page with call intent
-      const redirectState = property ? { 
-        property: property,
-        fromCall: true,
-        triggerCall: true 
-      } : { fromCall: true, triggerCall: true };
-      
-      navigate(redirectTo, { state: redirectState });
-    } else {
-      // Normal registration flow
-      navigate(redirectTo, { state: redirectState || { enquiry: true } });
+    setLoading(true);
+    setError("");
+    try {
+      const response = await userApi.register(form);
+      login(response.user, response.token);
+      if (fromCall) {
+        const nextState = property ? {
+          property,
+          fromCall: true,
+          triggerCall: true,
+        } : { fromCall: true, triggerCall: true };
+        navigate(redirectTo, { state: nextState });
+      } else {
+        navigate(redirectTo, { state: redirectState || { enquiry: true } });
+      }
+    } catch (err) {
+      setError(err.message || "Unable to create account.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,6 +72,11 @@ export default function Register() {
         </p>
 
         <form onSubmit={handleRegister} className="space-y-6">
+          {error && (
+            <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+              {error}
+            </div>
+          )}
           
           {/* Name */}
           <div>
@@ -130,9 +141,29 @@ export default function Register() {
             </div>
           </div>
 
+          <div>
+            <label className="wf-label">
+              Password
+            </label>
+
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <input
+                type="password"
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                required
+                minLength={8}
+                placeholder="Create a secure password"
+                className="wf-input bg-slate-50 pl-10 pr-4"
+              />
+            </div>
+          </div>
+
           {/* Submit Button */}
-          <button type="submit" className="wf-btn wf-btn-primary w-full">
-            Create Account
+          <button type="submit" disabled={loading} className="wf-btn wf-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-70">
+            {loading ? "Creating account..." : "Create Account"}
           </button>
         </form>
 

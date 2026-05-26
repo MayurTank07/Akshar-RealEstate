@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Bookmark, ChevronDown, Home, Menu, Search, SlidersHorizontal } from "lucide-react";
+import { Bookmark, ChevronDown, Home, Menu, Search, SlidersHorizontal, X } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import SavedBadge from "./SavedBadge";
 import useAuth from "../contexts/useAuth";
+import useSiteContent from "../hooks/useSiteContent";
+import { cityOptionsFromAreas } from "../config/navigationContent";
 
 const categories = ["Buy", "Rent"];
-const cities = ["All", "Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Anand", "Bharuch"];
 
 export default function PricingNavbar({
   searchType = "Buy",
@@ -18,7 +19,9 @@ export default function PricingNavbar({
   onToggleFilters,
 }) {
   const navigate = useNavigate();
-  const { savedProperties } = useAuth();
+  const { isAuthenticated, savedProperties } = useAuth();
+  const siteContent = useSiteContent();
+  const cities = cityOptionsFromAreas(siteContent.navbarAreas);
   const savedCount = savedProperties.length;
   const [openMenu, setOpenMenu] = useState(null);
   const toggleMenu = (menu) => setOpenMenu((current) => (current === menu ? null : menu));
@@ -104,7 +107,15 @@ export default function PricingNavbar({
               placeholder="Search project, locality, builder"
               value={query}
               onChange={(event) => onQueryChange?.(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") onQueryChange?.("");
+              }}
             />
+            {query && (
+              <button type="button" onClick={() => onQueryChange?.("")} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Clear search">
+                <X size={16} />
+              </button>
+            )}
             <button
               type="button"
               onClick={onToggleFilters}
@@ -121,22 +132,26 @@ export default function PricingNavbar({
             <Home size={16} />
             Home
           </button>
-          <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
-            <Bookmark size={16} />
-            Saved
-            <SavedBadge count={savedCount} />
-          </button>
+          {isAuthenticated && (
+            <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
+              <Bookmark size={16} />
+              Saved
+              <SavedBadge count={savedCount} />
+            </button>
+          )}
         </div>
         <div className="flex items-center gap-2 lg:hidden">
           <button type="button" onClick={() => navigate("/")} className="wf-btn wf-btn-secondary flex-1">
             <Home size={16} />
             Home
           </button>
-          <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary flex-1">
-            <Bookmark size={16} />
-            Saved
-            <SavedBadge count={savedCount} />
-          </button>
+          {isAuthenticated && (
+            <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary flex-1">
+              <Bookmark size={16} />
+              Saved
+              <SavedBadge count={savedCount} />
+            </button>
+          )}
         </div>
       </div>
     </header>

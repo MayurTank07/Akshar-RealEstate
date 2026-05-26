@@ -1,4 +1,5 @@
 import { CheckCircle2, Mail, Phone, Calendar } from 'lucide-react';
+import { formatINR } from '../utils/currency';
 
 export default function PropertyAmenities({ property }) {
   const fallbackAmenities = [
@@ -11,7 +12,7 @@ export default function PropertyAmenities({ property }) {
   const features = property?.features || [];
   const facilities = property?.facilities || [];
   const phone = property?.contact?.phone || "+911234567890";
-  const price = property?.price ? `₹${String(property.price).replace(/^₹/, "")}` : "₹8.5 Cr";
+  const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "₹8.5 Cr";
   const measurement = property?.measurement;
   const unit = measurement?.unit === "custom" ? measurement?.customUnit : measurement?.unit;
   const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "");

@@ -3,10 +3,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import useAuth from "../contexts/useAuth";
 import { findCredential } from "../data/authUsers";
+import { userApi } from "../services/api";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -18,26 +21,31 @@ export default function LoginPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const matchedCredential = findCredential(form.email, form.password);
-    const userData = matchedCredential
-      ? {
+    setLoading(true);
+    setError("");
+    try {
+      const matchedCredential = findCredential(form.email, form.password);
+      if (matchedCredential) {
+        const nextPath = redirectTo === "/" ? matchedCredential.dashboardPath : redirectTo;
+        login({
           email: matchedCredential.email,
           name: matchedCredential.name,
           role: matchedCredential.role,
-        }
-      : {
-          email: form.email,
-          name: form.email.split("@")[0] || "Akshar Estate The Property HUB User",
-          role: "user",
-        };
+        });
+        navigate(nextPath, { replace: true, state: redirectState });
+        return;
+      }
 
-    const nextPath = matchedCredential && redirectTo === "/" ? matchedCredential.dashboardPath : redirectTo;
-    login({
-      ...userData,
-    });
-    navigate(nextPath, { replace: true, state: redirectState });
+      const response = await userApi.login(form);
+      login(response.user, response.token);
+      navigate(redirectTo, { replace: true, state: redirectState });
+    } catch (err) {
+      setError(err.message || "Unable to sign in. Please check your details.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,6 +69,11 @@ export default function LoginPage() {
         {message && (
           <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700">
             {message}
+          </div>
+        )}
+        {error && (
+          <div className="mb-6 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+            {error}
           </div>
         )}
 
@@ -124,8 +137,8 @@ export default function LoginPage() {
             </a>
           </div>
 
-          <button type="submit" className="wf-btn wf-btn-primary w-full">
-            Sign In
+          <button type="submit" disabled={loading} className="wf-btn wf-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-70">
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
 

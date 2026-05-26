@@ -4,11 +4,13 @@ import useAuth from "../contexts/useAuth";
 import EnquiryModal from "./EnquiryModal";
 import BrandLogo from "./BrandLogo";
 import SavedBadge from "./SavedBadge";
-import { Bookmark, ChevronDown, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Bookmark, ChevronDown, LogIn, LogOut, Menu, User, X } from "lucide-react";
 
 import buyersData from "../data/buyers.json";
 import sellersData from "../data/sellers.json";
 import rentalsData from "../data/rentals.json";
+import useSiteContent from "../hooks/useSiteContent";
+import { buildDynamicMenus } from "../config/navigationContent";
 import { pricingPathFor, pricingStateFromLabel } from "../utils/propertyRouting";
 
 export default function Navbar() {
@@ -20,12 +22,13 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { isAuthenticated, logout, savedProperties } = useAuth();
+  const siteContent = useSiteContent();
   const savedCount = savedProperties.length;
 
   const dataMap = {
-    buyers: buyersData,
+    buyers: { ...buyersData, menus: buildDynamicMenus(siteContent, "sale") },
     sellers: sellersData,
-    rentals: rentalsData,
+    rentals: { ...rentalsData, menus: buildDynamicMenus(siteContent, "rent") },
   };
 
   const navItems = [
@@ -53,22 +56,57 @@ export default function Navbar() {
       return;
     }
 
-    if (key === "sellers" && !isAuthenticated) {
-      navigate("/login");
-      return;
-    }
-
     setActiveMenu(activeMenu === key ? null : key);
   };
 
-  const getTargetPath = (navKey, label) => {
+  const getTargetPath = (navKey, itemOrLabel) => {
+    const isObj = typeof itemOrLabel === "object" && itemOrLabel;
+    if (isObj && itemOrLabel.kind === "view-more") return itemOrLabel.link || "/properties";
+    if (isObj && itemOrLabel.slug && ["city", "custom-link"].includes(itemOrLabel.kind)) {
+      return itemOrLabel.slug.startsWith("/") ? itemOrLabel.slug : `/${itemOrLabel.slug.replace(/^\/+/, "")}`;
+    }
+    if (isObj && itemOrLabel.slug?.startsWith("/")) return itemOrLabel.slug;
+    const label = isObj ? itemOrLabel.name || itemOrLabel.title || "" : itemOrLabel;
     const slug = label.toLowerCase().replace(/\s+/g, "-");
     return navKey === "buyers" || navKey === "rentals"
       ? pricingPathFor(label, navKey)
       : `/${slug}`;
   };
 
-  const handleDropdownClick = (event, navKey, label) => {
+  const handleDropdownClick = (event, navKey, itemOrLabel) => {
+    const isObj = typeof itemOrLabel === "object" && itemOrLabel;
+    if (isObj && itemOrLabel.kind === "view-more") {
+      event.preventDefault();
+      navigate(itemOrLabel.link || "/properties");
+      setActiveMenu(null);
+      setMobileMenuOpen(false);
+      return;
+    }
+    if (isObj && itemOrLabel.slug && ["city", "custom-link"].includes(itemOrLabel.kind)) {
+      setActiveMenu(null);
+      setMobileMenuOpen(false);
+      return;
+    }
+    const label = isObj ? itemOrLabel.name || itemOrLabel.title || "" : itemOrLabel;
+    if (navKey === "sellers" && label.toLowerCase().includes("owner")) {
+      event.preventDefault();
+      const target = "/profile";
+      const state = { action: "add" };
+      setActiveMenu(null);
+      setMobileMenuOpen(false);
+      if (!isAuthenticated) {
+        navigate("/login", {
+          state: {
+            redirectTo: target,
+            redirectState: state,
+            message: "Please login or register to submit your owner property.",
+          },
+        });
+      } else {
+        navigate(target, { state });
+      }
+      return;
+    }
     if (navKey === "buyers" || navKey === "rentals") {
       event.preventDefault();
       navigate("/pricing", {
@@ -100,15 +138,17 @@ export default function Navbar() {
               </h3>
               <ul className="space-y-1.5">
                 {section.items.map((item) => {
-                  const isObj = typeof item === "object";
-                  const label = isObj ? item.name : item;
+                  const isObj = typeof item === "object" && item;
+                  const label = isObj ? item.name || item.title : item;
 
                   return (
                     <li key={label}>
                       <Link
-                        to={getTargetPath(nav.key, label)}
-                        onClick={(event) => handleDropdownClick(event, nav.key, label)}
-                        className="block rounded-lg px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                        to={getTargetPath(nav.key, item)}
+                        onClick={(event) => handleDropdownClick(event, nav.key, item)}
+                        className={`block rounded-lg px-3 py-2 text-sm font-semibold transition hover:bg-blue-50 hover:text-blue-700 ${
+                          isObj && item.kind === "view-more" ? "border border-blue-100 bg-blue-50 text-blue-700" : "text-slate-700"
+                        }`}
                       >
                         <span>{label}</span>
                         {isObj && item.desc && (
@@ -170,11 +210,13 @@ export default function Navbar() {
               Enquiry
             </button>
 
-            <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
-              <Bookmark size={16} />
-              Saved
-              <SavedBadge count={savedCount} />
-            </button>
+            {isAuthenticated && (
+              <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
+                <Bookmark size={16} />
+                Saved
+                <SavedBadge count={savedCount} />
+              </button>
+            )}
 
             {!isAuthenticated ? (
               <button type="button" onClick={() => navigate("/login")} className="wf-btn wf-btn-secondary">
@@ -182,10 +224,16 @@ export default function Navbar() {
                 Login
               </button>
             ) : (
-              <button type="button" onClick={logout} className="wf-btn wf-btn-secondary">
-                <LogOut size={16} />
-                Logout
-              </button>
+              <>
+                <button type="button" onClick={() => navigate("/profile")} className="wf-btn wf-btn-secondary">
+                  <User size={16} />
+                  Profile
+                </button>
+                <button type="button" onClick={logout} className="wf-btn wf-btn-secondary">
+                  <LogOut size={16} />
+                  Logout
+                </button>
+              </>
             )}
 
           </div>
@@ -254,21 +302,29 @@ export default function Navbar() {
               <button type="button" onClick={() => { setMobileMenuOpen(false); setShowEnquiryModal(true); }} className="wf-btn wf-btn-primary w-full">
                 Enquiry
               </button>
-              <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary w-full">
-                <Bookmark size={16} />
-                Saved
-                <SavedBadge count={savedCount} />
-              </button>
+              {isAuthenticated && (
+                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate("/saved"); }} className="wf-btn wf-btn-secondary w-full">
+                  <Bookmark size={16} />
+                  Saved
+                  <SavedBadge count={savedCount} />
+                </button>
+              )}
               {!isAuthenticated ? (
                 <button type="button" onClick={() => navigate("/login")} className="wf-btn wf-btn-secondary w-full">
                   <LogIn size={16} />
                   Login
                 </button>
               ) : (
-                <button type="button" onClick={logout} className="wf-btn wf-btn-secondary w-full">
-                  <LogOut size={16} />
-                  Logout
-                </button>
+                <>
+                  <button type="button" onClick={() => { setMobileMenuOpen(false); navigate("/profile"); }} className="wf-btn wf-btn-secondary w-full">
+                    <User size={16} />
+                    Profile
+                  </button>
+                  <button type="button" onClick={logout} className="wf-btn wf-btn-secondary w-full">
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </>
               )}
             </div>
           </aside>

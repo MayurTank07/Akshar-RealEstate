@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, Bath, BedDouble, Heart, MapPin, Maximize2 } from
 import useAuth from "../contexts/useAuth";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { formatINR } from "../utils/currency";
 
 export default function SavedProperties() {
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ export default function SavedProperties() {
 function SavedPropertyCard({ property, onUnsave }) {
   const detailsPath = property.source === "pricing" ? "/property-detail" : `/property/${property._id || property.id}`;
   const area = property.sqft ? `${property.sqft} sq.ft` : property.area;
-  const price = property.price?.startsWith("₹") ? property.price : `₹${property.price}`;
+  const price = formatINR(property.priceAmount || property.price);
   const removeSaved = () => {
     onUnsave(property);
   };
