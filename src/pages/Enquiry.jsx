@@ -104,8 +104,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
     try {
       await publicApi.createEnquiry(enquiryPayload);
       setIsSubmitted(true);
-    } catch (error) {
-      console.error("Enquiry submission failed:", error);
+    } catch {
       setErrors({ submit: "We could not submit your enquiry. Please try again." });
     }
   };

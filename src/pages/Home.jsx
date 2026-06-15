@@ -19,10 +19,10 @@ export default function Home() {
       <Navbar />
       <main className="home-motion">
         <Hero />
+        <Properties />
         <WhatWeDo/>
         <PropertyTypes />
         <Services/>
-        <Properties />
         <Videos/>
         <Agents/>
         <Testimonials/>

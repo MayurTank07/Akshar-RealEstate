@@ -31,3 +31,14 @@ export function moneyInputValue(value) {
   const amount = parseINRAmount(value);
   return amount ? String(amount) : "";
 }
+
+export function formatINRForInput(rawDigits) {
+  if (!rawDigits && rawDigits !== 0) return "";
+  const num = Number(String(rawDigits).replace(/[^\d]/g, "")) || 0;
+  if (!num) return "";
+  return new Intl.NumberFormat("en-IN").format(num);
+}
+
+export function stripINRFormatting(displayValue) {
+  return String(displayValue || "").replace(/[^\d]/g, "");
+}

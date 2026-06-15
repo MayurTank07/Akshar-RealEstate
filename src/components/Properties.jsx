@@ -21,13 +21,16 @@ export default function Properties() {
       .catch(() => setProperties(fallbackProperties));
   }, []);
 
+  const recentlyAdded = [...properties]
+    .filter((property) => String(property.status || "active").toLowerCase() === "active")
+    .sort((a, b) => {
+      const aTime = new Date(a.createdAt || a.updatedAt || 0).getTime();
+      const bTime = new Date(b.createdAt || b.updatedAt || 0).getTime();
+      return bTime - aTime;
+    })
+    .slice(0, 8);
+
   const sections = [
-    {
-      title: "Recently Added",
-      eyebrow: "New in Gujarat",
-      description: "Fresh listings added for active buyers this week.",
-      items: properties.filter((property) => property.tag === "New"),
-    },
     {
       title: "Featured Properties",
       eyebrow: "Curated picks",
@@ -45,6 +48,17 @@ export default function Properties() {
   return (
     <section id="properties" className="overflow-hidden bg-slate-50 py-12 sm:py-16">
       <div className="wf-container">
+        <div className="mb-12">
+          <PropertyRail
+            section={{
+              title: "Recently Added Properties",
+              eyebrow: "Latest listings",
+              description: "Explore the newest active properties added to Akshar Estate The Property HUB.",
+              items: recentlyAdded,
+            }}
+          />
+        </div>
+
         <div className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-3xl">
             <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blue-600">

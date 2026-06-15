@@ -1,13 +1,18 @@
 import { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   MapPin, Phone, ChevronRight, ShieldCheck
 } from 'lucide-react';
 
 import Navbar from '../components/PricingNavbar';
 import { formatINR } from '../utils/currency';
+import useAuth from '../contexts/useAuth';
 
 const PropertyDetails = ({ property }) => {
   const [selectedImage, setSelectedImage] = useState(0);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const fallbackImages = [
     "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1000",
@@ -23,7 +28,13 @@ const PropertyDetails = ({ property }) => {
   const galleryImages = images.length ? images : fallbackImages;
 
   const handleCall = () => {
-    const phoneNumber = property?.contact?.phone || "+911234567890";
+    if (!isAuthenticated) {
+      navigate("/register", {
+        state: { redirectTo: `${location.pathname}${location.search}`, fromCall: true, property },
+      });
+      return;
+    }
+    const phoneNumber = property?.broker?.phone || "+9118001234567";
     window.location.href = `tel:${phoneNumber.replace(/\s/g, "")}`;
   };
 

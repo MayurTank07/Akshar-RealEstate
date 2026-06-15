@@ -1,4 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://akshar-realestate-backend.onrender.com/api";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "http://127.0.0.1:5001/api" : "/api");
 
 function toQueryString(params = {}) {
   const searchParams = new URLSearchParams();
@@ -59,8 +61,9 @@ async function request(path, options = {}) {
 }
 
 export const publicApi = {
-  properties: () => request("/public/properties", { token: null }),
+  properties: (params = {}) => request(`/public/properties${typeof params === "string" ? params : toQueryString(params)}`, { token: null }),
   property: (id) => request(`/public/properties/${id}`, { token: null }),
+  propertyOptions: () => request("/public/property-options", { token: null }),
   createEnquiry: (payload) => request("/public/enquiries", { method: "POST", body: JSON.stringify(payload), token: null }),
   content: () => request("/public/content", { token: null }),
 };
@@ -68,6 +71,7 @@ export const publicApi = {
 export const userApi = {
   register: (payload) => request("/auth/user/register", { method: "POST", body: JSON.stringify(payload), token: null }),
   login: (payload) => request("/auth/user/login", { method: "POST", body: JSON.stringify(payload), token: null }),
+  google: (payload) => request("/auth/user/google", { method: "POST", body: JSON.stringify(payload), token: null }),
   me: () => request("/auth/user/me", { authRequired: true, token: getUserToken() }),
   logout: () => request("/auth/user/logout", { method: "POST", body: JSON.stringify({}), authRequired: true, token: getUserToken() }),
   wishlist: () => request("/auth/user/wishlist", { authRequired: true, token: getUserToken() }),
@@ -79,10 +83,18 @@ export const ownerApi = {
   list: () => request("/public/owner/properties", { authRequired: true, token: getUserToken() }),
   create: (payload) => request("/public/owner/properties", { method: "POST", body: JSON.stringify(payload), authRequired: true, token: getUserToken() }),
   update: (id, payload) => request(`/public/owner/properties/${id}`, { method: "PUT", body: JSON.stringify(payload), authRequired: true, token: getUserToken() }),
+  deletePending: (id) => request(`/public/owner/properties/${id}`, { method: "DELETE", authRequired: true, token: getUserToken() }),
+  requestDelete: (id, reason) => request(`/public/owner/properties/${id}/delete-request`, { method: "POST", body: JSON.stringify({ reason }), authRequired: true, token: getUserToken() }),
   upload: (files) => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
     return request("/public/owner/uploads", { method: "POST", body: formData, authRequired: true, token: getUserToken() });
+  },
+  uploadProof: (files, documentType) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("files", file));
+    formData.append("documentType", documentType);
+    return request("/public/owner/proofs", { method: "POST", body: formData, authRequired: true, token: getUserToken() });
   },
 };
 
@@ -97,12 +109,20 @@ export const staffApi = {
     formData.append("avatar", file);
     return request("/auth/me/avatar", { method: "POST", body: formData, authRequired: true });
   },
+  uploadCover: (file) => {
+    const formData = new FormData();
+    formData.append("cover", file);
+    return request("/auth/me/cover", { method: "POST", body: formData, authRequired: true });
+  },
+  removeCover: () => request("/auth/me/cover", { method: "DELETE", authRequired: true }),
   dashboard: () => request("/admin/dashboard", { authRequired: true }),
   analytics: (query = "") => request(`/admin/analytics${typeof query === "string" ? query : toQueryString(query)}`, { authRequired: true }),
   notifications: () => request("/admin/notifications", { authRequired: true }),
   markNotificationRead: (id) => request(`/admin/notifications/${id}/read`, { method: "PUT", body: JSON.stringify({}), authRequired: true }),
   markAllNotificationsRead: () => request("/admin/notifications/read-all", { method: "PUT", body: JSON.stringify({}), authRequired: true }),
   properties: (query = "") => request(`/admin/properties${query}`, { authRequired: true }),
+  propertyOptions: () => request("/admin/property-options", { authRequired: true }),
+  createPropertyOption: (payload) => request("/admin/property-options", { method: "POST", body: JSON.stringify(payload), authRequired: true }),
   nextPropertyCode: (params = {}) => request(`/admin/properties/next-code${toQueryString(params)}`, { authRequired: true }),
   checkPropertyCode: (propertyCode, params = {}) => request(`/admin/properties/code/${encodeURIComponent(propertyCode)}/available${toQueryString(params)}`, { authRequired: true }),
   createProperty: (payload) => request("/admin/properties", { method: "POST", body: JSON.stringify(payload), authRequired: true }),
@@ -119,9 +139,21 @@ export const staffApi = {
   staff: () => request("/admin/staff", { authRequired: true }),
   createStaff: (payload) => request("/admin/staff", { method: "POST", body: JSON.stringify(payload), authRequired: true }),
   updateStaff: (id, payload) => request(`/admin/staff/${id}`, { method: "PUT", body: JSON.stringify(payload), authRequired: true }),
+  uploadStaffCover: (id, file) => {
+    const formData = new FormData();
+    formData.append("cover", file);
+    return request(`/admin/staff/${id}/cover`, { method: "POST", body: formData, authRequired: true });
+  },
+  removeStaffCover: (id) => request(`/admin/staff/${id}/cover`, { method: "DELETE", authRequired: true }),
   deleteStaff: (id) => request(`/admin/staff/${id}`, { method: "DELETE", authRequired: true }),
   owners: (query = "") => request(`/admin/owners${typeof query === "string" ? query : toQueryString(query)}`, { authRequired: true }),
+  updateOwnerContent: (id, payload) => request(`/admin/owners/${id}`, { method: "PUT", body: JSON.stringify(payload), authRequired: true }),
   updateOwnerStatus: (id, payload) => request(`/admin/owners/${id}/status`, { method: "PUT", body: JSON.stringify(typeof payload === "string" ? { status: payload } : payload), authRequired: true }),
+  reviewOwnerDelete: (id, payload) => request(`/admin/owners/${id}/delete`, { method: "PUT", body: JSON.stringify(payload), authRequired: true }),
+  users: (query = "") => request(`/admin/users${typeof query === "string" ? query : toQueryString(query)}`, { authRequired: true }),
+  userStats: () => request("/admin/users/stats", { authRequired: true }),
+  updateUserStatus: (id, status) => request(`/admin/users/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }), authRequired: true }),
+  usersExportUrl: (format, params = {}) => `${API_BASE_URL}/admin/users/export${toQueryString({ ...params, format })}`,
   updateContent: (id, value) => request(`/admin/content/${id}`, { method: "PUT", body: JSON.stringify({ value }), authRequired: true }),
   soldRentedReport: (query = "") => request(`/admin/reports/sold-rented${typeof query === "string" ? query : toQueryString(query)}`, { authRequired: true }),
   reportUrl: (type, range, format = "csv", params = {}) => `${API_BASE_URL}/admin/reports/export${toQueryString({ ...params, type, range, format })}`,

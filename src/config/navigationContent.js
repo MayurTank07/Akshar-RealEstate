@@ -63,6 +63,13 @@ export const defaultContactContent = {
   email: "info@aksharrealestate.com",
   address: "SG Highway, Ahmedabad, Gujarat 380054",
   whatsapp: "+91 98765 43210",
+  whatsappSettings: {
+    enabled: true,
+    phone: "+91 98765 43210",
+    message: "Hello Akshar Estate : The Property Hub, I would like to make an enquiry about your property services. Please share more details.",
+    position: "bottom-right",
+    displayOn: "all",
+  },
   officeTiming: "Mon - Sat, 10:00 AM to 7:00 PM",
   mapEmbed: "",
   mapLink: "",
@@ -129,7 +136,7 @@ export function navbarAreasForMode(areas = defaultNavbarAreas, mode = "sale", { 
   const visible = normalized.slice(0, limit);
   if (includeViewMore && normalized.length > limit) {
     visible.push({
-      name: "View More",
+      name: "View All Properties",
       desc: "Explore all Ahmedabad areas and available properties",
       link: "/properties",
       kind: "view-more",

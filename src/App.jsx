@@ -17,6 +17,7 @@ import SavedProperties from "./pages/SavedProperties";
 import Profile from "./pages/Profile";
 import ScrollToTop from "./components/ScrollToTop";
 import SplashScreen from "./components/SplashScreen";
+import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton";
 import StaffLogin from "./pages/StaffLogin";
 import AdminWorkspace from "./pages/AdminWorkspace";
 import ProtectedStaffRoute from "./components/staff/ProtectedStaffRoute";
@@ -56,6 +57,7 @@ function App() {
             <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />
             <Route path="/terms-of-service" element={<LegalPage type="terms" />} />
           </Routes>
+          <FloatingWhatsAppButton />
         </Router>
       </StaffAuthProvider>
     </AuthProvider>

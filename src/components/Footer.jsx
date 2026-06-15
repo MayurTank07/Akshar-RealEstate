@@ -4,6 +4,14 @@ import BrandLogo from './BrandLogo';
 import { pricingPathFor, pricingStateFromLabel } from '../utils/propertyRouting';
 
 const Footer = () => {
+  const footerActions = [
+    { icon: Share2, label: 'Enquiry', to: '/enquiry' },
+    { icon: Globe, label: 'Properties', to: '/properties' },
+    { icon: Users, label: 'About Us', to: '/about' },
+    { icon: Link, label: 'Contact', to: '/contact' },
+    { icon: ExternalLink, label: 'Services', to: '/services' },
+  ];
+
   return (
     <footer className="bg-[#0a0f1c] text-gray-400 py-8 sm:py-12 px-4 sm:px-6 lg:px-16 font-sans">
       <div className="max-w-7xl mx-auto">
@@ -19,14 +27,15 @@ const Footer = () => {
             </p>
 
             <div className="flex space-x-3">
-              {[Share2, Globe, Users, Link, ExternalLink].map((Icon, index) => (
-                <a 
-                  key={index} 
-                  href="#" 
+              {footerActions.map(({ icon: Icon, label, to }) => (
+                <RouterLink
+                  key={label}
+                  to={to}
+                  aria-label={label}
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 transition-colors duration-300"
                 >
                   <Icon size={14} className="sm:size-[18px] text-gray-300 hover:text-white" />
-                </a>
+                </RouterLink>
               ))}
             </div>
           </div>

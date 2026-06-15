@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import AuthContext from './AuthContextCore';
 import { userApi } from '../services/api';
+import { sanitizePublicProperty } from '../utils/propertyData';
 
 function getStoredUser() {
   const storedUser = localStorage.getItem('user');
@@ -19,7 +20,7 @@ function getStoredSavedProperties() {
   if (!storedSaved) return [];
 
   try {
-    return JSON.parse(storedSaved);
+    return JSON.parse(storedSaved).map(sanitizePublicProperty);
   } catch {
     localStorage.removeItem('savedProperties');
     return [];
@@ -35,7 +36,11 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => getStoredUser());
   const [token, setToken] = useState(() => localStorage.getItem('userToken') || "");
   const [guestLoggedIn, setGuestLoggedIn] = useState(() => localStorage.getItem('guestLoggedIn') === 'true');
-  const [savedProperties, setSavedProperties] = useState(() => getStoredSavedProperties());
+  const [savedProperties, setSavedProperties] = useState(() => (
+    localStorage.getItem('isAuthenticated') === 'true' && localStorage.getItem('userToken')
+      ? getStoredSavedProperties()
+      : []
+  ));
   const [wishlistToast, setWishlistToast] = useState(null);
 
   useEffect(() => {
@@ -48,7 +53,7 @@ export function AuthProvider({ children }) {
     setIsAuthenticated(true);
     setUser(userData);
     setToken(authToken);
-    const backendSaved = Array.isArray(userData?.savedProperties) ? userData.savedProperties : [];
+    const backendSaved = Array.isArray(userData?.savedProperties) ? userData.savedProperties.map(sanitizePublicProperty) : [];
     setSavedProperties(backendSaved);
     localStorage.setItem('isAuthenticated', 'true');
     localStorage.setItem('user', JSON.stringify(userData));
@@ -84,7 +89,6 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
-      setSavedProperties([]);
       localStorage.removeItem('savedProperties');
       return undefined;
     }
@@ -94,7 +98,7 @@ export function AuthProvider({ children }) {
       .wishlist()
       .then((response) => {
         if (!active) return;
-        const nextSaved = response.data || [];
+        const nextSaved = (response.data || []).map(sanitizePublicProperty);
         setSavedProperties(nextSaved);
         localStorage.setItem('savedProperties', JSON.stringify(nextSaved));
       })
@@ -116,8 +120,8 @@ export function AuthProvider({ children }) {
     try {
       const response = exists
         ? await userApi.removeWishlist(key)
-        : await userApi.saveWishlist({ ...property, source: property.source || 'property' });
-      const nextSaved = response.data || [];
+        : await userApi.saveWishlist({ ...sanitizePublicProperty(property), source: property.source || 'property' });
+      const nextSaved = (response.data || []).map(sanitizePublicProperty);
       setSavedProperties(nextSaved);
       localStorage.setItem('savedProperties', JSON.stringify(nextSaved));
       setWishlistToast({

@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import useAuth from "../contexts/useAuth";
 import { findCredential } from "../data/authUsers";
 import { userApi } from "../services/api";
+import GoogleAuthButton from "../components/GoogleAuthButton";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -48,6 +49,13 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleCredential = useCallback(async (credential) => {
+    setError("");
+    const response = await userApi.google({ credential });
+    login(response.user, response.token);
+    navigate(redirectTo, { replace: true, state: redirectState });
+  }, [login, navigate, redirectState, redirectTo]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-24">
       <button
@@ -77,11 +85,19 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Primary: Google Sign-In */}
+        <GoogleAuthButton onCredential={handleGoogleCredential} disabled={loading} label="Continue with Google" />
+
+        <div className="my-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-slate-200" />
+          <span className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-400">or sign in with email</span>
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        {/* Secondary: Email / Password form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="wf-label">
-              Email Address
-            </label>
+            <label className="wf-label">Email Address</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input
@@ -97,9 +113,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="wf-label">
-              Password
-            </label>
+            <label className="wf-label">Password</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input
@@ -129,12 +143,13 @@ export default function LoginPage() {
               />
               <span>Remember me</span>
             </label>
-            <a
-              href="#"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+            <button
+              type="button"
+              onClick={() => navigate("/contact")}
+              className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
             >
               Forgot Password?
-            </a>
+            </button>
           </div>
 
           <button type="submit" disabled={loading} className="wf-btn wf-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-70">
@@ -142,7 +157,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-sm text-center text-slate-500 mt-8">
+        <p className="mt-8 text-center text-sm text-slate-500">
           Don't have an account?{" "}
           <button type="button" onClick={() => navigate("/register", { state: { redirectTo, redirectState } })} className="font-bold text-blue-600 transition-colors hover:text-blue-700">
             Sign up

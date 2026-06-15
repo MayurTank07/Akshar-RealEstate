@@ -62,9 +62,8 @@ export default function GuestForm({ onClose, onContinue }) {
         
         onContinue(formData);
         onClose();
-      } catch (error) {
-        console.error('Submission error:', error);
-        // Handle submission error if needed
+      } catch {
+        setErrors({ submit: 'Unable to continue right now. Please try again.' });
       } finally {
         setIsSubmitting(false);
       }
@@ -149,6 +148,7 @@ export default function GuestForm({ onClose, onContinue }) {
               <p className="text-red-500 text-sm mt-1">{errors.email}</p>
             )}
           </div>
+          {errors.submit && <p className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-600">{errors.submit}</p>}
 
           <div className="flex flex-col gap-3 pt-4 sm:flex-row">
             <button

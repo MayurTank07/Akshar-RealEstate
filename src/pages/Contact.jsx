@@ -3,10 +3,12 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import useSiteContent from "../hooks/useSiteContent";
 import { defaultContactContent } from "../config/navigationContent";
+import { DEFAULT_WHATSAPP_MESSAGE, generateWhatsAppLink } from "../utils/whatsapp";
 
 export default function Contact() {
   const siteContent = useSiteContent();
   const contact = { ...defaultContactContent, ...(siteContent.contactContent || {}) };
+  const whatsappLink = generateWhatsAppLink(contact.whatsapp || import.meta.env.VITE_WHATSAPP_NUMBER, DEFAULT_WHATSAPP_MESSAGE);
   return (
     <div className="min-h-screen bg-slate-50">
       <Navbar />
@@ -24,6 +26,17 @@ export default function Contact() {
             <ContactItem icon={Mail} label="Email" value={contact.email} />
             <ContactItem icon={Clock} label="Office Timing" value={contact.officeTiming} />
           </div>
+          {whatsappLink && (
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-600"
+            >
+              <MessageCircle size={18} />
+              Chat with us on WhatsApp
+            </a>
+          )}
           {(contact.mapEmbed || contact.mapLink) && (
             <div className="mt-5 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
               {contact.mapEmbed ? (

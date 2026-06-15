@@ -4,7 +4,60 @@ export function getPropertyCity(property) {
   return parts[parts.length - 1]?.trim() || "";
 }
 
+const PUBLIC_PRIVATE_FIELDS = [
+  "ownerName",
+  "contact",
+  "dealCustomerName",
+  "dealCustomerPhone",
+  "dealCustomerEmail",
+  "dealCustomerAddress",
+  "dealDate",
+  "dealSource",
+  "dealEnquiryId",
+  "finalPrice",
+  "finalPriceAmount",
+  "commission",
+  "commissionAmount",
+  "paymentDetails",
+  "statusRemarks",
+  "ownerUserId",
+  "ownerRequestId",
+  "assignedTo",
+  "createdBy",
+  "updatedBy",
+  "statusUpdatedBy",
+];
+
+export function sanitizePublicProperty(property) {
+  if (!property || typeof property !== "object") return property;
+  const safe = { ...property };
+  PUBLIC_PRIVATE_FIELDS.forEach((field) => delete safe[field]);
+  const map = property.map || {};
+  return {
+    ...safe,
+    map: {
+      area: map.area || property.location || "",
+      city: map.city || property.city || "",
+      state: map.state || "",
+    },
+    broker: property.broker && typeof property.broker === "object"
+      ? {
+          name: property.broker.name || "Akshar Estate Expert",
+          phone: property.broker.phone || "+91 1800-123-4567",
+          designation: property.broker.designation || "Real Estate Expert",
+          avatar: property.broker.avatar || "",
+        }
+      : {
+          name: "Akshar Estate Expert",
+          phone: "+91 1800-123-4567",
+          designation: "Real Estate Expert",
+          avatar: "",
+        },
+  };
+}
+
 export function normalizeProperty(property, source = "pricing") {
+  property = sanitizePublicProperty(property);
   const city = getPropertyCity(property);
   return {
     ...property,

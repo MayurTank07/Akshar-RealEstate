@@ -1,7 +1,14 @@
-import { CheckCircle2, Mail, Phone, Calendar } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { CheckCircle2, Mail, MessageCircle, Phone, Calendar } from 'lucide-react';
 import { formatINR } from '../utils/currency';
+import useAuth from '../contexts/useAuth';
 
-export default function PropertyAmenities({ property }) {
+export default function PropertyAmenities({ property, whatsappLink }) {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const autoActioned = useRef(false);
   const fallbackAmenities = [
     "Swimming Pool", "Private Garden", "Smart Home System",
     "Home Theater", "Gym", "Parking for 3 Cars",
@@ -11,7 +18,42 @@ export default function PropertyAmenities({ property }) {
   const amenities = property?.amenities?.length ? property.amenities : fallbackAmenities;
   const features = property?.features || [];
   const facilities = property?.facilities || [];
-  const phone = property?.contact?.phone || "+911234567890";
+  const phone = property?.broker?.phone || "+9118001234567";
+
+  const triggerCall = location.state?.triggerCall || false;
+  const triggerWhatsApp = location.state?.triggerWhatsApp || false;
+
+  useEffect(() => {
+    if (autoActioned.current || !isAuthenticated) return;
+    if (!triggerCall && !triggerWhatsApp) return;
+    autoActioned.current = true;
+    if (triggerCall) {
+      setTimeout(() => { window.location.href = `tel:${phone.replace(/\s/g, "")}`; }, 300);
+    } else if (triggerWhatsApp && whatsappLink) {
+      setTimeout(() => { window.open(whatsappLink, "_blank", "noopener,noreferrer"); }, 300);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
+
+  const handleCallClick = () => {
+    if (!isAuthenticated) {
+      navigate("/register", {
+        state: { redirectTo: `${location.pathname}${location.search}`, fromCall: true, property },
+      });
+      return;
+    }
+    window.location.href = `tel:${phone.replace(/\s/g, "")}`;
+  };
+
+  const handleWhatsAppClick = () => {
+    if (!isAuthenticated) {
+      navigate("/register", {
+        state: { redirectTo: `${location.pathname}${location.search}`, fromWhatsApp: true, property },
+      });
+      return;
+    }
+    if (whatsappLink) window.open(whatsappLink, "_blank", "noopener,noreferrer");
+  };
   const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "₹8.5 Cr";
   const measurement = property?.measurement;
   const unit = measurement?.unit === "custom" ? measurement?.customUnit : measurement?.unit;
@@ -22,7 +64,7 @@ export default function PropertyAmenities({ property }) {
     ["Category", property?.category],
     ["Availability", property?.availability],
     ["Facing", property?.facing],
-    ["Year Built", property?.yearBuilt || "2022"],
+    ["Year Built", property?.yearBuilt || "Not specified"],
     ["Property ID", property?.propertyCode || property?._id?.slice(-6)?.toUpperCase() || "LX-0001"],
     ["Status", property?.propertyStatus || property?.status || "Ready"],
     ["Area", area],
@@ -98,11 +140,22 @@ export default function PropertyAmenities({ property }) {
             <Mail className="w-5 h-5 fill-current" />
             Send Enquiry
           </a>
-          
-          <a href={`tel:${phone.replace(/\s/g, "")}`} className="w-full bg-[#059669] hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-50">
+
+          {whatsappLink && (
+            <button
+              type="button"
+              onClick={handleWhatsAppClick}
+              className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-100"
+            >
+              <MessageCircle className="w-5 h-5 fill-current" />
+              Enquire on WhatsApp
+            </button>
+          )}
+
+          <button type="button" onClick={handleCallClick} className="w-full bg-[#059669] hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-50">
             <Phone className="w-5 h-5 fill-current" />
             Call Now
-          </a>
+          </button>
           
           <button className="w-full bg-white border-2 border-[#2563eb] text-[#2563eb] font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors">
             <Calendar className="w-5 h-5" />

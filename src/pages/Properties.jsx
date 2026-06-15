@@ -1,14 +1,10 @@
-import Navbar from "../components/Navbar";
-import Properties from "../components/Properties";
+import Hero from "../compswest/Hero";
 import Footer from "../components/Footer";
 
 export default function PropertiesPage() {
   return (
     <div>
-      <Navbar />
-      <main className="pt-24">
-        <Properties />
-      </main>
+      <Hero category="Buy" type="All" city="All" filters={{ activeCity: "All", activeType: "All", query: "", searchType: "Buy" }} />
       <Footer />
     </div>
   );

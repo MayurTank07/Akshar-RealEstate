@@ -1,11 +1,17 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { Bookmark, ChevronDown, Home, Menu, Search, SlidersHorizontal, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowRight, Bookmark, ChevronDown, Clock, Home, Menu, Search, SlidersHorizontal, TrendingUp, X } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import SavedBadge from "./SavedBadge";
 import useAuth from "../contexts/useAuth";
 import useSiteContent from "../hooks/useSiteContent";
 import { cityOptionsFromAreas } from "../config/navigationContent";
+import { generateSearchSuggestions } from "../utils/propertySearch";
+
+const RECENT_KEY = "akshar_recent_searches";
+function getRecent() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
+}
 
 const categories = ["Buy", "Rent"];
 
@@ -17,6 +23,7 @@ export default function PricingNavbar({
   onCityChange,
   onQueryChange,
   onToggleFilters,
+  properties = [],
 }) {
   const navigate = useNavigate();
   const { isAuthenticated, savedProperties } = useAuth();
@@ -24,7 +31,32 @@ export default function PricingNavbar({
   const cities = cityOptionsFromAreas(siteContent.navbarAreas);
   const savedCount = savedProperties.length;
   const [openMenu, setOpenMenu] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [recent, setRecent] = useState([]);
+  const searchContainerRef = useRef(null);
   const toggleMenu = (menu) => setOpenMenu((current) => (current === menu ? null : menu));
+
+  useEffect(() => { setRecent(getRecent()); }, []);
+
+  useEffect(() => {
+    if (!query.trim()) { setSuggestions([]); return; }
+    const t = setTimeout(() => setSuggestions(generateSearchSuggestions(query, properties)), 180);
+    return () => clearTimeout(t);
+  }, [query, properties]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) setShowSuggestions(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSuggestionClick = (s) => {
+    onQueryChange?.(s);
+    setShowSuggestions(false);
+  };
 
   const selectCategory = (value) => {
     onCategoryChange?.(value);
@@ -51,8 +83,8 @@ export default function PricingNavbar({
           <button
             type="button"
             className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 lg:hidden"
-            onClick={onToggleFilters}
-            aria-label="Open menu"
+            onClick={() => onToggleFilters ? onToggleFilters() : navigate("/properties")}
+            aria-label={onToggleFilters ? "Open filters" : "View properties"}
           >
             <Menu size={21} />
           </button>
@@ -99,31 +131,65 @@ export default function PricingNavbar({
             )}
           </div>
 
-          <div className="flex min-h-11 flex-1 items-center gap-2 rounded-xl bg-white px-3 shadow-sm">
-            <Search size={17} className="shrink-0 text-slate-400" />
-            <input
-              className="min-h-0 w-full border-0 bg-transparent p-0 text-sm font-medium text-slate-700 shadow-none focus:shadow-none"
-              type="text"
-              placeholder="Search project, locality, builder"
-              value={query}
-              onChange={(event) => onQueryChange?.(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") onQueryChange?.("");
-              }}
-            />
-            {query && (
-              <button type="button" onClick={() => onQueryChange?.("")} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Clear search">
-                <X size={16} />
+          <div className="relative flex-1" ref={searchContainerRef}>
+            <div className="flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 shadow-sm">
+              <Search size={17} className="shrink-0 text-slate-400" />
+              <input
+                className="min-h-0 w-full border-0 bg-transparent p-0 text-sm font-medium text-slate-700 shadow-none focus:shadow-none"
+                type="text"
+                placeholder="Search project, locality, builder"
+                value={query}
+                autoComplete="off"
+                onChange={(event) => { onQueryChange?.(event.target.value); setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") { onQueryChange?.(""); setShowSuggestions(false); }
+                }}
+              />
+              {query && (
+                <button type="button" onClick={() => { onQueryChange?.(""); setSuggestions([]); setShowSuggestions(false); }} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Clear search">
+                  <X size={16} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onToggleFilters}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50 xl:hidden"
+                aria-label="Toggle filters"
+              >
+                <SlidersHorizontal size={17} />
               </button>
+            </div>
+
+            {showSuggestions && (
+              <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[90] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl">
+                {!query.trim() ? (
+                  recent.length > 0 && (
+                    <div className="px-2 py-2">
+                      <p className="mb-1 flex items-center gap-1 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <Clock size={10} /> Recent
+                      </p>
+                      {recent.slice(0, 4).map((s) => (
+                        <button key={s} type="button" onClick={() => handleSuggestionClick(s)} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                          <Clock size={13} className="shrink-0 text-slate-300" />
+                          <span className="flex-1 truncate">{s}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )
+                ) : suggestions.length > 0 ? (
+                  <div className="py-1.5">
+                    {suggestions.map((s) => (
+                      <button key={s} type="button" onClick={() => handleSuggestionClick(s)} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-700">
+                        <Search size={13} className="shrink-0 text-slate-300" />
+                        <span className="flex-1 truncate">{s}</span>
+                        <ArrowRight size={13} className="shrink-0 text-slate-200" />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             )}
-            <button
-              type="button"
-              onClick={onToggleFilters}
-              className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50"
-              aria-label="Toggle filters"
-            >
-              <SlidersHorizontal size={17} />
-            </button>
           </div>
         </div>
 

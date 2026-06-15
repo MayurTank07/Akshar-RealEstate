@@ -35,12 +35,13 @@ export default function Navbar() {
     { title: "For Buyers", key: "buyers" },
     { title: "For Sellers", key: "sellers" },
     { title: "For Rentals", key: "rentals" },
-    { title: "Services", key: "services" },
-    { title: "About Us", key: "about" },
+    { title: "Services", key: "services", path: "/services" },
+    { title: "About Us", key: "about", path: "/about" },
   ];
 
   useEffect(() => {
     function handleClickOutside(event) {
+      if (mobileMenuOpen) return;
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setActiveMenu(null);
       }
@@ -48,15 +49,38 @@ export default function Navbar() {
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
 
   const handleMenuClick = (key) => {
-    if (key === "about" || key === "services") {
-      navigate(key === "about" ? "/about" : "/services");
+    const nav = navItems.find((item) => item.key === key);
+    if (nav?.path) {
+      navigate(nav.path);
+      setMobileMenuOpen(false);
+      return;
+    }
+    if (nav?.filters) {
+      navigate("/pricing", {
+        state: {
+          category: nav.filters.searchType || "Buy",
+          type: nav.filters.activeType || "All",
+          city: "All",
+          filters: { activeCity: "All", ...nav.filters },
+        },
+      });
+      setMobileMenuOpen(false);
       return;
     }
 
-    setActiveMenu(activeMenu === key ? null : key);
+    setActiveMenu((current) => current === key ? null : key);
   };
 
   const getTargetPath = (navKey, itemOrLabel) => {
@@ -180,7 +204,7 @@ export default function Navbar() {
             <BrandLogo />
           </button>
 
-          <nav className="hidden items-center gap-1 lg:flex">
+          <nav className="hidden items-center gap-1 xl:flex">
             {navItems.map((nav) => (
               <div key={nav.key} className="relative">
                 <button
@@ -193,19 +217,19 @@ export default function Navbar() {
                   }`}
                 >
                   {nav.title}
-                  {nav.key !== "about" && nav.key !== "services" && (
+                  {dataMap[nav.key]?.menus?.length > 0 && (
                     <ChevronDown
                       size={15}
                       className={`transition ${activeMenu === nav.key ? "rotate-180" : ""}`}
                     />
                   )}
                 </button>
-                {nav.key !== "about" && nav.key !== "services" && activeMenu === nav.key && renderDropdown(nav)}
+                {dataMap[nav.key]?.menus?.length > 0 && activeMenu === nav.key && renderDropdown(nav)}
               </div>
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 lg:flex">
+          <div className="hidden items-center gap-2 xl:flex">
             <button type="button" onClick={() => setShowEnquiryModal(true)} className="wf-btn wf-btn-primary">
               Enquiry
             </button>
@@ -241,7 +265,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 lg:hidden"
+            className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 xl:hidden"
             aria-label="Open navigation"
           >
             <Menu size={22} />
@@ -250,7 +274,7 @@ export default function Navbar() {
       </header>
 
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[120] lg:hidden">
+        <div className="fixed inset-0 z-[120] xl:hidden">
           <button
             type="button"
             className="absolute inset-0 h-full w-full bg-slate-950/45 backdrop-blur-sm"
@@ -286,14 +310,14 @@ export default function Navbar() {
                     }`}
                   >
                     {nav.title}
-                    {nav.key !== "about" && nav.key !== "services" && (
+                    {dataMap[nav.key]?.menus?.length > 0 && (
                       <ChevronDown
                         size={16}
                         className={`transition ${activeMenu === nav.key ? "rotate-180" : ""}`}
                       />
                     )}
                   </button>
-                  {nav.key !== "about" && nav.key !== "services" && activeMenu === nav.key && renderDropdown(nav, true)}
+                  {dataMap[nav.key]?.menus?.length > 0 && activeMenu === nav.key && renderDropdown(nav, true)}
                 </div>
               ))}
             </nav>
@@ -310,7 +334,7 @@ export default function Navbar() {
                 </button>
               )}
               {!isAuthenticated ? (
-                <button type="button" onClick={() => navigate("/login")} className="wf-btn wf-btn-secondary w-full">
+                <button type="button" onClick={() => { setMobileMenuOpen(false); navigate("/login"); }} className="wf-btn wf-btn-secondary w-full">
                   <LogIn size={16} />
                   Login
                 </button>
@@ -320,7 +344,7 @@ export default function Navbar() {
                     <User size={16} />
                     Profile
                   </button>
-                  <button type="button" onClick={logout} className="wf-btn wf-btn-secondary w-full">
+                  <button type="button" onClick={() => { setMobileMenuOpen(false); logout(); }} className="wf-btn wf-btn-secondary w-full">
                     <LogOut size={16} />
                     Logout
                   </button>

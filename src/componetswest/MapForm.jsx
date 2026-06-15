@@ -5,9 +5,9 @@ import { publicApi } from '../services/api';
 export default function PropertyInformation({ property }) {
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", homeLoan: false });
   const [message, setMessage] = useState("");
-  const contact = property?.contact || {};
-  const contactName = contact.name || property?.ownerName || "Akshar Estate Expert";
-  const contactPhone = contact.phone || "+91 12345 67890";
+  const broker = property?.broker || {};
+  const contactName = broker.name || "Akshar Estate Expert";
+  const contactPhone = broker.phone || "+91 1800-123-4567";
   const initials = contactName.split(" ").map((item) => item[0]).join("").slice(0, 2).toUpperCase() || "AE";
   const videoThumb = property?.image || property?.gallery?.[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1200";
   const mapImage = "https://images.unsplash.com/photo-1524813686514-a57563d77965?auto=format&fit=crop&q=80&w=1200";
@@ -27,7 +27,7 @@ export default function PropertyInformation({ property }) {
         propertyType: property?.type || "",
         propertyTitle: property?.title || "",
         propertyId,
-        message: `Contact details requested${form.homeLoan ? " with home loan interest" : ""}.`,
+        message: `Broker callback requested${form.homeLoan ? " with home loan interest" : ""}.`,
         source: "property-detail",
       });
       setMessage("Thanks. Our team will contact you shortly.");
@@ -152,7 +152,7 @@ export default function PropertyInformation({ property }) {
                 <label className="flex gap-3 cursor-pointer group">
                   <input type="checkbox" className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" defaultChecked />
                   <span className="text-[12px] text-gray-500 leading-tight">
-                    I agree to be contacted by Housing and agents via WhatsApp, SMS, phone, email etc
+                    I agree to be contacted by the Akshar Estate brokerage team via WhatsApp, SMS, phone, or email.
                   </span>
                 </label>
                 <label className="flex gap-3 cursor-pointer group">
@@ -164,7 +164,7 @@ export default function PropertyInformation({ property }) {
               </div>
 
               <button className="w-full bg-[#2563eb] text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-100">
-                Get Contact Details
+                Request Broker Callback
               </button>
               {message && <p className="rounded-xl bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-700">{message}</p>}
 
