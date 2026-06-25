@@ -169,7 +169,6 @@ export function propertySearchText(property = {}) {
     property.description,
     property.area,
     measurement.unit,
-    measurement.customUnit,
     property.beds ? `${property.beds}bhk ${property.beds} bhk` : "",
     property.isPreLeased ? "pre leased preleased roi investment" : "",
     property.isBarter ? "barter" : "",
@@ -280,7 +279,7 @@ export function propertyAreaValue(property) {
 }
 
 export function propertyUnit(property) {
-  return property.measurement?.unit === "custom" ? property.measurement?.customUnit : property.measurement?.unit || (property.sqft ? "sqft" : "");
+  return property.measurement?.unit || (property.sqft ? "sqft" : "");
 }
 
 export function getFieldValue(property, field) {

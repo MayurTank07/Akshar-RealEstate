@@ -66,6 +66,7 @@ export const publicApi = {
   propertyOptions: () => request("/public/property-options", { token: null }),
   createEnquiry: (payload) => request("/public/enquiries", { method: "POST", body: JSON.stringify(payload), token: null }),
   content: () => request("/public/content", { token: null }),
+  certifications: () => request("/public/certifications", { token: null }),
 };
 
 export const userApi = {
@@ -157,6 +158,15 @@ export const staffApi = {
   updateContent: (id, value) => request(`/admin/content/${id}`, { method: "PUT", body: JSON.stringify({ value }), authRequired: true }),
   soldRentedReport: (query = "") => request(`/admin/reports/sold-rented${typeof query === "string" ? query : toQueryString(query)}`, { authRequired: true }),
   reportUrl: (type, range, format = "csv", params = {}) => `${API_BASE_URL}/admin/reports/export${toQueryString({ ...params, type, range, format })}`,
+  certifications: () => request("/admin/certifications", { authRequired: true }),
+  uploadCertificationImage: (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return request("/admin/certifications/upload", { method: "POST", body: formData, authRequired: true });
+  },
+  createCertification: (payload) => request("/admin/certifications", { method: "POST", body: JSON.stringify(payload), authRequired: true }),
+  updateCertification: (id, payload) => request(`/admin/certifications/${id}`, { method: "PUT", body: JSON.stringify(payload), authRequired: true }),
+  deleteCertification: (id) => request(`/admin/certifications/${id}`, { method: "DELETE", authRequired: true }),
 };
 
 export { API_BASE_URL, toQueryString };

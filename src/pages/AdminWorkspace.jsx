@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import {
+  Award,
   BarChart3,
   Bell,
   Building2,
@@ -51,6 +52,7 @@ const navItems = [
   { key: "reports", label: "Reports & Export", icon: FileText, roles: ["supervisor"], permission: "reports:export" },
   { key: "users", label: "User Management", icon: User, roles: ["admin"] },
   { key: "page-edits", label: "Page Edits", icon: Edit3, roles: ["admin"] },
+  { key: "certifications", label: "Certifications", icon: Award, roles: ["admin"] },
   { key: "settings", label: "Settings", icon: Settings, roles: ["admin"] },
 ];
 
@@ -102,7 +104,7 @@ const propertyOptionGroups = {
   listingStatuses: ["active", "pending", "inactive", "sold", "rented"],
   displayTags: ["Featured", "New", "Hot", "Standard"],
   bhk: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-  measurementUnits: ["sqft", "vigha", "acre", "sq-yard", "sq-meter", "guntha", "hectare", "custom"],
+  measurementUnits: ["sqft", "vigha", "acre", "sq-yard", "sq-meter", "guntha", "hectare"],
   ownership: ["Freehold", "Leasehold", "Co-operative Society", "Power of Attorney", "Joint Ownership", "Other"],
   floors: ["Ground", "Lower Ground", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "15", "20", "25", "30+"],
   parking: ["No Parking", "Open Parking", "Covered Parking", "1 Car", "2 Cars", "3 Cars", "Visitor Parking", "Basement Parking"],
@@ -131,7 +133,7 @@ const emptyProperty = {
   beds: "",
   baths: 0,
   sqft: 0,
-  measurement: { value: 0, unit: "", customUnit: "" },
+  measurement: { value: 0, unit: "" },
   area: "",
   tag: "",
   badge: "",
@@ -195,7 +197,7 @@ function generatePropertyDescription(property) {
   const dealPhrase = dealType === "ROI" ? "positioned as an attractive ROI opportunity" : dealType ? `available for ${dealType.toLowerCase()}` : "";
   const price = formatINR(property.priceAmount || property.price);
   const measurementValue = property.measurement?.value || property.sqft;
-  const measurementUnit = property.measurement?.unit === "custom" ? property.measurement?.customUnit : property.measurement?.unit;
+  const measurementUnit = property.measurement?.unit;
   const amenityText = (property.amenities || []).slice(0, 5).join(", ");
   const featureText = (property.features || []).slice(0, 3).join(", ");
   const furnishing = property.furnishing?.trim();
@@ -398,6 +400,7 @@ export default function AdminWorkspace({ scope = "admin" }) {
           {activeSection === "reports" && <ReportsSection token={staffToken} role={staffUser.role} />}
           {activeSection === "users" && <UsersSection />}
           {activeSection === "page-edits" && <PageEditsSection />}
+          {activeSection === "certifications" && <CertificationsAdminSection />}
           {activeSection === "settings" && <SettingsSection />}
         </main>
       </div>
@@ -1540,7 +1543,7 @@ function PropertyModal({ property, onClose, onSaved }) {
         throw new Error("Please add at least one property image.");
       }
       const measurementValue = nextForm.measurement?.value || nextForm.sqft || 0;
-      const measurementUnit = nextForm.measurement?.unit === "custom" ? nextForm.measurement.customUnit || "unit" : nextForm.measurement?.unit || "sqft";
+      const measurementUnit = nextForm.measurement?.unit || "sqft";
       const payload = {
         ...nextForm,
         status: nextForm.status || "active",
@@ -1757,7 +1760,6 @@ function PropertyModal({ property, onClose, onSaved }) {
               <Field label="Legacy Sqft" name="sqft" type="number" value={form.sqft} onChange={update} />
               <Field label="Measurement Value" name="measurement.value" type="number" value={form.measurement.value ?? ""} onChange={update} />
 	              <SearchableDropdown label="Measurement Unit" name="measurement.unit" value={form.measurement.unit} onChange={update} placeholder="Select Measurement Unit" options={(masterOptions.measurementUnits || []).map((value) => ({ label: labelize(value), value }))} masterGroup="measurementUnits" onAddOption={addMasterOption} />
-              <Field label="Custom Unit" name="measurement.customUnit" value={form.measurement.customUnit} onChange={update} />
               <OptionSelect label="Property Status" name="propertyStatus" value={form.propertyStatus} options={masterOptions.propertyStatus} onChange={update} masterGroup="propertyStatus" onAddOption={addMasterOption} />
               <OptionSelect label="Construction Status" name="constructionStatus" value={form.constructionStatus} options={masterOptions.constructionStatus} onChange={update} masterGroup="constructionStatus" onAddOption={addMasterOption} />
               <OptionSelect label="Possession Status" name="possessionStatus" value={form.possessionStatus} options={masterOptions.possessionStatus} onChange={update} masterGroup="possessionStatus" onAddOption={addMasterOption} />
@@ -5375,5 +5377,277 @@ function ImageUrlField({ label, value, onChange, onUpload, disabled }) {
         </label>
       </div>
     </div>
+  );
+}
+
+const emptyCert = { title: "", description: "", image: "", publicId: "", displayOrder: 0, isActive: true };
+
+function CertificationsAdminSection() {
+  const [certs, setCerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState(emptyCert);
+  const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(null);
+  const [preview, setPreview] = useState(null);
+
+  const flash = (msg, isError = false) => {
+    if (isError) { setError(msg); setSuccessMsg(""); }
+    else { setSuccessMsg(msg); setError(""); }
+  };
+
+  const fetchCerts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await staffApi.certifications();
+      setCerts(res.data || []);
+    } catch (err) {
+      flash(err.message || "Failed to load certifications.", true);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchCerts(); }, [fetchCerts]);
+
+  const openAdd = () => { setEditing(null); setForm(emptyCert); setShowForm(true); };
+  const openEdit = (cert) => { setEditing(cert); setForm({ title: cert.title || "", description: cert.description || "", image: cert.image || "", publicId: cert.publicId || "", displayOrder: cert.displayOrder ?? 0, isActive: cert.isActive !== false }); setShowForm(true); };
+  const closeForm = () => { setShowForm(false); setEditing(null); setForm(emptyCert); };
+
+  const handleImageUpload = async (file) => {
+    if (!file) return;
+    if (file.type !== "image/png") { flash("Only PNG files are allowed.", true); return; }
+    if (file.size > 5 * 1024 * 1024) { flash("Image must be under 5 MB.", true); return; }
+    setUploading(true);
+    try {
+      const res = await staffApi.uploadCertificationImage(file);
+      setForm((prev) => ({ ...prev, image: res.data.url, publicId: res.data.publicId }));
+    } catch (err) {
+      flash(err.message || "Image upload failed.", true);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!form.image) { flash("Please upload a PNG image.", true); return; }
+    setSaving(true);
+    try {
+      if (editing) {
+        await staffApi.updateCertification(editing._id, form);
+        flash("Certification updated.");
+      } else {
+        await staffApi.createCertification(form);
+        flash("Certification added.");
+      }
+      closeForm();
+      fetchCerts();
+    } catch (err) {
+      flash(err.message || "Failed to save certification.", true);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (cert) => {
+    if (!window.confirm(`Delete "${cert.title || "this certification"}"? This cannot be undone.`)) return;
+    setDeleting(cert._id);
+    try {
+      await staffApi.deleteCertification(cert._id);
+      flash("Certification deleted.");
+      fetchCerts();
+    } catch (err) {
+      flash(err.message || "Failed to delete.", true);
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const handleToggleActive = async (cert) => {
+    try {
+      await staffApi.updateCertification(cert._id, { isActive: !cert.isActive });
+      flash(`Certification ${!cert.isActive ? "enabled" : "disabled"}.`);
+      fetchCerts();
+    } catch (err) {
+      flash(err.message || "Failed to update status.", true);
+    }
+  };
+
+  return (
+    <>
+      <PageTitle
+        title="Certifications"
+        subtitle="Manage achievements and certifications displayed on the About page."
+        action={
+          <button onClick={openAdd} className="wf-btn wf-btn-primary w-full sm:w-auto">
+            <Plus size={17} /> Add Certification
+          </button>
+        }
+      />
+      <InlineAlert message={error} />
+      <InlineAlert message={successMsg} tone="green" />
+
+      {loading && <LoadingState label="Loading certifications..." />}
+
+      {!loading && certs.length === 0 && (
+        <EmptyState
+          title="No certifications yet"
+          description="Add your first certification to showcase it on the About page."
+        />
+      )}
+
+      {!loading && certs.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {certs.map((cert) => (
+            <div key={cert._id} className="group relative flex flex-col rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden hover:shadow-md transition-all">
+              <button
+                onClick={() => setPreview(cert)}
+                className="relative aspect-square w-full bg-slate-50 flex items-center justify-center overflow-hidden"
+                aria-label="Preview"
+              >
+                <img
+                  src={cert.image}
+                  alt={cert.title || "Certification"}
+                  className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <Eye size={22} className="text-white drop-shadow" />
+                </div>
+              </button>
+
+              <div className="flex flex-col gap-1.5 p-3 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-slate-900 text-sm">{cert.title || <span className="italic text-slate-400">No title</span>}</p>
+                    {cert.description && <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{cert.description}</p>}
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${cert.isActive ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                    {cert.isActive ? "Active" : "Inactive"}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-400">Order: {cert.displayOrder}</p>
+              </div>
+
+              <div className="flex items-center gap-1.5 border-t border-slate-50 px-3 py-2">
+                <button onClick={() => openEdit(cert)} className="flex-1 rounded-lg bg-slate-50 px-2 py-1.5 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 transition flex items-center justify-center gap-1">
+                  <Edit3 size={13} /> Edit
+                </button>
+                <button onClick={() => handleToggleActive(cert)} className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-bold transition flex items-center justify-center gap-1 ${cert.isActive ? "bg-amber-50 text-amber-700 hover:bg-amber-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}>
+                  {cert.isActive ? <EyeOff size={13} /> : <Eye size={13} />}
+                  {cert.isActive ? "Disable" : "Enable"}
+                </button>
+                <button
+                  onClick={() => handleDelete(cert)}
+                  disabled={deleting === cert._id}
+                  className="rounded-lg bg-red-50 px-2 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 transition disabled:opacity-50 flex items-center gap-1"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {showForm && createPortal(
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+              <h3 className="font-bold text-slate-900 text-lg">{editing ? "Edit Certification" : "Add Certification"}</h3>
+              <button onClick={closeForm} className="grid h-8 w-8 place-items-center rounded-full hover:bg-slate-100 transition">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <span className="wf-label">Certification Image (PNG only) <span className="text-red-500">*</span></span>
+                <div className="mt-2 flex flex-col gap-3">
+                  {form.image && (
+                    <div className="relative w-32 h-32 rounded-xl border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center">
+                      <img src={form.image} alt="Preview" className="w-full h-full object-contain p-2" />
+                    </div>
+                  )}
+                  <label className={`wf-btn wf-btn-secondary w-fit ${uploading ? "pointer-events-none opacity-60" : "cursor-pointer"}`}>
+                    <Upload size={15} />
+                    {uploading ? "Uploading…" : form.image ? "Replace Image" : "Upload PNG"}
+                    <input
+                      type="file"
+                      accept=".png,image/png"
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={(e) => { handleImageUpload(e.target.files?.[0]); e.target.value = ""; }}
+                    />
+                  </label>
+                  <p className="text-xs text-slate-400">PNG only · Max 5 MB</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="wf-label" htmlFor="cert-title">Title <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <input id="cert-title" className="wf-input mt-1" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="e.g. ISO 9001 Certified" />
+              </div>
+
+              <div>
+                <label className="wf-label" htmlFor="cert-desc">Short Description <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <textarea id="cert-desc" className="wf-input mt-1 min-h-[72px]" value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Brief description of this certification" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="wf-label" htmlFor="cert-order">Display Order</label>
+                  <input id="cert-order" type="number" min={0} className="wf-input mt-1" value={form.displayOrder} onChange={(e) => setForm((p) => ({ ...p, displayOrder: Number(e.target.value) || 0 }))} />
+                </div>
+                <div className="flex flex-col justify-end pb-1">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <div
+                      onClick={() => setForm((p) => ({ ...p, isActive: !p.isActive }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.isActive ? "bg-blue-600" : "bg-slate-300"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${form.isActive ? "translate-x-6" : "translate-x-1"}`} />
+                    </div>
+                    <span className="text-sm font-semibold text-slate-700">{form.isActive ? "Active" : "Inactive"}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
+              <button onClick={closeForm} className="wf-btn wf-btn-secondary">Cancel</button>
+              <button onClick={handleSave} disabled={saving || uploading} className="wf-btn wf-btn-primary disabled:opacity-60">
+                <Save size={16} />
+                {saving ? "Saving…" : editing ? "Save Changes" : "Add Certification"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {preview && createPortal(
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setPreview(null)}
+        >
+          <div className="relative max-h-[90vh] max-w-2xl w-full rounded-2xl bg-white overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setPreview(null)} className="absolute top-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 shadow hover:bg-white transition z-10">
+              <X size={18} className="text-slate-700" />
+            </button>
+            <img src={preview.image} alt={preview.title || "Certification"} className="w-full max-h-[75vh] object-contain" />
+            {(preview.title || preview.description) && (
+              <div className="px-6 py-4 border-t border-slate-100">
+                {preview.title && <p className="font-bold text-slate-900 text-lg">{preview.title}</p>}
+                {preview.description && <p className="text-slate-500 text-sm mt-1">{preview.description}</p>}
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }

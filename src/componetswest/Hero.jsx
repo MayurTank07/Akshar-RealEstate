@@ -42,7 +42,7 @@ const PropertyDetails = ({ property }) => {
   const propertyLocation = property?.location || "Bodakdev, Ahmedabad";
   const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "₹3 Cr - ₹3.81 Cr";
   const measurement = property?.measurement;
-  const unit = measurement?.unit === "custom" ? measurement?.customUnit : measurement?.unit;
+  const unit = measurement?.unit;
   const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "3 BHK");
   const propertyType = property?.beds ? `${property.beds} BHK` : "Premium Home";
   const propertyStatus = property?.propertyStatus || (property?.status ? property.status.charAt(0).toUpperCase() + property.status.slice(1) : "Ready");

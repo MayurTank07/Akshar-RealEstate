@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import BrandLogo from '../components/BrandLogo';
+import CertificationsSection from '../components/CertificationsSection';
 import useSiteContent from '../hooks/useSiteContent';
 import { defaultAboutContent } from '../config/navigationContent';
 
@@ -138,6 +139,8 @@ const AboutUs = () => {
           <p className="text-slate-600 text-lg leading-relaxed">{about.storyContent}</p>
         </div>
       </section>
+
+      <CertificationsSection />
 
       <Footer />
     </div>

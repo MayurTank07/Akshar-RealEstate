@@ -56,7 +56,7 @@ export default function PropertyAmenities({ property, whatsappLink }) {
   };
   const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "₹8.5 Cr";
   const measurement = property?.measurement;
-  const unit = measurement?.unit === "custom" ? measurement?.customUnit : measurement?.unit;
+  const unit = measurement?.unit;
   const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "");
 
   const details = [
