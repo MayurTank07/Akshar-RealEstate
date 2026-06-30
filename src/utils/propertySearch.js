@@ -170,6 +170,7 @@ export function propertySearchText(property = {}) {
     property.area,
     measurement.unit,
     property.beds ? `${property.beds}bhk ${property.beds} bhk` : "",
+    property.isNewProject ? "new project new projects new launch newly built newly constructed" : "",
     property.isPreLeased ? "pre leased preleased roi investment" : "",
     property.isBarter ? "barter" : "",
     arrayText(property.amenities),
@@ -302,10 +303,14 @@ export function collectOptions(properties, field) {
 }
 
 export function matchesAdvancedFilters(property, filters = {}) {
+  const categoryFilter = String(filters.propertyCategory || "").trim().toLowerCase();
+  const newProjectCategory = ["new projects", "new project", "new launch"].includes(categoryFilter);
+  if (newProjectCategory && !property.isNewProject) return false;
+
   const checks = [
     ["areaWise", getFieldValue(property, "areaWise")],
     ["propertyType", property.type],
-    ["propertyCategory", property.category],
+    ...(newProjectCategory ? [] : [["propertyCategory", property.category]]),
     ["dealType", property.dealType],
     ["landType", getFieldValue(property, "landType")],
     ["furnishing", property.furnishing],

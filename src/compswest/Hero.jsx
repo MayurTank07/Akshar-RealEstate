@@ -106,12 +106,13 @@ export default function PricingPage({ category, type, city: selectedCity, filter
   const dynamicOptions = useMemo(() => ({
     areaWise: uniqueSorted(collectOptions(listings, "areaWise"), masterOptions.locations),
     propertyType: uniqueSorted(availableTypes, masterOptions.propertyTypes),
-    propertyCategory: uniqueSorted(collectOptions(listings, "category"), masterOptions.category),
+    propertyCategory: uniqueSorted(collectOptions(listings, "category"), masterOptions.category, ["New Projects"]),
     bhk: uniqueSorted(collectOptions(listings, "beds"), masterOptions.bhk).filter((item) => Number(item) >= 0).sort((a, b) => Number(a) - Number(b)),
   }), [availableTypes, listings, masterOptions]);
 
   const updateAdvancedFilter = (key, value) => setAdvancedFilters((current) => ({ ...current, [key]: value }));
   const hasFilters = activeType !== "All" || activeCity !== "All" || query || priceRange !== "Any" || Object.values(advancedFilters).some(Boolean);
+  const newProjectOnly = searchType === "New Projects";
 
   useEffect(() => {
     publicApi
@@ -154,7 +155,8 @@ export default function PricingPage({ category, type, city: selectedCity, filter
       const itemCity = String(item.city || item.location || "");
       const itemLocation = String(item.location || "");
       const matchesCity = activeCity === "All" || !activeCity || itemCity.toLowerCase().includes(activeCity.toLowerCase()) || itemLocation.toLowerCase().includes(activeCity.toLowerCase());
-      const matchesDealType = matchesDealMode(item, dealMode, query);
+      const matchesDealType = newProjectOnly || matchesDealMode(item, dealMode, query);
+      const matchesNewProject = !newProjectOnly || Boolean(item.isNewProject);
       const matchesQuery = query.trim() ? true : matchesPropertySearch(item, normalizedQuery);
       const price = parseCrores(item.price);
       const matchesPrice =
@@ -170,11 +172,11 @@ export default function PricingPage({ category, type, city: selectedCity, filter
         (priceRange === "6 Cr+" && price > 6);
       const matchesAdvanced = matchesAdvancedFilters(item, advancedFilters);
 
-      return matchesType && matchesCity && matchesDealType && matchesQuery && matchesPrice && matchesAdvanced;
+      return matchesType && matchesCity && matchesDealType && matchesNewProject && matchesQuery && matchesPrice && matchesAdvanced;
     });
     if (query.trim()) return rankedPropertySearch(nextListings, query);
     return sortProperties(nextListings, "latest").map((p, i) => ({ property: p, rank: 0, index: i }));
-  }, [activeCity, activeType, advancedFilters, listings, priceRange, query, searchType]);
+  }, [activeCity, activeType, advancedFilters, listings, newProjectOnly, priceRange, query, searchType]);
 
   const filteredListings = useMemo(() => rankedItems.map((r) => r.property), [rankedItems]);
   const groupedResults = useMemo(() => (query.trim() ? groupSearchResults(rankedItems, query) : null), [rankedItems, query]);
@@ -418,14 +420,17 @@ function FilterSection({ children, title }) {
 
 function PropertyResults({ activeCity, activeType, desktop = false, filteredListings, groupedResults, query, handlePropertyClick, handleSaveClick, isPropertySaved, resetFilters, searchType }) {
   const hasQuery = Boolean(query?.trim());
+  const newProjectMode = searchType === "New Projects";
 
   function renderCard(item) {
     const saved = isPropertySaved({ ...item, source: "pricing" });
+    const badgeLabel = item.isNewProject ? "New Project" : item.badge;
+    const badgeColor = item.isNewProject ? "bg-blue-600" : item.badgeColor;
     return (
       <div key={item._id || item.id} className="overflow-hidden rounded-[20px] border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:shadow-md xl:flex xl:h-full xl:flex-col">
         <div className="relative h-44 shrink-0">
           <img src={item.image} className="h-full w-full object-cover" alt={item.title} />
-          <div className={`absolute left-3 top-3 ${item.badgeColor} rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-tight text-white`}>{item.badge}</div>
+          <div className={`absolute left-3 top-3 ${badgeColor} rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-tight text-white`}>{badgeLabel}</div>
           <button type="button" onClick={() => handleSaveClick(item)} className={`absolute right-3 top-3 rounded-full bg-white p-2 shadow-sm transition hover:scale-105 ${saved ? "text-rose-500" : "text-gray-500 hover:text-rose-500"}`} aria-label={saved ? "Remove from saved" : "Save property"}>
             <Heart className="h-4 w-4" fill={saved ? "currentColor" : "none"} />
           </button>
@@ -485,12 +490,12 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
               </>
             )
           ) : (
-            <>
-              <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">
-                {activeCity === "All" ? `${searchType} properties` : `${searchType} in ${activeCity}`}
+              <>
+                <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">
+                {newProjectMode ? "New Projects" : activeCity === "All" ? `${searchType} properties` : `${searchType} in ${activeCity}`}
               </p>
               <h1 className="mt-1 text-3xl font-extrabold text-slate-950">
-                {filteredListings.length} {desktop ? "Properties Found" : "Matching Properties"}
+                {filteredListings.length} {newProjectMode ? "New Projects Found" : desktop ? "Properties Found" : "Matching Properties"}
               </h1>
             </>
           )}

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Bookmark, ChevronDown, Clock, Home, Menu, Search, SlidersHorizontal, TrendingUp, X } from "lucide-react";
+import { ArrowRight, Bookmark, ChevronDown, Clock, Home, Menu, Search, SlidersHorizontal, X } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import SavedBadge from "./SavedBadge";
 import useAuth from "../contexts/useAuth";
@@ -13,7 +13,7 @@ function getRecent() {
   try { return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"); } catch { return []; }
 }
 
-const categories = ["Buy", "Rent"];
+const categories = ["Buy", "Rent", "New Projects"];
 
 export default function PricingNavbar({
   searchType = "Buy",
@@ -33,15 +33,12 @@ export default function PricingNavbar({
   const [openMenu, setOpenMenu] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [recent, setRecent] = useState([]);
+  const [recent] = useState(() => getRecent());
   const searchContainerRef = useRef(null);
   const toggleMenu = (menu) => setOpenMenu((current) => (current === menu ? null : menu));
 
-  useEffect(() => { setRecent(getRecent()); }, []);
-
   useEffect(() => {
-    if (!query.trim()) { setSuggestions([]); return; }
-    const t = setTimeout(() => setSuggestions(generateSearchSuggestions(query, properties)), 180);
+    const t = setTimeout(() => setSuggestions(query.trim() ? generateSearchSuggestions(query, properties) : []), query.trim() ? 180 : 0);
     return () => clearTimeout(t);
   }, [query, properties]);
 
@@ -111,7 +108,7 @@ export default function PricingNavbar({
             </button>
 
             {openMenu === "category" && (
-              <DropdownPanel className="left-0 w-36">
+              <DropdownPanel className="left-0 w-44">
                 {categories.map((item) => (
                   <DropdownButton key={item} active={item === searchType} onClick={() => selectCategory(item)}>
                     {item}

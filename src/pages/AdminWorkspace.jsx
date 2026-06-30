@@ -89,11 +89,11 @@ const propertyOptionGroups = {
   features: ["Corner Property", "Wide Road Access", "Road Facing", "Vaastu Compliant", "Gated Community", "Prime Location", "High Footfall", "Main Road Touch", "Near Metro", "Near School", "Near Hospital", "Near Market", "New Construction", "Ready Possession", "High ROI"],
   facilities: ["24/7 Water", "Generator Backup", "Society Office", "Waste Management", "Intercom", "Maintenance Staff", "Rainwater Harvesting", "EV Charging", "Service Lift", "Conference Room", "Pantry", "Reception Area"],
   highlights: ["Premium Location", "Verified Listing", "Negotiable Price", "Immediate Possession", "Clear Title", "Loan Approved", "Investor Friendly", "Owner Listed", "Exclusive Mandate"],
-  propertyTags: ["ROI", "Pre Leased", "Barter", "Commercial", "Residential", "Office", "Showroom", "Warehouse", "Apartment", "Villa", "Plot", "New Launch", "Hot Deal", "Featured"],
+  propertyTags: ["ROI", "Pre Leased", "Barter", "Commercial", "Residential", "Office", "Showroom", "Warehouse", "Apartment", "Villa", "Plot", "New Launch", "New Projects", "Hot Deal", "Featured"],
   furnishing: ["Unfurnished", "Semi Furnished", "Fully Furnished", "Bare Shell", "Warm Shell"],
   facing: ["East", "West", "North", "South", "North-East", "North-West", "South-East", "South-West", "Road Facing", "Garden Facing"],
   propertyStatus: ["Ready", "Under Construction", "New Launch", "Resale", "Sold", "Rented"],
-  category: ["Residential", "Commercial", "Industrial", "Land/Plot", "Pre-Leased", "Investment", "Retail", "Office"],
+  category: ["Residential", "Commercial", "Industrial", "Land/Plot", "Pre-Leased", "Investment", "Retail", "Office", "New Projects"],
   availability: ["Immediate", "Within 15 Days", "Within 30 Days", "Within 3 Months", "After 3 Months", "Under Construction"],
   cities: ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Mumbai"],
   propertyTypes: ["Apartments", "Villa", "Bungalow", "Plot", "Office", "Showroom", "Shop", "Warehouse", "Farm House", "Penthouse"],
@@ -102,7 +102,7 @@ const propertyOptionGroups = {
   projects: ["Gurukrupa Ananatam", "Trump Towers", "Ashapura Skies", "Clinton Heights", "Nathani Heights"],
   dealTypes: ["Sale", "Rent", "Pre-Leased", "Lease", "Resale", "New Launch", "Investment", "ROI"],
   listingStatuses: ["active", "pending", "inactive", "sold", "rented"],
-  displayTags: ["Featured", "New", "Hot", "Standard"],
+  displayTags: ["Featured", "New", "New Project", "Hot", "Standard"],
   bhk: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
   measurementUnits: ["sqft", "vigha", "acre", "sq-yard", "sq-meter", "guntha", "hectare"],
   ownership: ["Freehold", "Leasehold", "Co-operative Society", "Power of Attorney", "Joint Ownership", "Other"],
@@ -163,6 +163,7 @@ const emptyProperty = {
   totalFloors: "",
   furnishing: "",
   propertyTags: [],
+  isNewProject: false,
   isPreLeased: false,
   isBarter: false,
   roi: "",
@@ -1082,7 +1083,7 @@ function PropertiesSection({ canDelete, canCreate }) {
   const focusedPropertyId = searchParams.get("propertyId");
   const initialSearch = searchParams.get("search") || "";
   const [properties, setProperties] = useState([]);
-  const [filters, setFilters] = useState({ search: initialSearch, propertyCode: "", city: "all", type: "all", minPrice: "", maxPrice: "", status: "all", availability: "all" });
+  const [filters, setFilters] = useState({ search: initialSearch, propertyCode: "", city: "all", type: "all", newProject: "all", minPrice: "", maxPrice: "", status: "all", availability: "all" });
   const [filterOptions, setFilterOptions] = useState({ cities: [], types: [] });
   const [editing, setEditing] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1161,7 +1162,7 @@ function PropertiesSection({ canDelete, canCreate }) {
 
   const updateFilter = (name, value) => setFilters((current) => ({ ...current, [name]: value }));
   const clearFilters = () => {
-    const next = { search: "", propertyCode: "", city: "all", type: "all", minPrice: "", maxPrice: "", status: "all", availability: "all" };
+    const next = { search: "", propertyCode: "", city: "all", type: "all", newProject: "all", minPrice: "", maxPrice: "", status: "all", availability: "all" };
     setFilters(next);
     load(next);
   };
@@ -1176,7 +1177,7 @@ function PropertiesSection({ canDelete, canCreate }) {
       <InlineAlert message={error} />
       <InlineAlert message={notice} tone="green" />
       <div className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-5">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.2fr_0.85fr_0.8fr_0.8fr_0.7fr_0.7fr_0.8fr_0.9fr_auto_auto]">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.2fr_0.85fr_0.8fr_0.8fr_0.9fr_0.7fr_0.7fr_0.8fr_0.9fr_auto_auto]">
           <div className="relative">
             <Search className="absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
             <input className="wf-input pl-10" value={filters.search} onChange={(event) => updateFilter("search", event.target.value)} placeholder="Search name/location..." />
@@ -1189,6 +1190,11 @@ function PropertiesSection({ canDelete, canCreate }) {
           <select className="wf-input" value={filters.type} onChange={(event) => updateFilter("type", event.target.value)}>
             <option value="all">All Types</option>
             {filterOptions.types.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select>
+          <select className="wf-input" value={filters.newProject} onChange={(event) => updateFilter("newProject", event.target.value)}>
+            <option value="all">All Listings</option>
+            <option value="true">New Projects Only</option>
+            <option value="false">Standard Listings</option>
           </select>
           <input className="wf-input" type="number" min="0" step="0.01" value={filters.minPrice} onChange={(event) => updateFilter("minPrice", event.target.value)} placeholder="Min Cr" />
           <input className="wf-input" type="number" min="0" step="0.01" value={filters.maxPrice} onChange={(event) => updateFilter("maxPrice", event.target.value)} placeholder="Max Cr" />
@@ -1232,7 +1238,10 @@ function PropertiesSection({ canDelete, canCreate }) {
                     <img src={property.image || property.gallery?.[0] || "https://placehold.co/120x120?text=Property"} alt={property.title} className="h-14 w-14 rounded-xl object-cover ring-1 ring-slate-100" />
                     <div>
                       <p className="font-semibold text-slate-950">{property.title}</p>
-                      <p className="text-xs text-slate-400">ID: {property.propertyCode || property._id.slice(-6).toUpperCase()}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <p className="text-xs text-slate-400">ID: {property.propertyCode || property._id.slice(-6).toUpperCase()}</p>
+                        {property.isNewProject && <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-blue-700">New Project</span>}
+                      </div>
                     </div>
                   </div>
                 </td>
@@ -1267,7 +1276,10 @@ function PropertiesSection({ canDelete, canCreate }) {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <h4 className="truncate text-base font-bold text-slate-950">{property.title}</h4>
-                    <p className="mt-0.5 text-xs text-slate-400">ID: {property.propertyCode || property._id.slice(-6).toUpperCase()}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                      <p className="text-xs text-slate-400">ID: {property.propertyCode || property._id.slice(-6).toUpperCase()}</p>
+                      {property.isNewProject && <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-blue-700">New Project</span>}
+                    </div>
                   </div>
                   <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass(property.status)}`}>{property.status}</span>
                 </div>
@@ -1434,6 +1446,9 @@ function PropertyModal({ property, onClose, onSaved }) {
     const rawValue = name === "propertyCode" ? value.toUpperCase() : value;
     const nextValue = type === "checkbox" ? checked : numberFields.includes(name) ? (rawValue === "" ? null : Number(rawValue)) : rawValue;
     updatePath(name, nextValue);
+    if (name === "category" && String(value).trim().toLowerCase() === "new projects") {
+      updatePath("isNewProject", true);
+    }
     if (["price", "finalPrice", "commission"].includes(name)) {
       updatePath(`${name}Amount`, parseINRAmount(value));
     }
@@ -1550,6 +1565,7 @@ function PropertyModal({ property, onClose, onSaved }) {
         visibility: nextForm.visibility || "public",
         source: nextForm.source || "pricing",
         tag: nextForm.tag || "Standard",
+        isNewProject: Boolean(nextForm.isNewProject || String(nextForm.category || "").trim().toLowerCase() === "new projects"),
         propertyCode,
         image: nextForm.image || gallery[0],
         gallery,
@@ -1614,6 +1630,7 @@ function PropertyModal({ property, onClose, onSaved }) {
               <Field label="Property Title" name="title" value={form.title} onChange={update} required error={fieldErrors.title} placeholder="e.g. Premium 3 BHK Apartment in Thaltej" helperText="Use a clear, client-friendly listing title." />
               <ComboField label="Property Type" name="type" value={form.type} options={masterOptions.propertyTypes} onChange={update} required error={fieldErrors.type} placeholder="Select Property Type" masterGroup="propertyTypes" onAddOption={addMasterOption} />
               <OptionSelect label="Property Category" name="category" value={form.category} options={masterOptions.category} onChange={update} required error={fieldErrors.category} masterGroup="category" onAddOption={addMasterOption} />
+              <ToggleField label="New Projects" name="isNewProject" checked={form.isNewProject} onChange={update} />
               <Field label="Owner / Seller" name="ownerName" value={form.ownerName} onChange={update} placeholder="Owner or seller name" />
 	              <ComboField label="Developer / Builder" name="developerName" value={form.developerName} options={developerOptions} onChange={update} placeholder="Select or type developer" masterGroup="developers" onAddOption={addMasterOption} />
 	              <ComboField label="Top Project" name="topProject" value={form.topProject} options={projectOptions} onChange={update} placeholder="Select linked project" masterGroup="projects" onAddOption={addMasterOption} />
@@ -3698,7 +3715,7 @@ function EnquiriesSection({ canDelete, canManage }) {
           <div className="flex items-center gap-2">
             <Filter size={16} className="text-slate-400" />
             <span className="text-sm font-bold text-slate-700">Filters</span>
-            {Object.entries(filters).some(([k, v]) => v && v !== "all" && v !== "") && (
+            {Object.entries(filters).some(([, v]) => v && v !== "all" && v !== "") && (
               <span className="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-black text-white">Active</span>
             )}
           </div>
@@ -5085,8 +5102,14 @@ function UsersSection() {
     }
   }, [search, filterProvider, filterStatus, filterRole, dateFrom, dateTo]);
 
-  useEffect(() => { fetchStats(); }, [fetchStats]);
-  useEffect(() => { fetchUsers(1); }, [fetchUsers]);
+  useEffect(() => {
+    const timer = window.setTimeout(fetchStats, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchStats]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => fetchUsers(1), 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchUsers]);
 
   const handleToggleStatus = async (user) => {
     const nextStatus = user.status === "active" ? "disabled" : "active";
@@ -5412,7 +5435,10 @@ function CertificationsAdminSection() {
     }
   }, []);
 
-  useEffect(() => { fetchCerts(); }, [fetchCerts]);
+  useEffect(() => {
+    const timer = window.setTimeout(fetchCerts, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchCerts]);
 
   const openAdd = () => { setEditing(null); setForm(emptyCert); setShowForm(true); };
   const openEdit = (cert) => { setEditing(cert); setForm({ title: cert.title || "", description: cert.description || "", image: cert.image || "", publicId: cert.publicId || "", displayOrder: cert.displayOrder ?? 0, isActive: cert.isActive !== false }); setShowForm(true); };

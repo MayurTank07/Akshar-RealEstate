@@ -42,6 +42,23 @@ function titleCase(value) {
 export function parsePropertyIntent(label = "", navKey = "buyers") {
   const text = String(label).replace(/\s+/g, " ").trim();
   const normalized = text.toLowerCase();
+  if (normalized.includes("new project")) {
+    return {
+      category: "New Projects",
+      city: "",
+      type: "All",
+      query: "",
+      label: text,
+      filters: {
+        activeCity: "All",
+        activeType: "All",
+        query: "",
+        searchType: "New Projects",
+        newProject: true,
+        intentLabel: "New Projects",
+      },
+    };
+  }
   const category = navKey === "rentals" || normalized.includes(" rent ") || normalized.includes("for rent") ? "Rent" : "Buy";
   const city = knownCities.find((item) => normalized.includes(item.toLowerCase())) || "";
   const matchedType = knownTypes.find((item) => normalized.includes(item.toLowerCase()));

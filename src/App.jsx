@@ -13,6 +13,7 @@ import ServicesPage from "./pages/ServicesPage";
 import Contact from "./pages/Contact";
 import LegalPage from "./pages/LegalPage";
 import PropertiesPage from "./pages/Properties";
+import NewProjects from "./pages/NewProjects";
 import SavedProperties from "./pages/SavedProperties";
 import Profile from "./pages/Profile";
 import ScrollToTop from "./components/ScrollToTop";
@@ -35,6 +36,7 @@ function App() {
             <Route path="/property-detail" element={<PropertyDetails />} />
             <Route path="/home" element={<HomeWest />} />
             <Route path="/properties" element={<PropertiesPage />} />
+            <Route path="/new-projects" element={<NewProjects />} />
             <Route path="/saved" element={<SavedProperties />} />
             <Route path="/profile/*" element={<Profile />} />
             <Route path="/property/:id" element={<PropertyDetails />} />

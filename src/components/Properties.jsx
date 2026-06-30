@@ -32,6 +32,12 @@ export default function Properties() {
 
   const sections = [
     {
+      title: "New Projects",
+      eyebrow: "Fresh launches",
+      description: "Newly built and newly launched projects marked by the Akshar Estate team.",
+      items: properties.filter((property) => property.isNewProject),
+    },
+    {
       title: "Featured Properties",
       eyebrow: "Curated picks",
       description: "Premium homes selected for location, finish, and buyer interest.",
@@ -166,14 +172,16 @@ function PropertyCard({ property }) {
 
         <span
           className={`absolute left-3 top-3 rounded-full px-3 py-1 text-xs font-extrabold text-white shadow-lg ${
-            property.tag === "Featured"
+            property.isNewProject
+              ? "bg-blue-600"
+              : property.tag === "Featured"
               ? "bg-blue-600"
               : property.tag === "New"
               ? "bg-emerald-500"
               : "bg-orange-500"
           }`}
         >
-          {property.tag === "Hot" ? "Popular" : property.tag}
+          {property.isNewProject ? "New Project" : property.tag === "Hot" ? "Popular" : property.tag}
         </span>
 
         <button

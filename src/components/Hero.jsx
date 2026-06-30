@@ -31,7 +31,7 @@ export default function Hero() {
   const [query, setQuery] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
-  const [recent, setRecent] = useState([]);
+  const [recent, setRecent] = useState(() => getRecent());
   const [properties, setProperties] = useState([]);
   const containerRef = useRef(null);
   const inputRef = useRef(null);
@@ -44,11 +44,8 @@ export default function Hero() {
     publicApi.properties().then((r) => { if (r.data?.length) setProperties(r.data); }).catch(() => {});
   }, []);
 
-  useEffect(() => { setRecent(getRecent()); }, []);
-
   useEffect(() => {
-    if (!query.trim()) { setSuggestions([]); return; }
-    const t = setTimeout(() => setSuggestions(generateSearchSuggestions(query, properties)), 150);
+    const t = setTimeout(() => setSuggestions(query.trim() ? generateSearchSuggestions(query, properties) : []), query.trim() ? 150 : 0);
     return () => clearTimeout(t);
   }, [query, properties]);
 
@@ -73,9 +70,9 @@ export default function Hero() {
     const isLocality = mode === "locality";
     const isInvestmentMode = ["Pre Leased", "Barter", "ROI"].includes(activeTab);
     const isNewProjects = activeTab === "New Projects";
-    const searchQuery = isLocality ? "" : clean || (isNewProjects ? "new launch" : "");
+    const searchQuery = isLocality ? "" : clean;
 
-    navigate("/pricing", {
+    navigate(isNewProjects ? "/new-projects" : "/pricing", {
       state: {
         category: activeTab === "Rent" ? "Rentals" : isNewProjects ? "New Projects" : activeTab,
         type: "All",
@@ -85,6 +82,7 @@ export default function Hero() {
           activeType: "All",
           query: searchQuery,
           searchType: activeTab === "Rent" ? "Rent" : isInvestmentMode || isNewProjects ? activeTab : "Buy",
+          newProject: isNewProjects,
           intentLabel: isInvestmentMode || isNewProjects ? activeTab : "",
         },
       },
