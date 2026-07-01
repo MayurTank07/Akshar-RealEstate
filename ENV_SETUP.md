@@ -28,7 +28,7 @@ The frontend uses Vite for building and requires environment variables prefixed 
 
 ### Production Setup (Vercel)
 
-The `.env.production` file is used for production builds. It's already configured to use the Render backend.
+Vercel environment variables are used for production builds. Set the Render backend URL in the Vercel dashboard before redeploying.
 
 **Vercel Environment Variables:**
 
@@ -66,7 +66,7 @@ npm run preview
 
 1. Connect your GitHub repository to Vercel
 2. Add environment variables in Vercel dashboard
-3. Deploy - Vercel will automatically use `.env.production` values during build
+3. Deploy - Vercel will bake the dashboard environment variables into the production build
 
 ## Troubleshooting
 

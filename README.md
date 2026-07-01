@@ -38,7 +38,7 @@ Fill in the required variables:
 
 | Variable | Required | Description |
 |---|---|---|
-| `VITE_API_BASE_URL` | ✅ | Backend API URL, e.g. `http://127.0.0.1:5000/api` |
+| `VITE_API_BASE_URL` | ✅ | Backend API URL, e.g. `http://127.0.0.1:5000/api` locally or `https://akshar-realestate-backend.onrender.com/api` in production |
 | `VITE_GOOGLE_CLIENT_ID` | Optional | OAuth Web Client ID — Google button disabled if blank |
 | `VITE_GOOGLE_MAPS_API_KEY` | Optional | Places autocomplete for location picker |
 | `VITE_WHATSAPP_NUMBER` | Optional | Fallback WhatsApp contact number |
