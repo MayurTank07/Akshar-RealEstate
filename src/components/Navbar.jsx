@@ -196,7 +196,7 @@ export default function Navbar() {
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4" ref={menuRef}>
-        <div className="mx-auto flex min-h-[66px] w-full max-w-7xl items-center justify-between rounded-2xl border border-white/70 bg-white/95 px-4 shadow-[0_12px_35px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-5">
+        <div className="mx-auto flex min-h-[66px] w-full max-w-[92rem] items-center gap-3 rounded-2xl border border-white/70 bg-white/95 px-4 shadow-[0_12px_35px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-5">
           <button
             type="button"
             onClick={() => navigate("/")}
@@ -205,13 +205,13 @@ export default function Navbar() {
             <BrandLogo />
           </button>
 
-          <nav className="hidden items-center gap-1 xl:flex">
+          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 xl:flex">
             {navItems.map((nav) => (
               <div key={nav.key} className="relative">
                 <button
                   type="button"
                   onClick={() => handleMenuClick(nav.key)}
-                  className={`flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-bold transition ${
+                  className={`flex items-center gap-1 rounded-xl px-2.5 py-2 text-sm font-bold leading-none transition 2xl:gap-1.5 2xl:px-3.5 ${
                     activeMenu === nav.key || location.pathname === `/${nav.key}`
                       ? "bg-blue-50 text-blue-700"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"
@@ -230,33 +230,33 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 xl:flex">
-            <button type="button" onClick={() => setShowEnquiryModal(true)} className="wf-btn wf-btn-primary">
+          <div className="hidden shrink-0 items-center gap-1.5 whitespace-nowrap xl:flex">
+            <button type="button" onClick={() => setShowEnquiryModal(true)} className="wf-btn wf-btn-primary px-3 py-2 text-sm 2xl:px-4">
               Enquiry
             </button>
 
             {isAuthenticated && (
-              <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
+              <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary px-3 py-2 text-sm 2xl:px-4">
                 <Bookmark size={16} />
-                Saved
+                <span className="hidden 2xl:inline">Saved</span>
                 <SavedBadge count={savedCount} />
               </button>
             )}
 
             {!isAuthenticated ? (
-              <button type="button" onClick={() => navigate("/login")} className="wf-btn wf-btn-secondary">
+              <button type="button" onClick={() => navigate("/login")} className="wf-btn wf-btn-secondary px-3 py-2 text-sm 2xl:px-4">
                 <LogIn size={16} />
                 Login
               </button>
             ) : (
               <>
-                <button type="button" onClick={() => navigate("/profile")} className="wf-btn wf-btn-secondary">
+                <button type="button" onClick={() => navigate("/profile")} className="wf-btn wf-btn-secondary px-3 py-2 text-sm 2xl:px-4" aria-label="Profile">
                   <User size={16} />
-                  Profile
+                  <span className="hidden 2xl:inline">Profile</span>
                 </button>
-                <button type="button" onClick={logout} className="wf-btn wf-btn-secondary">
+                <button type="button" onClick={logout} className="wf-btn wf-btn-secondary px-3 py-2 text-sm 2xl:px-4" aria-label="Logout">
                   <LogOut size={16} />
-                  Logout
+                  <span className="hidden 2xl:inline">Logout</span>
                 </button>
               </>
             )}

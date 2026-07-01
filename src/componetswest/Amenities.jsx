@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle2, Mail, MessageCircle, Phone, Calendar } from 'lucide-react';
 import { formatINR } from '../utils/currency';
+import { displayPropertyCode } from '../utils/propertyCode';
 import useAuth from '../contexts/useAuth';
 
 export default function PropertyAmenities({ property, whatsappLink }) {
@@ -65,7 +66,7 @@ export default function PropertyAmenities({ property, whatsappLink }) {
     ["Availability", property?.availability],
     ["Facing", property?.facing],
     ["Year Built", property?.yearBuilt || "Not specified"],
-    ["Property ID", property?.propertyCode || property?._id?.slice(-6)?.toUpperCase() || "LX-0001"],
+    ["Property ID", displayPropertyCode(property?.propertyCode)],
     ["Status", property?.propertyStatus || property?.status || "Ready"],
     ["Area", area],
     ["Parking", property?.parking],

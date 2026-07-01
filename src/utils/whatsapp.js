@@ -1,3 +1,5 @@
+import { displayPropertyCode } from "./propertyCode.js";
+
 export const DEFAULT_WHATSAPP_MESSAGE =
   "Hello Akshar Estate : The Property Hub, I would like to make an enquiry about your property services. Please share more details.";
 
@@ -16,6 +18,6 @@ export function generateWhatsAppLink(phoneNumber, message = DEFAULT_WHATSAPP_MES
 }
 
 export function propertyWhatsAppMessage(property) {
-  const label = property?.propertyCode || property?.propertyId || property?.title || "this property";
+  const label = displayPropertyCode(property?.propertyCode, property?.propertyId || property?.title || "this property");
   return `Hello Akshar Estate : The Property Hub, I am interested in this property: ${label}. Please share more details.`;
 }

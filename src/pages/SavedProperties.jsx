@@ -95,15 +95,31 @@ export default function SavedProperties() {
 }
 
 function SavedPropertyCard({ property, onUnsave }) {
+  const navigate = useNavigate();
   const detailsPath = property.source === "pricing" ? "/property-detail" : `/property/${property._id || property.id}`;
   const area = property.sqft ? `${property.sqft} sq.ft` : property.area;
   const price = formatINR(property.priceAmount || property.price);
-  const removeSaved = () => {
+  const openDetails = () => navigate(detailsPath, { state: { property } });
+  const handleCardKeyDown = (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openDetails();
+    }
+  };
+  const removeSaved = (event) => {
+    event?.stopPropagation();
     onUnsave(property);
   };
 
   return (
-    <article className="wf-card wf-card-hover group overflow-hidden">
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={openDetails}
+      onKeyDown={handleCardKeyDown}
+      aria-label={`View details for ${property.title}`}
+      className="wf-card wf-card-hover group cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+    >
       <div className="relative h-56 overflow-hidden bg-slate-100">
         <img src={property.image} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
         <span className="absolute left-3 top-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-extrabold text-white">
@@ -137,10 +153,17 @@ function SavedPropertyCard({ property, onUnsave }) {
             <p className="text-xs font-semibold text-slate-400">Price</p>
             <p className="text-xl font-extrabold text-blue-600">{price}</p>
           </div>
-          <Link to={detailsPath} state={{ property }} className="inline-flex items-center gap-1 text-sm font-extrabold text-blue-600">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              openDetails();
+            }}
+            className="inline-flex items-center gap-1 text-sm font-extrabold text-blue-600"
+          >
             Details
             <ArrowRight size={16} />
-          </Link>
+          </button>
         </div>
         <button
           type="button"

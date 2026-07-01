@@ -427,12 +427,35 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
     const saved = isPropertySaved({ ...item, source: "pricing" });
     const badgeLabel = item.isNewProject ? "New Project" : item.badge;
     const badgeColor = item.isNewProject ? "bg-blue-600" : item.badgeColor;
+    const openDetails = () => handlePropertyClick(item);
+    const handleCardKeyDown = (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDetails();
+      }
+    };
     return (
-      <div key={item._id || item.id} className="overflow-hidden rounded-[20px] border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:shadow-md xl:flex xl:h-full xl:flex-col">
+      <article
+        key={item._id || item.id}
+        role="link"
+        tabIndex={0}
+        onClick={openDetails}
+        onKeyDown={handleCardKeyDown}
+        aria-label={`View details for ${item.title}`}
+        className="cursor-pointer overflow-hidden rounded-[20px] border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 xl:flex xl:h-full xl:flex-col"
+      >
         <div className="relative h-44 shrink-0">
           <img src={item.image} className="h-full w-full object-cover" alt={item.title} />
           <div className={`absolute left-3 top-3 ${badgeColor} rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-tight text-white`}>{badgeLabel}</div>
-          <button type="button" onClick={() => handleSaveClick(item)} className={`absolute right-3 top-3 rounded-full bg-white p-2 shadow-sm transition hover:scale-105 ${saved ? "text-rose-500" : "text-gray-500 hover:text-rose-500"}`} aria-label={saved ? "Remove from saved" : "Save property"}>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleSaveClick(item);
+            }}
+            className={`absolute right-3 top-3 rounded-full bg-white p-2 shadow-sm transition hover:scale-105 ${saved ? "text-rose-500" : "text-gray-500 hover:text-rose-500"}`}
+            aria-label={saved ? "Remove from saved" : "Save property"}
+          >
             <Heart className="h-4 w-4" fill={saved ? "currentColor" : "none"} />
           </button>
         </div>
@@ -450,10 +473,19 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
               <div className="text-[10px] font-bold uppercase tracking-tighter text-gray-400">Price</div>
               <div className="text-lg font-extrabold text-blue-600">{formatINR(item.priceAmount || item.price)}</div>
             </div>
-            <button onClick={() => handlePropertyClick(item)} className="flex items-center gap-1 text-[12px] font-bold text-blue-600 hover:underline">Details <span className="text-[14px]">→</span></button>
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                openDetails();
+              }}
+              className="flex items-center gap-1 text-[12px] font-bold text-blue-600 hover:underline"
+            >
+              Details <span className="text-[14px]">→</span>
+            </button>
           </div>
         </div>
-      </div>
+      </article>
     );
   }
 

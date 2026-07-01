@@ -40,6 +40,7 @@ import IndianMoneyInput from "../components/IndianMoneyInput";
 import { useStaffAuth } from "../contexts/useStaffAuth";
 import { publicApi, staffApi, toQueryString } from "../services/api";
 import { formatINR, parseINRAmount } from "../utils/currency";
+import { displayPropertyCode, isReadablePropertyCode } from "../utils/propertyCode";
 import { defaultAboutContent, defaultContactContent, defaultNavbarAreas, defaultTopLists, enabledSorted, normalizeAreaName } from "../config/navigationContent";
 
 const navItems = [
@@ -591,7 +592,7 @@ function AdminSearchBar({ scope }) {
                 <img src={item.image || item.gallery?.[0] || "https://placehold.co/80x80?text=AETP"} alt="" className="h-10 w-10 rounded-xl object-cover" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-extrabold text-slate-950">{item.title}</span>
-                  <span className="block truncate text-xs font-semibold text-slate-500">{item.propertyCode || item.city || item.location} · {item.status}</span>
+                  <span className="block truncate text-xs font-semibold text-slate-500">{displayPropertyCode(item.propertyCode, item.city || item.location)} · {item.status}</span>
                 </span>
               </button>
             ))
@@ -1240,7 +1241,7 @@ function PropertiesSection({ canDelete, canCreate }) {
                     <div>
                       <p className="font-semibold text-slate-950">{property.title}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                        <p className="text-xs text-slate-400">ID: {property.propertyCode || property._id.slice(-6).toUpperCase()}</p>
+                        <p className="text-xs text-slate-400">ID: {displayPropertyCode(property.propertyCode)}</p>
                         {property.isNewProject && <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-blue-700">New Project</span>}
                       </div>
                     </div>
@@ -1278,7 +1279,7 @@ function PropertiesSection({ canDelete, canCreate }) {
                   <div className="min-w-0">
                     <h4 className="truncate text-base font-bold text-slate-950">{property.title}</h4>
                     <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                      <p className="text-xs text-slate-400">ID: {property.propertyCode || property._id.slice(-6).toUpperCase()}</p>
+                      <p className="text-xs text-slate-400">ID: {displayPropertyCode(property.propertyCode)}</p>
                       {property.isNewProject && <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-blue-700">New Project</span>}
                     </div>
                   </div>
@@ -1307,12 +1308,14 @@ function PropertiesSection({ canDelete, canCreate }) {
 
 function PropertyModal({ property, onClose, onSaved }) {
   const { staffUser } = useStaffAuth();
+  const initialPropertyCode = isReadablePropertyCode(property.propertyCode) ? String(property.propertyCode).trim().toUpperCase() : "";
   const [supervisors, setSupervisors] = useState([]);
   const [cmsOptions, setCmsOptions] = useState({ navbarAreas: defaultNavbarAreas, navbarTopLists: defaultTopLists });
   const [masterOptions, setMasterOptions] = useState(propertyOptionGroups);
   const [form, setForm] = useState(() => ({
     ...emptyProperty,
     ...property,
+    propertyCode: initialPropertyCode,
     measurement: { ...emptyProperty.measurement, ...(property.measurement || {}) },
     contact: { ...emptyProperty.contact, ...(property.contact || {}) },
     map: { ...emptyProperty.map, ...(property.map || {}) },
@@ -1330,7 +1333,7 @@ function PropertyModal({ property, onClose, onSaved }) {
   const [pendingFiles, setPendingFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [dealModalOpen, setDealModalOpen] = useState(false);
-  const [propertyCodeTouched, setPropertyCodeTouched] = useState(Boolean(property.propertyCode));
+  const [propertyCodeTouched, setPropertyCodeTouched] = useState(Boolean(initialPropertyCode));
   const [propertyCodeLoading, setPropertyCodeLoading] = useState(false);
   const maxImageSizeMb = 15;
 
@@ -1399,7 +1402,8 @@ function PropertyModal({ property, onClose, onSaved }) {
   };
 
   useEffect(() => {
-    if (form._id || propertyCodeTouched) return undefined;
+    const canAutoFillCode = !propertyCodeTouched && (!form._id || !isReadablePropertyCode(form.propertyCode));
+    if (!canAutoFillCode) return undefined;
     let active = true;
     const timer = window.setTimeout(() => {
       setPropertyCodeLoading(true);
@@ -1407,7 +1411,10 @@ function PropertyModal({ property, onClose, onSaved }) {
         .nextPropertyCode({ city: form.city || form.map?.city || "Ahmedabad", location: form.location })
         .then((response) => {
           if (!active) return;
-          setForm((current) => current._id || propertyCodeTouched ? current : { ...current, propertyCode: response.data?.propertyCode || current.propertyCode });
+          setForm((current) => {
+            const currentNeedsCode = !propertyCodeTouched && (!current._id || !isReadablePropertyCode(current.propertyCode));
+            return currentNeedsCode ? { ...current, propertyCode: response.data?.propertyCode || current.propertyCode } : current;
+          });
         })
         .catch(() => {})
         .finally(() => {
@@ -1418,7 +1425,7 @@ function PropertyModal({ property, onClose, onSaved }) {
       active = false;
       window.clearTimeout(timer);
     };
-  }, [form._id, form.city, form.location, form.map?.city, propertyCodeTouched]);
+  }, [form._id, form.propertyCode, form.city, form.location, form.map?.city, propertyCodeTouched]);
 
   const updatePath = (path, value) => {
     const keys = path.split(".");
@@ -1544,6 +1551,9 @@ function PropertyModal({ property, onClose, onSaved }) {
     try {
       const propertyCode = String(nextForm.propertyCode || "").trim().toUpperCase();
       if (propertyCode) {
+        if (!isReadablePropertyCode(propertyCode)) {
+          throw new Error("Property ID must use the AETP-CITY-0001 format.");
+        }
         const availability = await staffApi.checkPropertyCode(propertyCode, nextForm._id ? { excludeId: nextForm._id } : {});
         if (!availability.data?.available) {
           throw new Error("Property ID already exists. Please use a unique Property ID.");
@@ -1975,7 +1985,7 @@ function PropertyDealModal({ property, onClose, onSubmit, saving }) {
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
               <OwnerCell label="City / Location" value={[property.city, property.location].filter(Boolean).join(", ") || "Not specified"} />
-              <OwnerCell label="Property ID" value={property.propertyCode || "Will be generated"} />
+              <OwnerCell label="Property ID" value={displayPropertyCode(property.propertyCode, "Will be generated")} />
               <OwnerCell label="Property Type" value={property.type || property.category || "Not specified"} />
               <OwnerCell label="Category" value={property.category || "Not specified"} />
               <OwnerCell label="Listed Price" value={formatINR(property.priceAmount || property.price)} />
@@ -3164,7 +3174,7 @@ function OwnerRequestDetailModal({ request, remarks, setRemarks, saving, onClose
                 <OwnerCell label="Status" value={request.status?.replace("_", " ") || "-"} />
                 <OwnerCell label="Reviewed by" value={request.reviewedBy?.name || "-"} />
                 <OwnerCell label="Reviewed at" value={reviewedAt} />
-                <OwnerCell label="Approved listing" value={request.approvedPropertyId?.propertyCode || request.approvedPropertyId?.title || "-"} />
+                <OwnerCell label="Approved listing" value={displayPropertyCode(request.approvedPropertyId?.propertyCode, request.approvedPropertyId?.title || "-")} />
                 <OwnerCell label="Source" value={request.source || "-"} />
                 <OwnerCell label="Delete status" value={request.deleteStatus?.replace("_", " ") || "none"} />
                 <OwnerCell label="Live listing status" value={request.approvedPropertyId?.status || "-"} />
@@ -4050,7 +4060,7 @@ function SoldRentedReportsSection({ role, token }) {
             {rows.map((item, index) => (
               <tr key={`${item.property}-${item.customer}-${index}`} onClick={() => setSelectedDeal(item)} className="cursor-pointer hover:bg-slate-50/60">
                 <td className="px-5 py-4"><p className="font-bold text-slate-950">{item.property}</p><p className="text-xs text-slate-500">{item.cityLocation}</p></td>
-                <td className="px-4 py-4 text-xs font-bold text-slate-600">{item.propertyCode || "—"}</td>
+                <td className="px-4 py-4 text-xs font-bold text-slate-600">{displayPropertyCode(item.propertyCode, "—")}</td>
                 <td className="px-4 py-4"><p className="font-semibold">{item.customer}</p><p className="text-xs text-slate-500">{item.phone}</p></td>
                 <td className="px-4 py-4">{item.supervisor || "Unassigned"}</td>
                 <td className="px-4 py-4"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass(item.conversionType.toLowerCase())}`}>{item.conversionType}</span></td>
@@ -4075,7 +4085,7 @@ function SoldRentedReportsSection({ role, token }) {
             </div>
             <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <OwnerCell label="Customer" value={item.customer} />
-              <OwnerCell label="Property ID" value={item.propertyCode || "—"} />
+              <OwnerCell label="Property ID" value={displayPropertyCode(item.propertyCode, "—")} />
               <OwnerCell label="Supervisor" value={item.supervisor || "Unassigned"} />
               <OwnerCell label="Final Price" value={item.finalPrice || "—"} />
               <OwnerCell label="Closing" value={item.closingDate || "—"} />
@@ -4123,7 +4133,7 @@ function SoldRentedDetailModal({ deal, onClose }) {
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <OwnerCell label="Type" value={deal.propertyType || "Not specified"} />
-                <OwnerCell label="Property ID" value={deal.propertyCode || "—"} />
+                <OwnerCell label="Property ID" value={displayPropertyCode(deal.propertyCode, "—")} />
                 <OwnerCell label="Category" value={deal.category || "Not specified"} />
                 <OwnerCell label="Location" value={deal.cityLocation || "Not specified"} />
                 <OwnerCell label="Deal Source" value={deal.dealSource || "Not specified"} />
