@@ -32,13 +32,30 @@ export function moneyInputValue(value) {
   return amount ? String(amount) : "";
 }
 
+export function stripINRFormatting(displayValue) {
+  return String(displayValue || "").replace(/[^\d]/g, "");
+}
+
 export function formatINRForInput(rawDigits) {
   if (!rawDigits && rawDigits !== 0) return "";
-  const num = Number(String(rawDigits).replace(/[^\d]/g, "")) || 0;
+  const num = Number(stripINRFormatting(rawDigits)) || 0;
   if (!num) return "";
   return new Intl.NumberFormat("en-IN").format(num);
 }
 
-export function stripINRFormatting(displayValue) {
-  return String(displayValue || "").replace(/[^\d]/g, "");
+export function countDigitsBeforeCaret(value, caretIndex) {
+  return String(value || "").slice(0, caretIndex ?? 0).replace(/[^\d]/g, "").length;
+}
+
+export function caretIndexForDigitCount(value, digitCount) {
+  if (!digitCount) return 0;
+  let seen = 0;
+  const text = String(value || "");
+  for (let index = 0; index < text.length; index += 1) {
+    if (/\d/.test(text[index])) {
+      seen += 1;
+      if (seen >= digitCount) return index + 1;
+    }
+  }
+  return text.length;
 }

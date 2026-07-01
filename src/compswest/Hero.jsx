@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Bed, Bath, Maximize, Heart, Search, SlidersHorizontal, X } from 'lucide-react';
+import IndianMoneyInput from "../components/IndianMoneyInput";
 import useAuth from "../contexts/useAuth";
 
 import propertyData from "../data/pricingProperties.json";
@@ -679,11 +680,11 @@ function PriceRangeControl({ compact = false, priceRange, setPriceRange, minPric
       <div className={`mt-5 grid gap-3 ${compact ? "grid-cols-2" : "md:grid-cols-2"}`}>
         <label>
           <span className="wf-label">From (₹)</span>
-          <input className="wf-input" type="number" min="0" value={minPrice || ""} onChange={(event) => onMinChange(event.target.value)} placeholder="No minimum" />
+          <IndianMoneyInput className="wf-input" value={minPrice || ""} onValueChange={onMinChange} placeholder="No minimum" />
         </label>
         <label>
           <span className="wf-label">To (₹)</span>
-          <input className="wf-input" type="number" min="0" value={maxPrice || ""} onChange={(event) => onMaxChange(event.target.value)} placeholder="No maximum" />
+          <IndianMoneyInput className="wf-input" value={maxPrice || ""} onValueChange={onMaxChange} placeholder="No maximum" />
         </label>
       </div>
 

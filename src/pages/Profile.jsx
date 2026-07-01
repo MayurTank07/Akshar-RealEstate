@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowLeft, Building2, CheckCircle2, Clock, Edit3, FileText, Home, Send, ShieldCheck, Trash2, Upload, X, XCircle } from "lucide-react";
+import IndianMoneyInput from "../components/IndianMoneyInput";
 import Navbar from "../components/Navbar";
 import useAuth from "../contexts/useAuth";
 import { ownerApi, publicApi } from "../services/api";
-import { formatINR, formatINRForInput, parseINRAmount, stripINRFormatting } from "../utils/currency";
+import { formatINR, parseINRAmount } from "../utils/currency";
 
 const statusStyles = {
   pending: "bg-amber-50 text-amber-700 ring-amber-200",
@@ -831,21 +832,14 @@ function TextField({ label, value, onChange, type = "text", required = false, pr
 }
 
 function PriceInputField({ label, value, onChange, required = false }) {
-  const displayValue = formatINRForInput(value);
-  const handleChange = (raw) => {
-    const digits = stripINRFormatting(raw);
-    onChange(digits);
-  };
   return (
     <label className="block">
       <span className="wf-label">{label}{required ? " *" : ""}</span>
       <div className="flex overflow-hidden rounded-2xl border border-slate-200 bg-white focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100">
         <span className="grid min-w-14 place-items-center border-r border-slate-200 bg-slate-50 text-sm font-black text-slate-500">Rs.</span>
-        <input
-          type="text"
-          inputMode="numeric"
-          value={displayValue}
-          onChange={(event) => handleChange(event.target.value)}
+        <IndianMoneyInput
+          value={value}
+          onValueChange={onChange}
           placeholder="e.g. 12,00,000"
           className="min-h-12 flex-1 border-0 px-4 text-sm font-semibold text-slate-900 outline-none"
           required={required}

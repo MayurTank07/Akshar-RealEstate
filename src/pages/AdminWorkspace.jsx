@@ -36,9 +36,10 @@ import {
   Users,
   X,
 } from "lucide-react";
+import IndianMoneyInput from "../components/IndianMoneyInput";
 import { useStaffAuth } from "../contexts/useStaffAuth";
 import { publicApi, staffApi, toQueryString } from "../services/api";
-import { formatINR, moneyInputValue, parseINRAmount } from "../utils/currency";
+import { formatINR, parseINRAmount } from "../utils/currency";
 import { defaultAboutContent, defaultContactContent, defaultNavbarAreas, defaultTopLists, enabledSorted, normalizeAreaName } from "../config/navigationContent";
 
 const navItems = [
@@ -2096,11 +2097,11 @@ function ComboField({ label, name, value, onChange, options = [], required = fal
 }
 
 function MoneyField({ label, name, value, onChange, required = false, placeholder = "0", helperText = "", error = "" }) {
-  const handleChange = (event) => {
+  const handleValueChange = (rawValue) => {
     onChange({
       target: {
         name,
-        value: event.target.value,
+        value: rawValue,
         type: "text",
       },
     });
@@ -2110,14 +2111,11 @@ function MoneyField({ label, name, value, onChange, required = false, placeholde
       <span className="wf-label">{label}{required && <span className="ml-1 text-red-500">*</span>}</span>
       <div className={`flex overflow-hidden rounded-xl border bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 ${error ? "border-red-300" : "border-slate-200"}`}>
         <span className="grid w-12 place-items-center border-r border-slate-200 bg-slate-50 text-sm font-extrabold text-slate-700">₹</span>
-        <input
+        <IndianMoneyInput
           className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm font-medium text-slate-900 outline-none"
           name={name}
-          type="number"
-          min="0"
-          step="1"
-          value={moneyInputValue(value)}
-          onChange={handleChange}
+          value={value}
+          onValueChange={handleValueChange}
           required={required}
           placeholder={placeholder}
         />
@@ -3458,12 +3456,10 @@ function OwnerContentEditModal({ request, saving, onClose, onSave }) {
                   <span className="wf-label">Expected Price / Rent</span>
                   <div className="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100">
                     <span className="grid min-w-12 place-items-center border-r border-slate-200 bg-slate-50 text-xs font-black text-slate-500">Rs.</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
+                    <IndianMoneyInput
                       className="min-h-10 flex-1 border-0 px-3 text-sm font-semibold text-slate-900 outline-none"
-                      value={form.propertyDetails.expectedPrice ? new Intl.NumberFormat("en-IN").format(Number(form.propertyDetails.expectedPrice) || 0) : ""}
-                      onChange={(event) => updateDetails("expectedPrice", event.target.value.replace(/[^\d]/g, ""))}
+                      value={form.propertyDetails.expectedPrice}
+                      onValueChange={(rawValue) => updateDetails("expectedPrice", rawValue)}
                       placeholder="e.g. 12,00,000"
                     />
                   </div>
