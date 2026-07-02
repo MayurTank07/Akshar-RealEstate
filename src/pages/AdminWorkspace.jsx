@@ -3006,6 +3006,7 @@ function OwnersSection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const ownerTabs = useMemo(() => [
     { key: "pending", label: "Pending", query: { status: "pending" } },
     { key: "approved", label: "Approved", query: { status: "approved" } },
@@ -3094,6 +3095,24 @@ function OwnersSection() {
       setSaving("");
     }
   };
+  const removeOwner = async (owner) => {
+    if (!window.confirm(`Delete owner submission for "${owner.propertyDetails?.title || owner.name}"? Linked live property will also be removed or archived.`)) return;
+    try {
+      setSaving(`owner-delete-${owner._id}`);
+      setError("");
+      setNotice("");
+      const response = await staffApi.deleteOwner(owner._id);
+      setOwners((current) => current.filter((item) => item._id !== owner._id));
+      setSelected(null);
+      const action = response.data?.propertyAction;
+      setNotice(action === "archived" ? "Owner submission deleted. Linked closed property was archived for reports." : action === "deleted" ? "Owner submission and linked property deleted." : "Owner submission deleted.");
+      load(tab, filters);
+    } catch (err) {
+      setError(err.message || "Unable to delete owner submission.");
+    } finally {
+      setSaving("");
+    }
+  };
   const counts = ownerTabs.reduce((acc, item) => {
     if (item.key === "delete_requests") return { ...acc, [item.key]: owners.filter((owner) => owner.deleteStatus === "pending").length };
     return { ...acc, [item.key]: owners.filter((owner) => owner.status === item.key).length };
@@ -3102,6 +3121,7 @@ function OwnersSection() {
     <>
       <PageTitle title="Owner Management" subtitle="Review seller/owner property submissions before they go live" />
       <InlineAlert message={error} />
+      <InlineAlert message={notice} tone="green" />
       <div className="rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)]">
         <div className="grid grid-cols-2 border-b border-slate-200 md:grid-cols-5">
           {ownerTabs.map((item) => (
@@ -3130,6 +3150,7 @@ function OwnersSection() {
                   <span className={`rounded-full px-3 py-1 text-xs font-black capitalize ${statusClass(owner.status)}`}>{owner.status?.replace("_", " ")}</span>
                   {owner.deleteStatus === "pending" && <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700 ring-1 ring-amber-200">Delete requested</span>}
                   <button type="button" onClick={() => { setSelected(owner); setRemarks(owner.deleteStatus === "pending" ? owner.deleteReviewRemarks || "" : owner.reviewRemarks || ""); }} className="wf-btn wf-btn-secondary text-sm"><Eye size={15} /> View</button>
+                  <button type="button" onClick={() => removeOwner(owner)} disabled={saving === `owner-delete-${owner._id}`} className="wf-btn wf-btn-secondary text-sm text-rose-600 ring-rose-100 hover:bg-rose-50 disabled:opacity-60"><Trash2 size={15} /> Delete</button>
                 </div>
               </div>
             </div>
@@ -3145,6 +3166,7 @@ function OwnersSection() {
           onClose={() => setSelected(null)}
           onUpdate={updateStatus}
           onReviewDelete={reviewDelete}
+          onDelete={() => removeOwner(selected)}
           onEdit={() => { setEditingContent(selected); setSelected(null); }}
         />
       )}
@@ -3157,7 +3179,7 @@ function OwnerCell({ label, value, sub }) {
   return <div><p className="text-xs text-slate-500 sm:text-sm">{label}</p><p className="mt-1 font-bold text-slate-900">{value}</p>{sub && <p className="mt-0.5 text-xs font-semibold text-slate-500">{sub}</p>}</div>;
 }
 
-function OwnerRequestDetailModal({ request, remarks, setRemarks, saving, onClose, onUpdate, onReviewDelete, onEdit }) {
+function OwnerRequestDetailModal({ request, remarks, setRemarks, saving, onClose, onUpdate, onReviewDelete, onDelete, onEdit }) {
   const details = request.propertyDetails || {};
   const media = request.media || {};
   const map = details.map || {};
@@ -3358,6 +3380,7 @@ function OwnerRequestDetailModal({ request, remarks, setRemarks, saving, onClose
         </div>
         <div className="flex flex-col gap-3 border-t border-slate-100 p-4 sm:flex-row sm:justify-end">
           <button type="button" onClick={onEdit} className="wf-btn wf-btn-secondary"><Edit3 size={16} /> Edit Submitted Content</button>
+          <button type="button" disabled={!!saving} onClick={onDelete} className="wf-btn wf-btn-secondary text-rose-600 ring-rose-100 hover:bg-rose-50 disabled:opacity-70"><Trash2 size={16} /> Delete</button>
           <button type="button" onClick={onClose} className="wf-btn wf-btn-secondary">Cancel</button>
           {request.deleteStatus === "pending" ? (
             <>
@@ -3998,6 +4021,7 @@ function SoldRentedReportsSection({ role, token }) {
   const [supervisors, setSupervisors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [selectedDeal, setSelectedDeal] = useState(null);
   const rows = useMemo(() => data.rows || [], [data.rows]);
   const cityOptions = uniqueOptions(rows, (item) => item.cityLocation);
@@ -4070,6 +4094,27 @@ function SoldRentedReportsSection({ role, token }) {
     URL.revokeObjectURL(url);
   };
 
+  const deleteDeal = async (deal) => {
+    if (!window.confirm(`Delete this ${deal.conversionType?.toLowerCase() || "closed"} report record?`)) return;
+    try {
+      setError("");
+      setNotice("");
+      if (deal.sourceType === "enquiry") {
+        await staffApi.deleteEnquiry(deal.id);
+        if (deal.propertyId && ["sold", "rented"].includes(String(deal.propertyStatus || "").toLowerCase())) {
+          await staffApi.deleteProperty(deal.propertyId);
+        }
+      } else {
+        await staffApi.deleteProperty(deal.propertyId || deal.id);
+      }
+      setSelectedDeal(null);
+      setNotice("Sold/rented record deleted.");
+      await load(filters);
+    } catch (err) {
+      setError(err.message || "Unable to delete sold/rented record.");
+    }
+  };
+
   return (
     <>
       <PageTitle
@@ -4078,6 +4123,7 @@ function SoldRentedReportsSection({ role, token }) {
         action={<div className="flex flex-wrap gap-3"><button onClick={() => exportReport("pdf")} className="wf-btn wf-btn-primary w-full sm:w-auto"><Download size={17} /> PDF</button><button onClick={() => exportReport("excel")} className="wf-btn wf-btn-secondary w-full sm:w-auto"><Download size={17} /> Excel</button></div>}
       />
       <InlineAlert message={error} />
+      <InlineAlert message={notice} tone="green" />
       <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         <StatCard icon={Check} color="green" label="Sold" value={data.totals?.sold ?? 0} />
         <StatCard icon={Home} color="teal" label="Rented" value={data.totals?.rented ?? 0} />
@@ -4117,7 +4163,7 @@ function SoldRentedReportsSection({ role, token }) {
       </div>
       <div className="hidden overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)] lg:block">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs text-slate-600"><tr><th className="px-5 py-4">Property</th><th className="px-4 py-4">Property ID</th><th className="px-4 py-4">Customer</th><th className="px-4 py-4">Supervisor</th><th className="px-4 py-4">Type</th><th className="px-4 py-4">Original</th><th className="px-4 py-4">Final</th><th className="px-4 py-4">Commission</th><th className="px-4 py-4">Closing</th></tr></thead>
+          <thead className="bg-slate-50 text-xs text-slate-600"><tr><th className="px-5 py-4">Property</th><th className="px-4 py-4">Property ID</th><th className="px-4 py-4">Customer</th><th className="px-4 py-4">Supervisor</th><th className="px-4 py-4">Type</th><th className="px-4 py-4">Original</th><th className="px-4 py-4">Final</th><th className="px-4 py-4">Commission</th><th className="px-4 py-4">Closing</th><th className="px-4 py-4 text-right">Action</th></tr></thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((item, index) => (
               <tr key={`${item.property}-${item.customer}-${index}`} onClick={() => setSelectedDeal(item)} className="cursor-pointer hover:bg-slate-50/60">
@@ -4130,6 +4176,18 @@ function SoldRentedReportsSection({ role, token }) {
                 <td className="px-4 py-4 font-bold text-blue-600">{item.finalPrice || "—"}</td>
                 <td className="px-4 py-4">{item.commission || "—"}</td>
                 <td className="px-4 py-4">{item.closingDate || "—"}</td>
+                <td className="px-4 py-4 text-right">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      deleteDeal(item);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-100"
+                  >
+                    <Trash2 size={14} /> Delete
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -4140,7 +4198,16 @@ function SoldRentedReportsSection({ role, token }) {
       <div className="space-y-3 lg:hidden">
         {loading && <LoadingState label="Loading report..." />}
         {rows.map((item, index) => (
-          <button key={`${item.property}-${item.customer}-${index}`} onClick={() => setSelectedDeal(item)} className="w-full rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-[0_4px_16px_rgba(15,23,42,0.08)]">
+          <div
+            key={`${item.property}-${item.customer}-${index}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => setSelectedDeal(item)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") setSelectedDeal(item);
+            }}
+            className="w-full cursor-pointer rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-[0_4px_16px_rgba(15,23,42,0.08)]"
+          >
             <div className="flex items-start justify-between gap-3">
               <div><p className="font-bold text-slate-950">{item.property}</p><p className="text-xs text-slate-500">{item.cityLocation}</p></div>
               <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass(item.conversionType.toLowerCase())}`}>{item.conversionType}</span>
@@ -4152,16 +4219,28 @@ function SoldRentedReportsSection({ role, token }) {
               <OwnerCell label="Final Price" value={item.finalPrice || "—"} />
               <OwnerCell label="Closing" value={item.closingDate || "—"} />
             </div>
-          </button>
+            <div className="mt-3 flex justify-end border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  deleteDeal(item);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:bg-rose-100"
+              >
+                <Trash2 size={15} /> Delete
+              </button>
+            </div>
+          </div>
         ))}
         {!loading && !rows.length && <EmptyState title="No sold or rented records" description="Close enquiries as sold or rented to populate this report." />}
       </div>
-      {selectedDeal && <SoldRentedDetailModal deal={selectedDeal} onClose={closeSelectedDeal} />}
+      {selectedDeal && <SoldRentedDetailModal deal={selectedDeal} onClose={closeSelectedDeal} onDelete={() => deleteDeal(selectedDeal)} />}
     </>
   );
 }
 
-function SoldRentedDetailModal({ deal, onClose }) {
+function SoldRentedDetailModal({ deal, onClose, onDelete }) {
   const images = [deal.image, ...(deal.gallery || [])].filter(Boolean);
   return (
     <div className="fixed inset-0 z-[600] grid place-items-center bg-slate-950/60 p-4">
@@ -4217,6 +4296,10 @@ function SoldRentedDetailModal({ deal, onClose }) {
               {deal.paymentDetails && deal.remarks && <p className="mt-2 text-sm text-slate-500">{deal.remarks}</p>}
             </div>
           </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-3 border-t border-slate-100 pt-4">
+          <button type="button" onClick={onDelete} className="wf-btn wf-btn-secondary text-rose-600 ring-rose-100 hover:bg-rose-50"><Trash2 size={16} /> Delete</button>
+          <button type="button" onClick={onClose} className="wf-btn wf-btn-secondary">Close</button>
         </div>
       </div>
     </div>
@@ -5637,6 +5720,7 @@ function UsersSection() {
   const [exportFormat, setExportFormat] = useState("excel");
   const [exporting, setExporting] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(null);
+  const [deletingUser, setDeletingUser] = useState(null);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -5682,6 +5766,25 @@ function UsersSection() {
       alert(err.message || "Failed to update user status");
     } finally {
       setStatusUpdating(null);
+    }
+  };
+
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm(`Delete user "${user.name}"? This cannot be undone.`)) return;
+    setDeletingUser(user._id);
+    try {
+      await staffApi.deleteUser(user._id);
+      setUsers((prev) => prev.filter((u) => u._id !== user._id));
+      fetchStats();
+      if (users.length === 1 && pagination.page > 1) {
+        fetchUsers(pagination.page - 1);
+      } else {
+        fetchUsers(pagination.page);
+      }
+    } catch (err) {
+      alert(err.message || "Failed to delete user");
+    } finally {
+      setDeletingUser(null);
     }
   };
 
@@ -5866,13 +5969,22 @@ function UsersSection() {
                   </span>
                 </td>
                 <td className="px-4 py-3.5 text-right">
-                  <button
-                    onClick={() => handleToggleStatus(u)}
-                    disabled={statusUpdating === u._id}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-bold transition disabled:opacity-50 ${u.status === "active" ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
-                  >
-                    {statusUpdating === u._id ? "Saving…" : u.status === "active" ? "Deactivate" : "Activate"}
-                  </button>
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => handleToggleStatus(u)}
+                      disabled={statusUpdating === u._id}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition disabled:opacity-50 ${u.status === "active" ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
+                    >
+                      {statusUpdating === u._id ? "Saving…" : u.status === "active" ? "Deactivate" : "Activate"}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(u)}
+                      disabled={deletingUser === u._id}
+                      className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50"
+                    >
+                      {deletingUser === u._id ? "Deleting…" : "Delete"}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -5914,13 +6026,20 @@ function UsersSection() {
               {u.phone && <span className="text-slate-500">{u.phone}</span>}
               {fmtDate(u.createdAt) && <span className="text-slate-400">{fmtDate(u.createdAt)}</span>}
             </div>
-            <div className="mt-3 flex justify-end border-t border-slate-50 pt-3">
+            <div className="mt-3 flex justify-end gap-2 border-t border-slate-50 pt-3">
               <button
                 onClick={() => handleToggleStatus(u)}
                 disabled={statusUpdating === u._id}
                 className={`rounded-lg px-3 py-1.5 text-xs font-bold transition disabled:opacity-50 ${u.status === "active" ? "bg-red-50 text-red-600 hover:bg-red-100" : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
               >
                 {statusUpdating === u._id ? "Saving…" : u.status === "active" ? "Deactivate" : "Activate"}
+              </button>
+              <button
+                onClick={() => handleDeleteUser(u)}
+                disabled={deletingUser === u._id}
+                className="rounded-lg bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600 transition hover:bg-rose-100 disabled:opacity-50"
+              >
+                {deletingUser === u._id ? "Deleting…" : "Delete"}
               </button>
             </div>
           </div>
