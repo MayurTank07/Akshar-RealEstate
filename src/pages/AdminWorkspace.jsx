@@ -1159,11 +1159,18 @@ function PropertiesSection({ canDelete, canCreate }) {
     if (focusedPropertyId) navigate(location.pathname, { replace: true });
   };
 
-  const remove = async (id) => {
-    if (!window.confirm("Delete this property?")) return;
+  const remove = async (property) => {
+    const id = property?._id || property;
+    const isClosed = ["sold", "rented"].includes(String(property?.status || "").toLowerCase());
+    const confirmText = isClosed
+      ? "Archive this closed property? It will be hidden from listings but kept for reports."
+      : "Delete this property?";
+    if (!window.confirm(confirmText)) return;
     try {
       setError("");
-      await staffApi.deleteProperty(id);
+      const response = await staffApi.deleteProperty(id);
+      setNotice(response.data?.archived ? "Closed property archived and hidden from listings." : "Property deleted successfully.");
+      setProperties((current) => current.filter((item) => item._id !== id));
       load();
     } catch (err) {
       setError(err.message || "Unable to delete property.");
@@ -1262,7 +1269,7 @@ function PropertiesSection({ canDelete, canCreate }) {
                 <td className="px-6 py-4">
                   <div className="flex justify-end gap-3">
                     <button onClick={() => setEditing(property)} className="grid h-9 w-9 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50" aria-label="Edit property"><Edit3 size={17} /></button>
-                    {canDelete && <button onClick={() => remove(property._id)} className="grid h-9 w-9 place-items-center rounded-lg text-red-500 transition hover:bg-red-50" aria-label="Delete property"><Trash2 size={17} /></button>}
+                    {canDelete && <button onClick={() => remove(property)} className="grid h-9 w-9 place-items-center rounded-lg text-red-500 transition hover:bg-red-50" aria-label="Delete property"><Trash2 size={17} /></button>}
                   </div>
                 </td>
               </tr>
@@ -1302,7 +1309,7 @@ function PropertiesSection({ canDelete, canCreate }) {
             </div>
             <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">
               <button onClick={() => setEditing(property)} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-2.5 text-sm font-semibold text-blue-600 transition hover:bg-blue-100"><Edit3 size={15} /> Edit</button>
-              {canDelete && <button onClick={() => remove(property._id)} className="flex items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"><Trash2 size={15} /> Delete</button>}
+              {canDelete && <button onClick={() => remove(property)} className="flex items-center justify-center gap-2 rounded-xl bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"><Trash2 size={15} /> Delete</button>}
             </div>
           </div>
         ))}
