@@ -1,43 +1,28 @@
 import { Play } from "lucide-react";
-
-const videos = [
-  {
-    title: "Bungalow for Sale",
-    location: "Karali, Vadodara",
-    image: "/v1.jpg",
-    overlay: "LUXURY HOME FOR SALE - VIRTUAL TOUR",
-  },
-  {
-    title: "Bungalow for Sale",
-    location: "Koba, Gandhinagar",
-    image: "/v2.jpg",
-  },
-  {
-    title: "Land for Sale",
-    location: "Adajan, Surat",
-    image: "/v3.jpg",
-    overlay: "Property Video",
-  },
-  {
-    title: "Villa for Sale",
-    location: "Alkapuri, Vadodara",
-    image: "/v4.jpg",
-    overlay: "FOR SALE - DREAM HOME",
-    button: "CONTACT AGENT",
-  },
-];
+import useSiteContent from "../hooks/useSiteContent";
+import { defaultHomeSectionsContent } from "../config/navigationContent";
 
 export default function Videos() {
+  const { homeSectionsContent } = useSiteContent();
+  const section = { ...defaultHomeSectionsContent.videos, ...(homeSectionsContent?.videos || {}) };
+  const videos = (Array.isArray(section.items) ? section.items : defaultHomeSectionsContent.videos.items).filter((item) => item.enabled !== false);
+  if (!videos.length) return null;
+
   return (
     <div className="w-full bg-gray-100 py-16">
 
       {/* Header */}
       <div className="px-6 md:px-12 lg:px-20 pb-8">
+        {section.eyebrow && (
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-blue-600">
+            {section.eyebrow}
+          </p>
+        )}
         <h2 className="text-3xl md:text-4xl font-semibold text-gray-900">
-          Watch Our Videos
+          {section.title}
         </h2>
         <p className="text-gray-500 mt-2">
-          Explore our collection of short videos showcasing properties and insights
+          {section.subtitle}
         </p>
       </div>
 
@@ -48,7 +33,7 @@ export default function Videos() {
           <div key={i} className="flex flex-col">
 
             {/* Video Card */}
-            <div className="relative h-64 rounded-2xl overflow-hidden group">
+            <a href={v.url || "#"} className="relative h-64 rounded-2xl overflow-hidden group block" onClick={(event) => !v.url && event.preventDefault()}>
 
               <img
                 src={v.image}
@@ -80,7 +65,7 @@ export default function Videos() {
                 </div>
               )}
 
-            </div>
+            </a>
 
             {/* Info */}
             <div className="mt-3">

@@ -1,10 +1,11 @@
+import useSiteContent from "../hooks/useSiteContent";
+import { defaultHomeSectionsContent } from "../config/navigationContent";
+
 export default function Stats() {
-  const stats = [
-    { value: "10K+", label: "Happy Clients" },
-    { value: "15K+", label: "Properties Sold" },
-    { value: "4.9", label: "Average Rating" },
-    { value: "25+", label: "Years Experience" },
-  ];
+  const { homeSectionsContent } = useSiteContent();
+  const section = { ...defaultHomeSectionsContent.stats, ...(homeSectionsContent?.stats || {}) };
+  const stats = (Array.isArray(section.items) ? section.items : defaultHomeSectionsContent.stats.items).filter((item) => item.enabled !== false);
+  if (!stats.length) return null;
 
   return (
     <div className="w-full bg-#FFFFFF py-16 px-6 md:px-12 lg:px-20">

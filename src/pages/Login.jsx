@@ -5,6 +5,7 @@ import useAuth from "../contexts/useAuth";
 import { findCredential } from "../data/authUsers";
 import { userApi } from "../services/api";
 import GoogleAuthButton from "../components/GoogleAuthButton";
+import BrandLogo from "../components/BrandLogo";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -67,6 +68,9 @@ export default function LoginPage() {
       </button>
 
       <div className="wf-card w-full max-w-md p-6 shadow-2xl sm:p-8">
+        <div className="mb-6 flex justify-center">
+          <BrandLogo large />
+        </div>
         <h2 className="mb-2 text-center text-3xl font-extrabold tracking-tight text-slate-950">
           Login to Akshar Estate The Property HUB
         </h2>

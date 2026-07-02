@@ -1,21 +1,27 @@
-import agents from "../data/agents.json";
+import useSiteContent from "../hooks/useSiteContent";
+import { defaultHomeSectionsContent } from "../config/navigationContent";
 
 export default function Agents() {
+  const { homeSectionsContent } = useSiteContent();
+  const section = { ...defaultHomeSectionsContent.agents, ...(homeSectionsContent?.agents || {}) };
+  const agents = (Array.isArray(section.items) ? section.items : defaultHomeSectionsContent.agents.items).filter((item) => item.enabled !== false);
+  if (!agents.length) return null;
+
   return (
     <div className="w-full bg-[#F5F8FF] py-12 sm:py-20 px-4 sm:px-6 md:px-12 lg:px-20">
 
       {/* Header */}
       <div className="max-w-3xl mb-8 sm:mb-12 text-center sm:text-left">
         <p className="text-blue-600 text-xs font-semibold uppercase tracking-wider">
-          Our Experts
+          {section.eyebrow}
         </p>
 
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-900 mt-2">
-          Meet our Expert Agents in Ahmedabad
+          {section.title}
         </h2>
 
         <p className="text-gray-500 mt-2 sm:mt-3 text-sm sm:text-base max-w-2xl mx-auto sm:mx-0">
-          Connect with our certified real estate professionals across India
+          {section.subtitle}
         </p>
       </div>
 
@@ -23,7 +29,7 @@ export default function Agents() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
         {agents.map((agent) => (
           <div
-            key={agent.id}
+            key={`${agent.name}-${agent.city}`}
             className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-md transition group"
           >
 
@@ -46,14 +52,19 @@ export default function Agents() {
 
             {/* Description */}
             <p className="text-sm text-gray-500 mt-2 sm:mt-3 leading-relaxed text-center sm:text-left line-clamp-3 sm:line-clamp-none">
-              Experienced real estate professional with extensive knowledge of
-              local market trends and property investment opportunities across India.
+              {agent.description}
             </p>
 
             {/* Link */}
-            <button className="text-blue-600 text-sm font-medium mt-3 sm:mt-4 hover:underline w-full sm:w-auto text-center">
-              View Agent Profile →
-            </button>
+            {agent.linkUrl ? (
+              <a href={agent.linkUrl} className="block text-blue-600 text-sm font-medium mt-3 sm:mt-4 hover:underline w-full sm:w-auto text-center sm:text-left">
+                {agent.linkText || "View Agent Profile"} →
+              </a>
+            ) : (
+              <span className="block text-blue-600 text-sm font-medium mt-3 sm:mt-4 w-full sm:w-auto text-center sm:text-left">
+                {agent.linkText || "View Agent Profile"} →
+              </span>
+            )}
 
           </div>
         ))}

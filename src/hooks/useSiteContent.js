@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { publicApi } from "../services/api";
-import { defaultAboutContent, defaultContactContent, defaultNavbarAreas, defaultTopLists } from "../config/navigationContent";
+import { defaultAboutContent, defaultContactContent, defaultHomeSectionsContent, defaultNavbarAreas, defaultTopLists } from "../config/navigationContent";
 
 const defaults = {
   siteName: "Akshar Estate The Property HUB",
@@ -10,6 +10,7 @@ const defaults = {
   navbarTopLists: defaultTopLists,
   aboutContent: defaultAboutContent,
   contactContent: defaultContactContent,
+  homeSectionsContent: defaultHomeSectionsContent,
   heroImage: "/house.jpg",
   heroCtaText: "Search",
 };

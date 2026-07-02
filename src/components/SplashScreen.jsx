@@ -33,8 +33,8 @@ export default function SplashScreen() {
       <div className="absolute left-1/2 top-1/2 h-[24rem] w-[24rem] -translate-x-1/2 -translate-y-1/2 rounded-full border border-slate-200/80 animate-[akshar-orbit_2.4s_ease-in-out_infinite_reverse]" />
 
       <div className="relative w-full max-w-md text-center">
-        <div className="mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-white p-2 shadow-[0_24px_70px_rgba(37,99,235,0.2)] ring-1 ring-slate-200 animate-[akshar-logo-rise_900ms_cubic-bezier(.2,.8,.2,1)_both]">
-          <img src="/akshar-logo-512.jpeg" alt="Akshar Estate The Property HUB logo" className="h-full w-full rounded-[1.45rem] object-cover" />
+        <div className="mx-auto mb-7 flex h-24 w-24 items-center justify-center rounded-full bg-white p-2 shadow-[0_24px_70px_rgba(37,99,235,0.2)] ring-1 ring-slate-200 animate-[akshar-logo-rise_900ms_cubic-bezier(.2,.8,.2,1)_both]">
+          <img src="/akshar-logo-512.jpeg" alt="Akshar Estate The Property HUB logo" className="h-full w-full rounded-full object-cover" />
         </div>
         <div className="flex justify-center text-2xl animate-[akshar-fade-up_900ms_180ms_cubic-bezier(.2,.8,.2,1)_both]">
           <BrandLogo />

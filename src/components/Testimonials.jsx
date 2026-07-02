@@ -1,21 +1,27 @@
-import testimonials from "../data/testimonials.json";
+import useSiteContent from "../hooks/useSiteContent";
+import { defaultHomeSectionsContent } from "../config/navigationContent";
 
 export default function Testimonials() {
+  const { homeSectionsContent } = useSiteContent();
+  const section = { ...defaultHomeSectionsContent.testimonials, ...(homeSectionsContent?.testimonials || {}) };
+  const testimonials = (Array.isArray(section.items) ? section.items : defaultHomeSectionsContent.testimonials.items).filter((item) => item.enabled !== false);
+  if (!testimonials.length) return null;
+
   return (
     <div className="w-full bg-white py-12 sm:py-20 px-4 sm:px-6 md:px-12 lg:px-20">
 
       {/* Header */}
       <div className="max-w-3xl mb-8 sm:mb-12 text-center sm:text-left">
         <p className="text-blue-600 text-xs font-semibold uppercase tracking-wider">
-          Testimonials
+          {section.eyebrow}
         </p>
 
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-900 mt-2">
-          What Our Clients Say
+          {section.title}
         </h2>
 
         <p className="text-gray-500 mt-2 sm:mt-3 text-sm sm:text-base max-w-2xl mx-auto sm:mx-0">
-          Don't just take our word for it. Here's what our valued clients have to say about their experience with us.
+          {section.subtitle}
         </p>
       </div>
 
@@ -23,13 +29,13 @@ export default function Testimonials() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
         {testimonials.map((t) => (
           <div
-            key={t.id}
+            key={`${t.name}-${t.role}`}
             className="bg-gray-50 sm:bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-full"
           >
 
             {/* Stars */}
             <div className="flex text-yellow-400 mb-2 sm:mb-3 justify-center sm:justify-start">
-              {"★★★★★".split("").map((_, i) => (
+              {"★".repeat(Math.max(1, Math.min(5, Number(t.rating || 5)))).split("").map((_, i) => (
                 <span key={i} className="text-sm sm:text-base">★</span>
               ))}
             </div>

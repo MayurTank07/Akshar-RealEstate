@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useStaffAuth } from "../contexts/useStaffAuth";
+import BrandLogo from "../components/BrandLogo";
 
 export default function StaffLogin() {
   const navigate = useNavigate();
@@ -47,8 +48,8 @@ export default function StaffLogin() {
 
       <main className="mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-[1fr_460px]">
         <section className="hidden flex-col justify-center bg-blue-600 px-12 text-white lg:flex">
-          <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/15">
-            <Building2 size={32} />
+          <div className="w-fit rounded-2xl bg-white/15 p-4">
+            <BrandLogo light large />
           </div>
           <h1 className="mt-8 max-w-lg text-5xl font-extrabold leading-tight tracking-tight">
             Staff workspace for Akshar Estate operations.
@@ -61,6 +62,9 @@ export default function StaffLogin() {
         <section className="flex items-center justify-center px-5 py-20">
           <div className="wf-card w-full max-w-md p-7 shadow-2xl sm:p-9">
             <div className="mb-8">
+              <div className="mb-5">
+                <BrandLogo large />
+              </div>
               <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blue-600">Staff Login</p>
               <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">Welcome back</h2>
               <p className="mt-2 text-sm text-slate-500">Login with admin or supervisor credentials.</p>

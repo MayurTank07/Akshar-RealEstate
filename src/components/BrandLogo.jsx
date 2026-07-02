@@ -13,8 +13,8 @@ export default function BrandLogo({ compact = false, light = false, large = fals
         alt="Akshar Estate The Property HUB logo"
         className={`shrink-0 object-cover shadow-md ring-1 ${
           large
-            ? "h-11 w-11 rounded-2xl shadow-slate-950/15 ring-white/40"
-            : "h-9 w-9 rounded-xl shadow-slate-950/10 ring-white/50"
+            ? "h-12 w-12 rounded-full shadow-slate-950/15 ring-white/40"
+            : "h-10 w-10 rounded-full shadow-slate-950/10 ring-white/50"
         }`}
       />
       {!compact && (
@@ -22,14 +22,14 @@ export default function BrandLogo({ compact = false, light = false, large = fals
           <span
             className={`font-extrabold tracking-tight ${
               large ? "text-[18px]" : "text-[14px]"
-            } ${light ? "text-white" : "text-slate-950"}`}
+            } text-[#f6c945] drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]`}
           >
             {primary}
           </span>
           <span
             className={`font-semibold tracking-wide ${
               large ? "mt-[5px] text-[12px]" : "mt-[3px] text-[10px]"
-            } ${light ? "text-blue-200" : "text-slate-500"}`}
+            } ${light ? "text-[#d8a5ff]" : "text-[#8e2a9f]"}`}
           >
             {secondary}
           </span>

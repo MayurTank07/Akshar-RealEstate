@@ -41,7 +41,7 @@ import { useStaffAuth } from "../contexts/useStaffAuth";
 import { publicApi, staffApi, toQueryString } from "../services/api";
 import { formatINR, parseINRAmount } from "../utils/currency";
 import { displayPropertyCode, isReadablePropertyCode } from "../utils/propertyCode";
-import { defaultAboutContent, defaultContactContent, defaultNavbarAreas, defaultTopLists, enabledSorted, normalizeAreaName } from "../config/navigationContent";
+import { defaultAboutContent, defaultContactContent, defaultHomeSectionsContent, defaultNavbarAreas, defaultTopLists, enabledSorted, normalizeAreaName } from "../config/navigationContent";
 
 const navItems = [
   { key: "dashboard", label: "Dashboard", icon: BarChart3, roles: ["admin", "supervisor"], permission: "dashboard:access" },
@@ -456,10 +456,10 @@ function SidebarContent({ staffUser, allowedItems, activeSection, scope, onNavig
     <>
       <div className="flex h-[88px] items-center justify-between gap-3 border-b border-blue-500/60 px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-blue-500 to-teal-500 text-lg font-bold">A</div>
+          <img src="/akshar-logo-512.jpeg" alt="Akshar Estate logo" className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-white/30" />
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-extrabold">Akshar Estate</h1>
-            <p className="text-xs text-blue-100">{staffUser.role === "admin" ? "Admin Panel" : "Supervisor Panel"}</p>
+            <h1 className="truncate text-lg font-extrabold text-[#f6c945]">Akshar Estate</h1>
+            <p className="text-xs font-semibold text-[#d8a5ff]">{staffUser.role === "admin" ? "Admin Panel" : "Supervisor Panel"}</p>
           </div>
         </div>
         {showClose && (
@@ -2106,7 +2106,14 @@ function ComboField({ label, name, value, onChange, options = [], required = fal
   );
 }
 
-function MoneyField({ label, name, value, onChange, required = false, placeholder = "0", helperText = "", error = "" }) {
+function moneyPlaceholderFor(name = "", label = "") {
+  const text = `${name} ${label}`.toLowerCase();
+  if (text.includes("commission") || text.includes("brokerage")) return "25,00,000";
+  if (text.includes("final") || text.includes("sold") || text.includes("rented") || text.includes("deal")) return "1,00,00,000";
+  return "50,00,000";
+}
+
+function MoneyField({ label, name, value, onChange, required = false, placeholder = "", helperText = "", error = "" }) {
   const handleValueChange = (rawValue) => {
     onChange({
       target: {
@@ -2127,7 +2134,7 @@ function MoneyField({ label, name, value, onChange, required = false, placeholde
           value={value}
           onValueChange={handleValueChange}
           required={required}
-          placeholder={placeholder}
+          placeholder={placeholder || moneyPlaceholderFor(name, label)}
         />
       </div>
       {(error || helperText) && <span className={`mt-1.5 block text-xs font-semibold ${error ? "text-red-600" : "text-slate-400"}`}>{error || helperText}</span>}
@@ -3470,7 +3477,7 @@ function OwnerContentEditModal({ request, saving, onClose, onSave }) {
                       className="min-h-10 flex-1 border-0 px-3 text-sm font-semibold text-slate-900 outline-none"
                       value={form.propertyDetails.expectedPrice}
                       onValueChange={(rawValue) => updateDetails("expectedPrice", rawValue)}
-                      placeholder="e.g. 12,00,000"
+                      placeholder="50,00,000"
                     />
                   </div>
                   {form.propertyDetails.expectedPrice && Number(form.propertyDetails.expectedPrice) > 0 && (
@@ -4477,8 +4484,10 @@ function PageEditsSection() {
   const topLists = Array.isArray(itemByKey("navbarTopLists")?.value) ? itemByKey("navbarTopLists").value : defaultTopLists;
   const aboutContent = itemByKey("aboutContent")?.value && typeof itemByKey("aboutContent").value === "object" ? { ...defaultAboutContent, ...itemByKey("aboutContent").value } : defaultAboutContent;
   const contactContent = itemByKey("contactContent")?.value && typeof itemByKey("contactContent").value === "object" ? { ...defaultContactContent, ...itemByKey("contactContent").value } : defaultContactContent;
+  const homeSectionsContent = itemByKey("homeSectionsContent")?.value && typeof itemByKey("homeSectionsContent").value === "object" ? { ...defaultHomeSectionsContent, ...itemByKey("homeSectionsContent").value } : defaultHomeSectionsContent;
   const updateAbout = (patch) => updateContentKey("aboutContent", { ...aboutContent, ...patch });
   const updateContact = (patch) => updateContentKey("contactContent", { ...contactContent, ...patch });
+  const updateHomeSections = (patch) => updateContentKey("homeSectionsContent", { ...homeSectionsContent, ...patch });
   const uploadAboutImage = async (field, file) => {
     if (!file) return;
     setSaving(true);
@@ -4544,7 +4553,7 @@ function PageEditsSection() {
               ))}
             </div>
           </div>
-          {activeTab === "home" && <HomeCMSForm content={content} updateLocal={updateLocal} uploadImage={uploadContentImage} disabled={saving} />}
+          {activeTab === "home" && <HomeCMSForm content={content} homeSections={homeSectionsContent} updateLocal={updateLocal} updateHomeSections={updateHomeSections} uploadImage={uploadContentImage} disabled={saving} />}
           {activeTab === "about" && <AboutCMSForm value={aboutContent} onChange={updateAbout} onUpload={uploadAboutImage} disabled={saving} />}
           {activeTab === "contact" && <ContactCMSForm value={contactContent} onChange={updateContact} disabled={saving} />}
           {activeTab === "navbar" && <NavbarManagement value={{ navbarAreas, topLists }} onChange={updateContentKey} />}
@@ -4646,7 +4655,7 @@ function SettingsSection() {
           <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
             <h3 className="text-xl font-bold">Branding</h3>
             <label className="mt-6 block"><span className="wf-label">Site Name</span><input className="wf-input" value={siteName} onChange={(event) => setSiteName(event.target.value)} /></label>
-            <div className="mt-6"><p className="wf-label">Platform Logo</p><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"><span className="grid h-20 w-20 place-items-center rounded-xl bg-gradient-to-br from-blue-600 to-teal-600 text-3xl text-white">A</span></div></div>
+            <div className="mt-6"><p className="wf-label">Platform Logo</p><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"><img src="/akshar-logo-512.jpeg" alt="Akshar Estate logo" className="h-20 w-20 rounded-full object-cover ring-1 ring-slate-200" /></div></div>
             <div className="mt-6"><p className="wf-label">Brand Colors</p><div className="flex flex-wrap gap-3"><span className="h-12 w-12 rounded-lg bg-blue-600 ring-1 ring-slate-200" /><span className="h-12 w-12 rounded-lg bg-teal-600 ring-1 ring-slate-200" /></div></div>
           </div>
 
@@ -4721,30 +4730,179 @@ function SettingsSection() {
   );
 }
 
-function HomeCMSForm({ content, updateLocal, uploadImage, disabled }) {
+function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, uploadImage, disabled }) {
   const item = (key) => content.find((entry) => entry.key === key);
   const field = (key) => item(key) || { _id: key, value: "" };
   const update = (key, value) => {
     const target = item(key);
     if (target) updateLocal(target._id, value);
   };
+  const section = (key) => ({ ...defaultHomeSectionsContent[key], ...(homeSections?.[key] || {}) });
+  const updateSection = (key, patch) => updateHomeSections({ [key]: { ...section(key), ...patch } });
+  const updateSectionItem = (key, index, patch) => {
+    const current = section(key);
+    const items = Array.isArray(current.items) ? current.items : [];
+    updateSection(key, { items: items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, ...patch } : entry)) });
+  };
+  const addSectionItem = (key, nextItem) => {
+    const current = section(key);
+    const items = Array.isArray(current.items) ? current.items : [];
+    updateSection(key, { items: [...items, nextItem] });
+  };
+  const removeSectionItem = (key, index) => {
+    const current = section(key);
+    const items = Array.isArray(current.items) ? current.items : [];
+    updateSection(key, { items: items.filter((_, itemIndex) => itemIndex !== index) });
+  };
+  const videos = section("videos");
+  const agents = section("agents");
+  const testimonials = section("testimonials");
+  const stats = section("stats");
+
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
-      <h3 className="text-xl font-bold">Home Page</h3>
-      <p className="mt-1 text-sm text-slate-500">Edit the hero content shown on the client-side home page.</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <label className="md:col-span-2">
-          <span className="wf-label">Hero Title</span>
-          <textarea className="wf-input min-h-28" value={field("heroTitle").value || ""} onChange={(event) => update("heroTitle", event.target.value)} />
-        </label>
-        <label className="md:col-span-2">
-          <span className="wf-label">Hero Subtitle</span>
-          <textarea className="wf-input min-h-24" value={field("heroSubtitle").value || ""} onChange={(event) => update("heroSubtitle", event.target.value)} />
-        </label>
-        <ImageUrlField label="Hero Background Image" value={field("heroImage").value || ""} onChange={(value) => update("heroImage", value)} onUpload={(file) => uploadImage("heroImage", file)} disabled={disabled} />
-        <Field label="CTA Button Text" name="heroCtaText" value={field("heroCtaText").value || ""} onChange={(event) => update("heroCtaText", event.target.value)} />
+    <div className="space-y-6">
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
+        <h3 className="text-xl font-bold">Home Page Hero</h3>
+        <p className="mt-1 text-sm text-slate-500">Edit the hero content shown on the client-side home page.</p>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <label className="md:col-span-2">
+            <span className="wf-label">Hero Title</span>
+            <textarea className="wf-input min-h-28" value={field("heroTitle").value || ""} onChange={(event) => update("heroTitle", event.target.value)} />
+          </label>
+          <label className="md:col-span-2">
+            <span className="wf-label">Hero Subtitle</span>
+            <textarea className="wf-input min-h-24" value={field("heroSubtitle").value || ""} onChange={(event) => update("heroSubtitle", event.target.value)} />
+          </label>
+          <ImageUrlField label="Hero Background Image" value={field("heroImage").value || ""} onChange={(value) => update("heroImage", value)} onUpload={(file) => uploadImage("heroImage", file)} disabled={disabled} />
+          <Field label="CTA Button Text" name="heroCtaText" value={field("heroCtaText").value || ""} onChange={(event) => update("heroCtaText", event.target.value)} />
+        </div>
+      </div>
+
+      <HomeSectionEditor title="Videos Section" section={videos} onChange={(patch) => updateSection("videos", patch)}>
+        <div className="space-y-3">
+          {(Array.isArray(videos.items) ? videos.items : []).map((video, index) => (
+            <div key={`video-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <Field label="Title" name={`video-title-${index}`} value={video.title || ""} onChange={(event) => updateSectionItem("videos", index, { title: event.target.value })} placeholder="Bungalow for Sale" />
+                <Field label="Location" name={`video-location-${index}`} value={video.location || ""} onChange={(event) => updateSectionItem("videos", index, { location: event.target.value })} placeholder="Karali, Vadodara" />
+                <Field label="Image URL" name={`video-image-${index}`} value={video.image || ""} onChange={(event) => updateSectionItem("videos", index, { image: event.target.value })} placeholder="/v1.jpg" />
+                <Field label="Video Link" name={`video-url-${index}`} value={video.url || ""} onChange={(event) => updateSectionItem("videos", index, { url: event.target.value })} placeholder="https://youtube.com/..." />
+                <Field label="Overlay Text" name={`video-overlay-${index}`} value={video.overlay || ""} onChange={(event) => updateSectionItem("videos", index, { overlay: event.target.value })} placeholder="Property video" />
+                <Field label="Button Text" name={`video-button-${index}`} value={video.button || ""} onChange={(event) => updateSectionItem("videos", index, { button: event.target.value })} placeholder="Contact Agent" />
+                <StatusSelect value={video.enabled !== false} onChange={(enabled) => updateSectionItem("videos", index, { enabled })} />
+                <DeleteRowButton onClick={() => removeSectionItem("videos", index)} />
+              </div>
+            </div>
+          ))}
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => addSectionItem("videos", { title: "", location: "", image: "", overlay: "", button: "", url: "", enabled: true })}><Plus size={16} /> Add Video</button>
+        </div>
+      </HomeSectionEditor>
+
+      <HomeSectionEditor title="Agents Section" section={agents} onChange={(patch) => updateSection("agents", patch)}>
+        <div className="space-y-3">
+          {(Array.isArray(agents.items) ? agents.items : []).map((agent, index) => (
+            <div key={`agent-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <Field label="Name" name={`agent-name-${index}`} value={agent.name || ""} onChange={(event) => updateSectionItem("agents", index, { name: event.target.value })} placeholder="Vikram Patel" />
+                <Field label="City" name={`agent-city-${index}`} value={agent.city || ""} onChange={(event) => updateSectionItem("agents", index, { city: event.target.value })} placeholder="Vadodara" />
+                <Field label="Photo URL" name={`agent-image-${index}`} value={agent.image || ""} onChange={(event) => updateSectionItem("agents", index, { image: event.target.value })} placeholder="/a1.jpg" />
+                <Field label="Link URL" name={`agent-link-${index}`} value={agent.linkUrl || ""} onChange={(event) => updateSectionItem("agents", index, { linkUrl: event.target.value })} placeholder="/contact" />
+                <label className="md:col-span-2 xl:col-span-4">
+                  <span className="wf-label">Description</span>
+                  <textarea className="wf-input min-h-20" value={agent.description || ""} onChange={(event) => updateSectionItem("agents", index, { description: event.target.value })} />
+                </label>
+                <Field label="Link Text" name={`agent-link-text-${index}`} value={agent.linkText || ""} onChange={(event) => updateSectionItem("agents", index, { linkText: event.target.value })} placeholder="View Agent Profile" />
+                <StatusSelect value={agent.enabled !== false} onChange={(enabled) => updateSectionItem("agents", index, { enabled })} />
+                <DeleteRowButton onClick={() => removeSectionItem("agents", index)} />
+              </div>
+            </div>
+          ))}
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => addSectionItem("agents", { name: "", city: "", image: "", description: "", linkText: "View Agent Profile", linkUrl: "", enabled: true })}><Plus size={16} /> Add Agent</button>
+        </div>
+      </HomeSectionEditor>
+
+      <HomeSectionEditor title="Testimonials Section" section={testimonials} onChange={(patch) => updateSection("testimonials", patch)}>
+        <div className="space-y-3">
+          {(Array.isArray(testimonials.items) ? testimonials.items : []).map((testimonial, index) => (
+            <div key={`testimonial-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <Field label="Client Name" name={`testimonial-name-${index}`} value={testimonial.name || ""} onChange={(event) => updateSectionItem("testimonials", index, { name: event.target.value })} placeholder="Ananya Desai" />
+                <Field label="Role" name={`testimonial-role-${index}`} value={testimonial.role || ""} onChange={(event) => updateSectionItem("testimonials", index, { role: event.target.value })} placeholder="Homeowner" />
+                <Field label="Photo URL" name={`testimonial-image-${index}`} value={testimonial.image || ""} onChange={(event) => updateSectionItem("testimonials", index, { image: event.target.value })} placeholder="/t1.jpg" />
+                <Field label="Rating" name={`testimonial-rating-${index}`} type="number" value={testimonial.rating || 5} onChange={(event) => updateSectionItem("testimonials", index, { rating: Number(event.target.value || 5) })} placeholder="5" />
+                <label className="md:col-span-2 xl:col-span-4">
+                  <span className="wf-label">Testimonial Text</span>
+                  <textarea className="wf-input min-h-20" value={testimonial.text || ""} onChange={(event) => updateSectionItem("testimonials", index, { text: event.target.value })} />
+                </label>
+                <StatusSelect value={testimonial.enabled !== false} onChange={(enabled) => updateSectionItem("testimonials", index, { enabled })} />
+                <DeleteRowButton onClick={() => removeSectionItem("testimonials", index)} />
+              </div>
+            </div>
+          ))}
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => addSectionItem("testimonials", { name: "", role: "", image: "", text: "", rating: 5, enabled: true })}><Plus size={16} /> Add Testimonial</button>
+        </div>
+      </HomeSectionEditor>
+
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-xl font-bold">Stats Section</h3>
+            <p className="mt-1 text-sm text-slate-500">Edit the counters displayed below testimonials.</p>
+          </div>
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => addSectionItem("stats", { value: "", label: "", enabled: true })}><Plus size={16} /> Add Stat</button>
+        </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {(Array.isArray(stats.items) ? stats.items : []).map((stat, index) => (
+            <div key={`stat-${index}`} className="grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_130px_auto]">
+              <Field label="Value" name={`stat-value-${index}`} value={stat.value || ""} onChange={(event) => updateSectionItem("stats", index, { value: event.target.value })} placeholder="10K+" />
+              <Field label="Label" name={`stat-label-${index}`} value={stat.label || ""} onChange={(event) => updateSectionItem("stats", index, { label: event.target.value })} placeholder="Happy Clients" />
+              <StatusSelect value={stat.enabled !== false} onChange={(enabled) => updateSectionItem("stats", index, { enabled })} />
+              <DeleteRowButton onClick={() => removeSectionItem("stats", index)} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
+  );
+}
+
+function HomeSectionEditor({ title, section, onChange, children }) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
+      <div>
+        <h3 className="text-xl font-bold">{title}</h3>
+        <p className="mt-1 text-sm text-slate-500">Manage the items displayed on the home page.</p>
+      </div>
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <Field label="Eyebrow" name={`${title}-eyebrow`} value={section.eyebrow || ""} onChange={(event) => onChange({ eyebrow: event.target.value })} placeholder="Optional label" />
+        <Field label="Section Title" name={`${title}-title`} value={section.title || ""} onChange={(event) => onChange({ title: event.target.value })} placeholder="Section title" />
+        <label className="md:col-span-2">
+          <span className="wf-label">Subtitle</span>
+          <textarea className="wf-input min-h-20" value={section.subtitle || ""} onChange={(event) => onChange({ subtitle: event.target.value })} />
+        </label>
+      </div>
+      <div className="mt-5">{children}</div>
+    </div>
+  );
+}
+
+function StatusSelect({ value, onChange }) {
+  return (
+    <label>
+      <span className="wf-label">Status</span>
+      <select className="wf-input bg-white" value={value ? "active" : "inactive"} onChange={(event) => onChange(event.target.value === "active")}>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+    </label>
+  );
+}
+
+function DeleteRowButton({ onClick }) {
+  return (
+    <button type="button" className="mt-6 grid h-12 w-12 place-items-center rounded-xl border border-red-100 bg-white text-red-600 transition hover:bg-red-50" onClick={onClick} aria-label="Delete item">
+      <Trash2 size={16} />
+    </button>
   );
 }
 
@@ -4899,6 +5057,11 @@ function ContactCMSForm({ value, onChange, disabled }) {
         <Field label="Email" name="email" type="email" value={value.email} onChange={(event) => onChange({ email: event.target.value })} />
         <Field label="Office Timing" name="officeTiming" value={value.officeTiming} onChange={(event) => onChange({ officeTiming: event.target.value })} />
         <Field label="Map Link" name="mapLink" value={value.mapLink} onChange={(event) => onChange({ mapLink: event.target.value })} />
+        <label className="md:col-span-2">
+          <span className="wf-label">Footer Text</span>
+          <textarea className="wf-input min-h-20" value={value.footerDescription || ""} onChange={(event) => onChange({ footerDescription: event.target.value })} />
+        </label>
+        <Field label="Footer Copyright" name="footerCopyright" value={value.footerCopyright || ""} onChange={(event) => onChange({ footerCopyright: event.target.value })} />
         <div className="md:col-span-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
           <h4 className="font-extrabold text-slate-950">WhatsApp Floating Icon</h4>
           <p className="mt-1 text-sm text-slate-500">Control the public WhatsApp chat button without code changes.</p>
@@ -4956,7 +5119,7 @@ function ContactCMSForm({ value, onChange, disabled }) {
         <div className="md:col-span-2">
           <h4 className="mb-3 font-extrabold text-slate-950">Social Links</h4>
           <div className="grid gap-3 md:grid-cols-2">
-            {["instagram", "facebook", "linkedin", "youtube"].map((item) => (
+            {["instagram", "facebook", "linkedin", "youtube", "x"].map((item) => (
               <Field key={item} label={labelize(item)} name={item} value={value.socials?.[item] || ""} onChange={(event) => onChange({ socials: { ...(value.socials || {}), [item]: event.target.value } })} />
             ))}
           </div>
