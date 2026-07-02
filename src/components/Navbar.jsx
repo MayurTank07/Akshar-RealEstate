@@ -196,11 +196,11 @@ export default function Navbar() {
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-4" ref={menuRef}>
-        <div className="mx-auto flex min-h-[66px] w-full max-w-[92rem] items-center gap-3 rounded-2xl border border-white/70 bg-white/95 px-4 shadow-[0_12px_35px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-5">
+        <div className="mx-auto grid min-h-[66px] w-full max-w-[92rem] grid-cols-[minmax(0,1fr)_2.5rem] items-center gap-3 rounded-2xl border border-white/70 bg-white/95 px-4 shadow-[0_12px_35px_rgba(15,23,42,0.12)] backdrop-blur-xl sm:px-5 xl:flex">
           <button
             type="button"
             onClick={() => navigate("/")}
-            className="flex min-w-0 items-center rounded-xl transition hover:opacity-90"
+            className="flex min-w-0 items-center overflow-hidden rounded-xl transition hover:opacity-90 xl:overflow-visible"
           >
             <BrandLogo />
           </button>
@@ -266,7 +266,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(true)}
-            className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 xl:hidden"
+            className="grid h-10 w-10 place-items-center justify-self-end rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 xl:hidden"
             aria-label="Open navigation"
           >
             <Menu size={22} />
