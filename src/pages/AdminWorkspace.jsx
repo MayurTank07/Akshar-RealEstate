@@ -361,9 +361,10 @@ export default function AdminWorkspace({ scope = "admin" }) {
             <AdminSearchBar scope={scope} />
           </div>
           <div className="flex flex-1 items-center justify-end gap-3">
-            <Link to="/" className="wf-btn wf-btn-secondary hidden sm:inline-flex lg:hidden">
+            <Link to="/" target="_blank" rel="noreferrer" className="wf-btn wf-btn-secondary hidden sm:inline-flex">
               <Home size={16} />
-              Site
+              <span className="hidden xl:inline">Visit Website</span>
+              <span className="xl:hidden">Site</span>
             </Link>
             <button
               type="button"

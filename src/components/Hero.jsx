@@ -104,9 +104,15 @@ export default function Hero() {
 
       <div className="relative z-10 mx-auto flex min-h-[760px] w-full max-w-7xl flex-col justify-end px-4 pb-10 pt-28 text-white sm:min-h-[720px] sm:px-6 sm:pb-14 sm:pt-32 lg:min-h-[760px] lg:px-8">
         <div className="max-w-4xl">
-          <p className="mb-4 inline-flex rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-blue-50 backdrop-blur sm:text-[11px]">
-            Gujarat real estate advisory
-          </p>
+          <div className="mb-4 inline-flex items-center gap-3 rounded-full border border-white/25 bg-white/15 px-4 py-2.5 text-blue-50 shadow-lg shadow-slate-950/10 backdrop-blur">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-sm font-black text-blue-700 shadow-md">
+              06
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-blue-100">Since</span>
+              <span className="mt-1 text-lg font-black tracking-wide text-white">2006</span>
+            </span>
+          </div>
           <h1 className="max-w-3xl text-[2.7rem] font-extrabold leading-[1.06] tracking-tight text-white sm:text-6xl lg:text-6xl">
             {heroTitle}
           </h1>
