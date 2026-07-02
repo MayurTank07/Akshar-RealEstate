@@ -34,14 +34,8 @@ const AboutUs = () => {
       <section className="pt-12 pb-20 px-6 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row items-end justify-between gap-8">
           <div className="md:w-2/3">
-            <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-blue-100 bg-blue-50 px-4 py-2.5 shadow-sm">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-blue-600 text-sm font-black text-white shadow-md shadow-blue-600/20">
-                06
-              </span>
-              <span className="flex flex-col leading-none">
-                <span className="text-[10px] font-extrabold uppercase tracking-[0.24em] text-blue-500">Since</span>
-                <span className="mt-1 text-lg font-black tracking-wide text-slate-950">2006</span>
-              </span>
+            <div className="mb-6 inline-flex rounded-full border border-blue-100 bg-blue-50 px-5 py-2.5 text-sm font-black uppercase tracking-[0.18em] text-blue-700 shadow-sm sm:text-base">
+              Since 2006
             </div>
             <h1 className="text-5xl md:text-7xl font-light tracking-tight leading-tight">
               {about.title?.includes("Akshar Estate") ? (
@@ -70,7 +64,7 @@ const AboutUs = () => {
           <div className="absolute bottom-10 left-10 bg-white p-8 rounded-xl shadow-2xl hidden md:block">
             <div className="flex gap-12 text-center">
               <div>
-                <p className="text-3xl font-bold text-blue-600">2006</p>
+                <p className="text-2xl font-bold text-blue-600">Since 2006</p>
                 <p className="text-xs text-slate-400 uppercase tracking-widest mt-1">Established</p>
               </div>
               {stats.slice(0, 2).map((item, index) => (
