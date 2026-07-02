@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, Link, useParams } from "react-router-dom";
-import properties from "../data/properties.json";
 import Hero from "../componetswest/Hero";
 import Amenities from "../componetswest/Amenities";
 import MapForm from "../componetswest/MapForm";
@@ -16,8 +15,8 @@ export default function PropertyDetails() {
   const location = useLocation();
   const { id } = useParams();
   const initialProperty = useMemo(
-    () => sanitizePublicProperty(location.state?.property || properties.find(p => p.id === parseInt(location.pathname.split('/').pop()))),
-    [location.pathname, location.state?.property]
+    () => sanitizePublicProperty(location.state?.property),
+    [location.state?.property]
   );
   const remoteId = /^[a-f\d]{24}$/i.test(id || "")
     ? id

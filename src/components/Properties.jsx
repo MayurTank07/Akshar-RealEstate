@@ -2,23 +2,34 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Bath, BedDouble, Heart, MapPin, Maximize2 } from "lucide-react";
 import useAuth from "../contexts/useAuth";
-import fallbackProperties from "../data/properties.json";
 import { publicApi } from "../services/api";
 import { formatINR } from "../utils/currency";
-import { mergeProperties } from "../utils/propertyData";
+import { normalizeProperty } from "../utils/propertyData";
 
 export default function Properties() {
-  const [properties, setProperties] = useState(fallbackProperties);
+  const [properties, setProperties] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    let active = true;
     publicApi
-      .properties()
+      .properties({ limit: 100, sort: "createdAt", order: "desc" })
       .then((response) => {
-        if (response.data?.length) {
-          setProperties(mergeProperties(response.data, fallbackProperties, "home"));
-        }
+        if (!active) return;
+        setProperties((response.data || []).map((property) => normalizeProperty(property, "home")));
       })
-      .catch(() => setProperties(fallbackProperties));
+      .catch((err) => {
+        if (!active) return;
+        setError(err.message || "Unable to load live properties.");
+        setProperties([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const recentlyAdded = [...properties]
@@ -41,7 +52,7 @@ export default function Properties() {
       title: "Featured Properties",
       eyebrow: "Curated picks",
       description: "Premium homes selected for location, finish, and buyer interest.",
-      items: properties.filter((property) => property.tag === "Featured"),
+      items: properties.filter((property) => property.featured || property.tag === "Featured" || property.badge === "Featured"),
     },
     {
       title: "Popular Properties",
@@ -62,6 +73,8 @@ export default function Properties() {
               description: "Explore the newest active properties added to Akshar Estate The Property HUB.",
               items: recentlyAdded,
             }}
+            loading={loading}
+            error={error}
           />
         </div>
 
@@ -89,7 +102,7 @@ export default function Properties() {
 
         <div className="space-y-10">
           {sections.map((section) => (
-            <PropertyRail key={section.title} section={section} />
+            <PropertyRail key={section.title} section={section} loading={loading} />
           ))}
         </div>
 
@@ -104,7 +117,7 @@ export default function Properties() {
   );
 }
 
-function PropertyRail({ section }) {
+function PropertyRail({ section, loading = false, error = "" }) {
   return (
     <section>
       <div className="mb-4 flex items-end justify-between gap-4">
@@ -125,6 +138,21 @@ function PropertyRail({ section }) {
       </div>
 
       <div className="wf-scrollbar-none flex snap-x gap-4 overflow-x-auto pb-4 sm:gap-5">
+        {loading && (
+          <div className="w-full rounded-2xl border border-slate-200 bg-white p-6 text-sm font-bold text-slate-500">
+            Loading live properties...
+          </div>
+        )}
+        {!loading && error && (
+          <div className="w-full rounded-2xl border border-rose-100 bg-rose-50 p-6 text-sm font-bold text-rose-600">
+            {error}
+          </div>
+        )}
+        {!loading && !error && section.items.length === 0 && (
+          <div className="w-full rounded-2xl border border-slate-200 bg-white p-6 text-sm font-bold text-slate-500">
+            No live properties available in this section.
+          </div>
+        )}
         {section.items.map((property) => (
           <PropertyCard key={property._id || property.id} property={property} />
         ))}
@@ -165,7 +193,7 @@ function PropertyCard({ property }) {
     >
       <div className="relative h-56 overflow-hidden bg-slate-100 sm:h-60">
         <img
-          src={property.image}
+          src={property.image || "/house.jpg"}
           alt={property.title}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
@@ -181,7 +209,7 @@ function PropertyCard({ property }) {
               : "bg-orange-500"
           }`}
         >
-          {property.isNewProject ? "New Project" : property.tag === "Hot" ? "Popular" : property.tag}
+          {property.isNewProject ? "New Project" : property.tag === "Hot" ? "Popular" : property.tag || property.badge || "Active"}
         </span>
 
         <button

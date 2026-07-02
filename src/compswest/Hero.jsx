@@ -4,12 +4,11 @@ import { MapPin, Bed, Bath, Maximize, Heart, Search, SlidersHorizontal, X } from
 import IndianMoneyInput from "../components/IndianMoneyInput";
 import useAuth from "../contexts/useAuth";
 
-import propertyData from "../data/pricingProperties.json";
 import Navbar from "../components/PricingNavbar";
 import { publicApi } from "../services/api";
 import { formatINR, parseINRAmount } from "../utils/currency";
 import { parsePurchaseRoute } from "../utils/propertyRouting";
-import { mergeProperties } from "../utils/propertyData";
+import { normalizeProperty } from "../utils/propertyData";
 import { collectOptions, groupSearchResults, matchesAdvancedFilters, matchesPropertySearch, rankedPropertySearch, sortProperties } from "../utils/propertySearch";
 
 const emptyFilters = {
@@ -74,17 +73,20 @@ export default function PricingPage({ category, type, city: selectedCity, filter
   const location = useLocation();
   const { isAuthenticated, isPropertySaved, toggleSavedProperty } = useAuth();
 
-  const [remoteListings, setRemoteListings] = useState(null);
+  const [remoteListings, setRemoteListings] = useState([]);
+  const [listingsLoading, setListingsLoading] = useState(true);
+  const [listingsError, setListingsError] = useState("");
   const [publicOptions, setPublicOptions] = useState(emptyPublicOptions);
-  const availableTypes = useMemo(() => {
-    const types = remoteListings ? [...new Set(remoteListings.map((item) => item.type).filter(Boolean))] : propertyData.propertyTypes;
-    return types.length ? types : propertyData.propertyTypes;
-  }, [remoteListings]);
   const routeIntent = parsePurchaseRoute(routeCategory, slug);
   const routeFilters = slug ? routeIntent.filters : {};
   const mergedFilters = { ...routeFilters, ...(filters || {}) };
-  const listings = remoteListings ? mergeProperties(remoteListings, propertyData.listings, "pricing") : propertyData.listings;
-  const initialType = mergedFilters.activeType || (availableTypes.includes(type) ? type : "All");
+  const listings = useMemo(() => remoteListings.map((property) => normalizeProperty(property, "pricing")), [remoteListings]);
+  const masterOptions = useMemo(() => optionValues(publicOptions), [publicOptions]);
+  const availableTypes = useMemo(
+    () => uniqueSorted(collectOptions(listings, "type"), masterOptions.propertyTypes),
+    [listings, masterOptions.propertyTypes]
+  );
+  const initialType = mergedFilters.activeType || type || "All";
   const [activeType, setActiveType] = useState(initialType);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [query, setQuery] = useState(mergedFilters.query || "");
@@ -103,7 +105,6 @@ export default function PricingPage({ category, type, city: selectedCity, filter
     (routeCategory === "rentals" ? "Rent" : "Buy")
   );
   const filterTypes = ["All", ...availableTypes];
-  const masterOptions = useMemo(() => optionValues(publicOptions), [publicOptions]);
   const dynamicOptions = useMemo(() => ({
     areaWise: uniqueSorted(collectOptions(listings, "areaWise"), masterOptions.locations),
     propertyType: uniqueSorted(availableTypes, masterOptions.propertyTypes),
@@ -116,12 +117,25 @@ export default function PricingPage({ category, type, city: selectedCity, filter
   const newProjectOnly = searchType === "New Projects";
 
   useEffect(() => {
+    let active = true;
     publicApi
-      .properties()
+      .properties({ limit: 100, sort: "createdAt", order: "desc" })
       .then((response) => {
-        if (response.data?.length) setRemoteListings(response.data);
+        if (!active) return;
+        setRemoteListings(response.data || []);
+        setListingsError("");
       })
-      .catch(() => setRemoteListings(null));
+      .catch((err) => {
+        if (!active) return;
+        setRemoteListings([]);
+        setListingsError(err.message || "Unable to load live properties.");
+      })
+      .finally(() => {
+        if (active) setListingsLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -299,6 +313,8 @@ export default function PricingPage({ category, type, city: selectedCity, filter
             activeType={activeType}
             filteredListings={filteredListings}
             groupedResults={groupedResults}
+            loading={listingsLoading}
+            error={listingsError}
             query={query}
             handlePropertyClick={handlePropertyClick}
             handleSaveClick={handleSaveClick}
@@ -327,6 +343,8 @@ export default function PricingPage({ category, type, city: selectedCity, filter
               desktop
               filteredListings={filteredListings}
               groupedResults={groupedResults}
+              loading={listingsLoading}
+              error={listingsError}
               query={query}
               handlePropertyClick={handlePropertyClick}
               handleSaveClick={handleSaveClick}
@@ -419,7 +437,7 @@ function FilterSection({ children, title }) {
   );
 }
 
-function PropertyResults({ activeCity, activeType, desktop = false, filteredListings, groupedResults, query, handlePropertyClick, handleSaveClick, isPropertySaved, resetFilters, searchType }) {
+function PropertyResults({ activeCity, activeType, desktop = false, filteredListings, groupedResults, loading = false, error = "", query, handlePropertyClick, handleSaveClick, isPropertySaved, resetFilters, searchType }) {
   const hasQuery = Boolean(query?.trim());
   const newProjectMode = searchType === "New Projects";
 
@@ -445,7 +463,7 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
         className="cursor-pointer overflow-hidden rounded-[20px] border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 xl:flex xl:h-full xl:flex-col"
       >
         <div className="relative h-44 shrink-0">
-          <img src={item.image} className="h-full w-full object-cover" alt={item.title} />
+          <img src={item.image || "/house.jpg"} className="h-full w-full object-cover" alt={item.title} />
           <div className={`absolute left-3 top-3 ${badgeColor} rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-tight text-white`}>{badgeLabel}</div>
           <button
             type="button"
@@ -538,18 +556,20 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
 
       {hasQuery && groupedResults ? (
         <div>
-          {groupedResults.exact.length === 0 && filteredListings.length > 0 && (
+          {loading && <PropertyStatusCard message="Loading live properties..." />}
+          {!loading && error && <PropertyStatusCard tone="error" message={error} />}
+          {!loading && !error && groupedResults.exact.length === 0 && filteredListings.length > 0 && (
             <div className="mb-6 rounded-2xl border border-rose-100 bg-rose-50 px-5 py-3.5">
               <p className="text-sm font-bold text-rose-700">No exact results for &ldquo;{query.trim()}&rdquo;</p>
               <p className="mt-0.5 text-xs text-rose-500">Showing similar and nearby properties below.</p>
             </div>
           )}
 
-          {groupedResults.exact.length > 0 && renderGroup("Exact Matches", groupedResults.exact, "text-blue-600", "bg-blue-50 text-blue-700")}
-          {groupedResults.similar.length > 0 && renderGroup("Similar Properties", groupedResults.similar, "text-violet-600", "bg-violet-50 text-violet-700", "same city, different configuration")}
-          {groupedResults.alternatives.length > 0 && renderGroup("In Other Cities", groupedResults.alternatives, "text-amber-600", "bg-amber-50 text-amber-700", "similar properties nearby")}
+          {!loading && !error && groupedResults.exact.length > 0 && renderGroup("Exact Matches", groupedResults.exact, "text-blue-600", "bg-blue-50 text-blue-700")}
+          {!loading && !error && groupedResults.similar.length > 0 && renderGroup("Similar Properties", groupedResults.similar, "text-violet-600", "bg-violet-50 text-violet-700", "same city, different configuration")}
+          {!loading && !error && groupedResults.alternatives.length > 0 && renderGroup("In Other Cities", groupedResults.alternatives, "text-amber-600", "bg-amber-50 text-amber-700", "similar properties nearby")}
 
-          {filteredListings.length === 0 && (
+          {!loading && !error && filteredListings.length === 0 && (
             <div className="wf-card p-8 text-center">
               <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-slate-100">
                 <Search size={28} className="text-slate-400" />
@@ -563,10 +583,14 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
         </div>
       ) : (
         <>
-          <div className={`grid grid-cols-1 gap-6 md:grid-cols-2 ${desktop ? "2xl:grid-cols-3" : "lg:grid-cols-3"}`}>
-            {filteredListings.map((item) => renderCard(item))}
-          </div>
-          {filteredListings.length === 0 && (
+          {loading && <PropertyStatusCard message="Loading live properties..." />}
+          {!loading && error && <PropertyStatusCard tone="error" message={error} />}
+          {!loading && !error && (
+            <div className={`grid grid-cols-1 gap-6 md:grid-cols-2 ${desktop ? "2xl:grid-cols-3" : "lg:grid-cols-3"}`}>
+              {filteredListings.map((item) => renderCard(item))}
+            </div>
+          )}
+          {!loading && !error && filteredListings.length === 0 && (
             <div className="wf-card p-8 text-center">
               <h2 className="text-2xl font-extrabold text-slate-950">No properties found.</h2>
               <p className="mt-2 text-slate-500">Try changing your search or filters.</p>
@@ -576,6 +600,15 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
         </>
       )}
     </>
+  );
+}
+
+function PropertyStatusCard({ message, tone = "default" }) {
+  const isError = tone === "error";
+  return (
+    <div className={`wf-card p-8 text-center ${isError ? "border-rose-100 bg-rose-50 text-rose-600" : "text-slate-500"}`}>
+      <p className="text-sm font-bold">{message}</p>
+    </div>
   );
 }
 

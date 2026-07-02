@@ -74,11 +74,12 @@ export function normalizeProperty(property, source = "pricing") {
   };
 }
 
-export function mergeProperties(primary = [], fallback = [], source = "pricing") {
+export function mergeProperties(primary = [], fallbackOrSource = "pricing", maybeSource = "pricing") {
+  const source = typeof fallbackOrSource === "string" ? fallbackOrSource : maybeSource;
   const seen = new Set();
   const merged = [];
 
-  [...primary, ...fallback].forEach((item) => {
+  primary.forEach((item) => {
     const property = normalizeProperty(item, source);
     const key = `${String(property.title).toLowerCase()}-${String(property.location).toLowerCase()}`;
     if (seen.has(key)) return;
