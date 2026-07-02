@@ -458,8 +458,8 @@ function SidebarContent({ staffUser, allowedItems, activeSection, scope, onNavig
         <div className="flex min-w-0 items-center gap-3">
           <img src="/akshar-logo-512.jpeg" alt="Akshar Estate logo" className="h-11 w-11 shrink-0 rounded-full object-cover ring-2 ring-white/30" />
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-extrabold text-[#f6c945]">Akshar Estate</h1>
-            <p className="text-xs font-semibold text-[#d8a5ff]">{staffUser.role === "admin" ? "Admin Panel" : "Supervisor Panel"}</p>
+            <h1 className="truncate text-lg font-extrabold text-white">Akshar Estate</h1>
+            <p className="text-xs font-semibold text-blue-100">{staffUser.role === "admin" ? "Admin Panel" : "Supervisor Panel"}</p>
           </div>
         </div>
         {showClose && (
@@ -4494,9 +4494,12 @@ function PageEditsSection() {
     setError("");
     try {
       const response = await staffApi.uploadPropertyImages([file]);
-      updateAbout({ [field]: response.data.urls?.[0] || "" });
+      const uploadedUrl = response.data.urls?.[0] || "";
+      updateAbout({ [field]: uploadedUrl });
+      return uploadedUrl;
     } catch (err) {
       setError(err.message || "Unable to upload image.");
+      return "";
     } finally {
       setSaving(false);
     }
@@ -4889,9 +4892,9 @@ function HomeSectionEditor({ title, section, onChange, addLabel, onAdd, children
 
 function createHomeSectionItem(key) {
   const defaults = {
-    videos: { title: "", location: "", image: "", overlay: "", button: "Contact Agent", url: "", enabled: true },
-    agents: { name: "", city: "", image: "", description: "", linkText: "View Agent Profile", linkUrl: "", enabled: true },
-    testimonials: { name: "", role: "", image: "", text: "", rating: 5, enabled: true },
+    videos: { title: "", location: "", image: "/home-video-1.svg", overlay: "", button: "Contact Agent", url: "", enabled: true },
+    agents: { name: "", city: "", image: "/home-agent-1.svg", description: "", linkText: "View Agent Profile", linkUrl: "", enabled: true },
+    testimonials: { name: "", role: "", image: "/home-testimonial-1.svg", text: "", rating: 5, enabled: true },
     stats: { value: "", label: "", enabled: true },
   };
   return defaults[key] || { enabled: true };
@@ -4981,7 +4984,7 @@ function HomeItemModal({ editor, onClose, onSave }) {
             <>
               <Field label="Title" name="home-video-title" value={draft.title || ""} onChange={(event) => update({ title: event.target.value })} placeholder="Bungalow for Sale" />
               <Field label="Location" name="home-video-location" value={draft.location || ""} onChange={(event) => update({ location: event.target.value })} placeholder="Karali, Vadodara" />
-              <Field label="Image URL" name="home-video-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/v1.jpg" />
+              <Field label="Image URL" name="home-video-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/home-video-1.svg" />
               <Field label="Video Link" name="home-video-url" value={draft.url || ""} onChange={(event) => update({ url: event.target.value })} placeholder="https://youtube.com/..." />
               <Field label="Overlay Text" name="home-video-overlay" value={draft.overlay || ""} onChange={(event) => update({ overlay: event.target.value })} placeholder="Property video" />
               <Field label="Button Text" name="home-video-button" value={draft.button || ""} onChange={(event) => update({ button: event.target.value })} placeholder="Contact Agent" />
@@ -4991,7 +4994,7 @@ function HomeItemModal({ editor, onClose, onSave }) {
             <>
               <Field label="Name" name="home-agent-name" value={draft.name || ""} onChange={(event) => update({ name: event.target.value })} placeholder="Vikram Patel" />
               <Field label="City" name="home-agent-city" value={draft.city || ""} onChange={(event) => update({ city: event.target.value })} placeholder="Vadodara" />
-              <Field label="Photo URL" name="home-agent-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/a1.jpg" />
+              <Field label="Photo URL" name="home-agent-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/home-agent-1.svg" />
               <Field label="Link URL" name="home-agent-link" value={draft.linkUrl || ""} onChange={(event) => update({ linkUrl: event.target.value })} placeholder="/contact" />
               <label className="md:col-span-2">
                 <span className="wf-label">Description</span>
@@ -5004,7 +5007,7 @@ function HomeItemModal({ editor, onClose, onSave }) {
             <>
               <Field label="Client Name" name="home-testimonial-name" value={draft.name || ""} onChange={(event) => update({ name: event.target.value })} placeholder="Ananya Desai" />
               <Field label="Role" name="home-testimonial-role" value={draft.role || ""} onChange={(event) => update({ role: event.target.value })} placeholder="Homeowner" />
-              <Field label="Photo URL" name="home-testimonial-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/t1.jpg" />
+              <Field label="Photo URL" name="home-testimonial-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/home-testimonial-1.svg" />
               <Field label="Rating" name="home-testimonial-rating" type="number" value={draft.rating || 5} onChange={(event) => update({ rating: event.target.value })} placeholder="5" />
               <label className="md:col-span-2">
                 <span className="wf-label">Testimonial Text</span>
@@ -5034,6 +5037,169 @@ function homeItemLabel(key) {
   return { videos: "Video", agents: "Agent", testimonials: "Testimonial", stats: "Stat" }[key] || "Item";
 }
 
+function CmsFieldsTable({ title, description, fields, onEdit, onClear }) {
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
+      <div>
+        <h3 className="text-xl font-bold">{title}</h3>
+        {description && <p className="mt-1 text-sm text-slate-500">{description}</p>}
+      </div>
+      <div className="mt-5 overflow-hidden rounded-2xl border border-slate-100">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead className="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Field</th>
+                <th className="px-4 py-3">Current Value</th>
+                <th className="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {fields.map((field) => (
+                <tr key={field.key} className="align-top transition hover:bg-slate-50">
+                  <td className="px-4 py-3 font-black text-slate-800">{field.label}</td>
+                  <td className="max-w-[720px] px-4 py-3 font-semibold text-slate-600">
+                    <div className="line-clamp-2 break-words">{formatCmsValue(field.value)}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-2">
+                      <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-100 bg-white text-blue-600 transition hover:bg-blue-50" onClick={() => onEdit(field)} aria-label={`Edit ${field.label}`}>
+                        <Edit3 size={15} />
+                      </button>
+                      <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-white text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40" onClick={() => onClear(field)} aria-label={`Clear ${field.label}`} disabled={field.clearable === false}>
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CmsFieldModal({ field, onClose, disabled }) {
+  const [draft, setDraft] = useState(field.value ?? "");
+  const submit = (event) => {
+    event.preventDefault();
+    const nextValue = field.type === "number" && draft !== "" ? Number(draft) : draft;
+    field.onSave(nextValue);
+    onClose();
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[650] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm">
+      <form onSubmit={submit} className="w-full max-w-3xl rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-600">Page Edits</p>
+            <h3 className="mt-1 text-2xl font-black text-slate-950">Edit {field.label}</h3>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="mt-6">
+          {field.type === "textarea" ? (
+            <label>
+              <span className="wf-label">{field.label}</span>
+              <textarea className="wf-input min-h-32" value={draft || ""} onChange={(event) => setDraft(event.target.value)} />
+            </label>
+          ) : field.type === "select" ? (
+            <label>
+              <span className="wf-label">{field.label}</span>
+              <select className="wf-input" value={String(draft ?? "")} onChange={(event) => setDraft(event.target.value)}>
+                {(field.options || []).map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          ) : field.type === "image" ? (
+            <ImageUrlField
+              label={field.label}
+              value={draft || ""}
+              onChange={setDraft}
+              onUpload={async (file) => {
+                const uploadedUrl = await field.onUpload?.(file);
+                if (uploadedUrl) setDraft(uploadedUrl);
+              }}
+              disabled={disabled}
+            />
+          ) : (
+            <Field label={field.label} name={field.key} type={field.type || "text"} value={draft ?? ""} onChange={(event) => setDraft(event.target.value)} />
+          )}
+        </div>
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="submit" className="wf-btn wf-btn-primary"><Save size={16} /> Save</button>
+        </div>
+      </form>
+    </div>,
+    document.body
+  );
+}
+
+function SimpleItemModal({ title, item, fields, onClose, onSave }) {
+  const [draft, setDraft] = useState(item || {});
+  const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
+  const submit = (event) => {
+    event.preventDefault();
+    onSave(draft);
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[650] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm">
+      <form onSubmit={submit} className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-600">Page Edits</p>
+            <h3 className="mt-1 text-2xl font-black text-slate-950">{title}</h3>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {fields.map((field) => (
+            field.type === "textarea" ? (
+              <label key={field.key} className="md:col-span-2">
+                <span className="wf-label">{field.label}</span>
+                <textarea className="wf-input min-h-28" value={draft[field.key] || ""} onChange={(event) => update(field.key, event.target.value)} />
+              </label>
+            ) : field.type === "select" ? (
+              <label key={field.key}>
+                <span className="wf-label">{field.label}</span>
+                <select className="wf-input" value={String(draft[field.key] ?? field.defaultValue ?? "")} onChange={(event) => update(field.key, field.transform ? field.transform(event.target.value) : event.target.value)} disabled={field.disabled}>
+                  {(field.options || []).map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <Field key={field.key} label={field.label} name={field.key} type={field.type || "text"} value={draft[field.key] ?? ""} onChange={(event) => update(field.key, field.type === "number" ? Number(event.target.value || 0) : event.target.value)} placeholder={field.placeholder || ""} />
+            )
+          ))}
+        </div>
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="submit" className="wf-btn wf-btn-primary"><Save size={16} /> Save Item</button>
+        </div>
+      </form>
+    </div>,
+    document.body
+  );
+}
+
+function formatCmsValue(value) {
+  if (value === true) return "Enabled";
+  if (value === false) return "Disabled";
+  if (value === null || value === undefined || value === "") return "-";
+  return String(value);
+}
+
 function StatusSelect({ value, onChange }) {
   return (
     <label>
@@ -5048,6 +5214,7 @@ function StatusSelect({ value, onChange }) {
 
 function NavbarManagement({ value, onChange }) {
   const [query, setQuery] = useState("");
+  const [editingMenu, setEditingMenu] = useState(null);
   const { navbarAreas, topLists } = value;
   const areaObjects = navbarAreas.map((area, index) => {
     if (typeof area === "object") return { title: area.title || area.name || normalizeAreaName(area), city: "Ahmedabad", enabled: true, featured: true, showInNavbar: true, showInFooter: false, sortOrder: index + 1, slug: "", description: "", ...area };
@@ -5062,10 +5229,10 @@ function NavbarManagement({ value, onChange }) {
     .sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0) || String(a.title || "").localeCompare(String(b.title || "")));
   const previewItems = allItems.filter((item) => item.enabled !== false && item.showInNavbar !== false).sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0)).slice(0, 10);
 
-  const addMenuItem = () => onChange("navbarTopLists", [
-    ...topLists,
-    { title: "", type: "custom-link", enabled: true, featured: true, showInNavbar: true, showInFooter: false, sortOrder: allItems.length + 1, city: "", slug: "/properties", description: "" },
-  ]);
+  const addMenuItem = () => setEditingMenu({
+    mode: "add",
+    item: { title: "", menuType: "custom-link", status: "active", featured: true, showInNavbar: true, showInFooter: false, sortOrder: allItems.length + 1, city: "", slug: "/properties", description: "" },
+  });
   const updateMenuItem = (item, patch) => {
     if (item.source === "area") {
       onChange("navbarAreas", areaObjects.map((entry, index) => (index === item.sourceIndex ? { ...entry, ...patch } : entry)));
@@ -5080,6 +5247,63 @@ function NavbarManagement({ value, onChange }) {
     if (item.source === "area") onChange("navbarAreas", areaObjects.filter((_, index) => index !== item.sourceIndex));
     else onChange("navbarTopLists", topLists.filter((_, index) => index !== item.sourceIndex));
   };
+  const openMenuEditor = (item) => setEditingMenu({
+    mode: "edit",
+    original: item,
+    item: {
+      ...item,
+      menuType: item.menuType || item.type || "custom-link",
+      status: item.enabled === false ? "inactive" : "active",
+    },
+  });
+  const saveMenuItem = (draft) => {
+    const patch = {
+      title: draft.title || "",
+      menuType: draft.menuType || draft.type || "custom-link",
+      type: draft.menuType || draft.type || "custom-link",
+      slug: draft.slug || "",
+      sortOrder: Number(draft.sortOrder || 0),
+      description: draft.description || "",
+      enabled: draft.status !== "inactive",
+      showInNavbar: draft.status !== "inactive",
+      featured: draft.featured ?? true,
+      showInFooter: draft.showInFooter ?? false,
+      city: draft.city || "",
+    };
+    if (editingMenu.mode === "add") {
+      onChange("navbarTopLists", [...topLists, patch]);
+    } else {
+      updateMenuItem(editingMenu.original, patch);
+    }
+    setEditingMenu(null);
+  };
+  const menuModalFields = (item = {}) => [
+    { key: "title", label: "Menu Name", placeholder: "Example: Buy" },
+    {
+      key: "menuType",
+      label: "Menu Type",
+      type: "select",
+      disabled: item.source === "area",
+      options: [
+        { value: "area", label: "Area Wise" },
+        { value: "project", label: "Top Project" },
+        { value: "developer", label: "Developer / Builder" },
+        { value: "city", label: "City" },
+        { value: "category", label: "Category" },
+        { value: "custom-link", label: "Custom Link" },
+      ],
+    },
+    { key: "slug", label: "Link / Page / Area / Category", placeholder: "/properties or area/category" },
+    { key: "sortOrder", label: "Sort Order", type: "number", placeholder: "1" },
+    {
+      key: "status",
+      label: "Active / Inactive",
+      type: "select",
+      options: [{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }],
+    },
+    { key: "description", label: "Helper Text", type: "textarea" },
+  ];
+
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -5107,66 +5331,35 @@ function NavbarManagement({ value, onChange }) {
           <h4 className="font-extrabold text-slate-950">Menu Items</h4>
           <p className="text-sm font-semibold text-slate-500">{visibleItems.length} items</p>
         </div>
-        <div className="grid gap-4">
-          {visibleItems.map((item) => (
-            <NavbarItemCard key={`${item.source}-${item.sourceIndex}`} item={item} onChange={(patch) => updateMenuItem(item, patch)} onDelete={() => removeMenuItem(item)} />
-          ))}
-          {!visibleItems.length && <EmptyState title="No navbar items" description="Add a menu item or adjust your search." />}
-        </div>
+        <HomeItemsTable
+          emptyLabel="No navbar items. Add a menu item or adjust your search."
+          items={visibleItems}
+          columns={[
+            { label: "Menu Name", render: (item) => item.title || "Untitled menu" },
+            { label: "Menu Type", render: (item) => labelize(item.menuType || item.type || "custom-link") },
+            { label: "Link / Page / Area", render: (item) => item.slug || item.city || item.title || "-" },
+            { label: "Sort Order", render: (item) => item.sortOrder || "-" },
+            { label: "Status", render: (item) => <StatusBadge active={item.enabled !== false && item.showInNavbar !== false} /> },
+          ]}
+          onEdit={(index) => openMenuEditor(visibleItems[index])}
+          onDelete={(index) => removeMenuItem(visibleItems[index])}
+        />
       </div>
-    </div>
-  );
-}
-
-function NavbarItemCard({ item, onChange, onDelete }) {
-  return (
-    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-      <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[1.2fr_0.8fr_1.2fr_110px_140px]">
-          <label>
-            <span className="wf-label">Menu Name</span>
-            <input className="wf-input bg-white" value={item.title || ""} onChange={(event) => onChange({ title: event.target.value })} placeholder="Example: Buy" />
-          </label>
-          <label>
-            <span className="wf-label">Menu Type</span>
-            <select className="wf-input bg-white" value={item.menuType || item.type || "custom-link"} onChange={(event) => onChange({ menuType: event.target.value })} disabled={item.source === "area"}>
-              <option value="area">Area Wise</option>
-              <option value="project">Top Project</option>
-              <option value="developer">Developer / Builder</option>
-              <option value="city">City</option>
-              <option value="category">Category</option>
-              <option value="custom-link">Custom Link</option>
-            </select>
-          </label>
-          <label>
-            <span className="wf-label">Link / Page / Area / Category</span>
-            <input className="wf-input bg-white" value={item.slug || ""} onChange={(event) => onChange({ slug: event.target.value })} placeholder="/properties or area/category" />
-          </label>
-          <label>
-            <span className="wf-label">Sort Order</span>
-            <input className="wf-input bg-white" type="number" min="1" value={item.sortOrder || ""} onChange={(event) => onChange({ sortOrder: Number(event.target.value || 0) })} placeholder="1" />
-          </label>
-          <label>
-            <span className="wf-label">Active / Inactive</span>
-            <select className="wf-input bg-white" value={item.enabled === false ? "inactive" : "active"} onChange={(event) => onChange({ enabled: event.target.value === "active", showInNavbar: event.target.value === "active" })}>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </label>
-          <label className="md:col-span-2 xl:col-span-5">
-            <span className="wf-label">Helper Text</span>
-            <input className="wf-input bg-white" value={item.description || ""} onChange={(event) => onChange({ description: event.target.value })} placeholder="Optional short note shown inside dropdowns" />
-          </label>
-        </div>
-        <div className="flex gap-2">
-          <button type="button" onClick={onDelete} className="wf-btn wf-btn-secondary flex-1 justify-center text-red-600"><Trash2 size={16} /> Delete</button>
-        </div>
-      </div>
+      {editingMenu && (
+        <SimpleItemModal
+          title={`${editingMenu.mode === "add" ? "Add" : "Edit"} Menu Item`}
+          item={editingMenu.item}
+          fields={menuModalFields(editingMenu.item)}
+          onClose={() => setEditingMenu(null)}
+          onSave={saveMenuItem}
+        />
+      )}
     </div>
   );
 }
 
 function ContactCMSForm({ value, onChange, disabled }) {
+  const [editingField, setEditingField] = useState(null);
   const location = { ...(defaultContactContent.location || {}), ...(value.location || {}) };
   const whatsappSettings = { ...(defaultContactContent.whatsappSettings || {}), ...(value.whatsappSettings || {}) };
   const updateLocation = (patch) => {
@@ -5183,187 +5376,190 @@ function ContactCMSForm({ value, onChange, disabled }) {
       whatsapp: nextSettings.phone || value.whatsapp,
     });
   };
+  const socialField = (key) => ({
+    key: `social-${key}`,
+    label: `${labelize(key)} Link`,
+    value: value.socials?.[key] || "",
+    onSave: (nextValue) => onChange({ socials: { ...(value.socials || {}), [key]: nextValue } }),
+  });
+  const fields = [
+    { key: "title", label: "Page Title", value: value.title, onSave: (nextValue) => onChange({ title: nextValue }), clearable: false },
+    { key: "phone", label: "Phone Number", value: value.phone, onSave: (nextValue) => onChange({ phone: nextValue }) },
+    { key: "subtitle", label: "Subtitle", value: value.subtitle, type: "textarea", onSave: (nextValue) => onChange({ subtitle: nextValue }) },
+    { key: "email", label: "Email", value: value.email, type: "email", onSave: (nextValue) => onChange({ email: nextValue }) },
+    { key: "officeTiming", label: "Office Timing", value: value.officeTiming, onSave: (nextValue) => onChange({ officeTiming: nextValue }) },
+    { key: "mapLink", label: "Map Link", value: value.mapLink, onSave: (nextValue) => onChange({ mapLink: nextValue }) },
+    { key: "footerDescription", label: "Footer Text", value: value.footerDescription, type: "textarea", onSave: (nextValue) => onChange({ footerDescription: nextValue }) },
+    { key: "footerCopyright", label: "Footer Copyright", value: value.footerCopyright, onSave: (nextValue) => onChange({ footerCopyright: nextValue }) },
+    { key: "whatsappPhone", label: "WhatsApp Phone Number", value: whatsappSettings.phone || value.whatsapp || "", onSave: (nextValue) => updateWhatsApp({ phone: nextValue }) },
+    {
+      key: "whatsappEnabled",
+      label: "WhatsApp Status",
+      value: whatsappSettings.enabled === false ? "Disabled" : "Enabled",
+      type: "select",
+      options: [{ value: "enabled", label: "Enabled" }, { value: "disabled", label: "Disabled" }],
+      onSave: (nextValue) => updateWhatsApp({ enabled: nextValue === "enabled" }),
+      empty: "disabled",
+    },
+    {
+      key: "whatsappPosition",
+      label: "WhatsApp Position",
+      value: whatsappSettings.position || "bottom-right",
+      type: "select",
+      options: [{ value: "bottom-right", label: "Bottom Right" }, { value: "bottom-left", label: "Bottom Left" }],
+      onSave: (nextValue) => updateWhatsApp({ position: nextValue }),
+      empty: "bottom-right",
+    },
+    {
+      key: "whatsappDisplayOn",
+      label: "WhatsApp Display On",
+      value: whatsappSettings.displayOn || "all",
+      type: "select",
+      options: [{ value: "all", label: "All Pages" }, { value: "property-pages", label: "Property Pages Only" }, { value: "homepage", label: "Homepage Only" }],
+      onSave: (nextValue) => updateWhatsApp({ displayOn: nextValue }),
+      empty: "all",
+    },
+    { key: "whatsappMessage", label: "WhatsApp Default Message", value: whatsappSettings.message || "", type: "textarea", onSave: (nextValue) => updateWhatsApp({ message: nextValue }) },
+    { key: "address", label: "Address", value: value.address, type: "textarea", onSave: (nextValue) => onChange({ address: nextValue, location: { ...location, address: nextValue } }) },
+    { key: "mapEmbed", label: "Map Embed URL", value: value.mapEmbed, onSave: (nextValue) => onChange({ mapEmbed: nextValue }) },
+    { key: "area", label: "Area", value: location.area, onSave: (nextValue) => updateLocation({ area: nextValue }) },
+    { key: "city", label: "City", value: location.city, onSave: (nextValue) => updateLocation({ city: nextValue }) },
+    { key: "state", label: "State", value: location.state, onSave: (nextValue) => updateLocation({ state: nextValue }) },
+    { key: "pincode", label: "Pincode", value: location.pincode, onSave: (nextValue) => updateLocation({ pincode: nextValue }) },
+    { key: "lat", label: "Latitude", value: location.lat ?? "", type: "number", onSave: (nextValue) => updateLocation({ lat: nextValue === "" ? null : Number(nextValue) }) },
+    { key: "lng", label: "Longitude", value: location.lng ?? "", type: "number", onSave: (nextValue) => updateLocation({ lng: nextValue === "" ? null : Number(nextValue) }) },
+    { key: "placeId", label: "Google Place ID", value: location.placeId, onSave: (nextValue) => updateLocation({ placeId: nextValue }) },
+    ...["instagram", "facebook", "linkedin", "youtube", "x"].map(socialField),
+  ];
+  const clearField = (field) => {
+    if (field.clearable === false) return;
+    if (window.confirm(`Clear ${field.label}?`)) field.onSave(field.empty ?? "");
+  };
+
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
-      <h3 className="text-xl font-bold">Contact Us Page</h3>
-      <p className="mt-1 text-sm text-slate-500">Edit public contact details, office location, map links, WhatsApp, timing, and socials.</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <Field label="Page Title" name="contactTitle" value={value.title} onChange={(event) => onChange({ title: event.target.value })} />
-        <Field label="Phone Number" name="phone" value={value.phone} onChange={(event) => onChange({ phone: event.target.value })} />
-        <label className="md:col-span-2">
-          <span className="wf-label">Subtitle</span>
-          <textarea className="wf-input min-h-24" value={value.subtitle || ""} onChange={(event) => onChange({ subtitle: event.target.value })} />
-        </label>
-        <Field label="Email" name="email" type="email" value={value.email} onChange={(event) => onChange({ email: event.target.value })} />
-        <Field label="Office Timing" name="officeTiming" value={value.officeTiming} onChange={(event) => onChange({ officeTiming: event.target.value })} />
-        <Field label="Map Link" name="mapLink" value={value.mapLink} onChange={(event) => onChange({ mapLink: event.target.value })} />
-        <label className="md:col-span-2">
-          <span className="wf-label">Footer Text</span>
-          <textarea className="wf-input min-h-20" value={value.footerDescription || ""} onChange={(event) => onChange({ footerDescription: event.target.value })} />
-        </label>
-        <Field label="Footer Copyright" name="footerCopyright" value={value.footerCopyright || ""} onChange={(event) => onChange({ footerCopyright: event.target.value })} />
-        <div className="md:col-span-2 rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
-          <h4 className="font-extrabold text-slate-950">WhatsApp Floating Icon</h4>
-          <p className="mt-1 text-sm text-slate-500">Control the public WhatsApp chat button without code changes.</p>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <Field label="WhatsApp Phone Number" name="whatsappPhone" value={whatsappSettings.phone || value.whatsapp || ""} onChange={(event) => updateWhatsApp({ phone: event.target.value })} />
-            <label>
-              <span className="wf-label">Enable / Disable</span>
-              <select className="wf-input" value={whatsappSettings.enabled === false ? "disabled" : "enabled"} onChange={(event) => updateWhatsApp({ enabled: event.target.value === "enabled" })}>
-                <option value="enabled">Enabled</option>
-                <option value="disabled">Disabled</option>
-              </select>
-            </label>
-            <label>
-              <span className="wf-label">Icon Position</span>
-              <select className="wf-input" value={whatsappSettings.position || "bottom-right"} onChange={(event) => updateWhatsApp({ position: event.target.value })}>
-                <option value="bottom-right">Bottom Right</option>
-                <option value="bottom-left">Bottom Left</option>
-              </select>
-            </label>
-            <label>
-              <span className="wf-label">Display On Pages</span>
-              <select className="wf-input" value={whatsappSettings.displayOn || "all"} onChange={(event) => updateWhatsApp({ displayOn: event.target.value })}>
-                <option value="all">All Pages</option>
-                <option value="property-pages">Property Pages Only</option>
-                <option value="homepage">Homepage Only</option>
-              </select>
-            </label>
-            <label className="md:col-span-2">
-              <span className="wf-label">Default Message</span>
-              <textarea className="wf-input min-h-24" value={whatsappSettings.message || ""} onChange={(event) => updateWhatsApp({ message: event.target.value })} />
-            </label>
-          </div>
-        </div>
-        <label className="md:col-span-2">
-          <span className="wf-label">Address</span>
-          <textarea className="wf-input min-h-20" value={value.address || ""} onChange={(event) => onChange({ address: event.target.value, location: { ...location, address: event.target.value } })} />
-        </label>
-        <LocationAutocompleteField
-          label="Google Location Search"
-          name="contactLocation"
-          value={location.address || value.address || ""}
-          options={defaultNavbarAreas.map(normalizeAreaName)}
-          onChange={(event) => updateLocation({ address: event.target.value })}
-          placeholder="Search office location"
-          onPlaceSelect={(place) => updateLocation(place)}
-        />
-        <Field label="Map Embed URL" name="mapEmbed" value={value.mapEmbed} onChange={(event) => onChange({ mapEmbed: event.target.value })} />
-        <Field label="Area" name="area" value={location.area} onChange={(event) => updateLocation({ area: event.target.value })} />
-        <Field label="City" name="city" value={location.city} onChange={(event) => updateLocation({ city: event.target.value })} />
-        <Field label="State" name="state" value={location.state} onChange={(event) => updateLocation({ state: event.target.value })} />
-        <Field label="Pincode" name="pincode" value={location.pincode} onChange={(event) => updateLocation({ pincode: event.target.value })} />
-        <Field label="Latitude" name="lat" type="number" value={location.lat ?? ""} onChange={(event) => updateLocation({ lat: event.target.value === "" ? null : Number(event.target.value) })} />
-        <Field label="Longitude" name="lng" type="number" value={location.lng ?? ""} onChange={(event) => updateLocation({ lng: event.target.value === "" ? null : Number(event.target.value) })} />
-        <Field label="Google Place ID" name="placeId" value={location.placeId} onChange={(event) => updateLocation({ placeId: event.target.value })} />
-        <div className="md:col-span-2">
-          <h4 className="mb-3 font-extrabold text-slate-950">Social Links</h4>
-          <div className="grid gap-3 md:grid-cols-2">
-            {["instagram", "facebook", "linkedin", "youtube", "x"].map((item) => (
-              <Field key={item} label={labelize(item)} name={item} value={value.socials?.[item] || ""} onChange={(event) => onChange({ socials: { ...(value.socials || {}), [item]: event.target.value } })} />
-            ))}
-          </div>
-        </div>
-      </div>
+    <>
+      <CmsFieldsTable
+        title="Contact Us Page"
+        description="Edit public contact details, office location, map links, WhatsApp, timing, and socials."
+        fields={fields}
+        onEdit={setEditingField}
+        onClear={clearField}
+      />
       {disabled && <p className="mt-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-700">Uploading or saving content...</p>}
-    </div>
+      {editingField && <CmsFieldModal field={editingField} onClose={() => setEditingField(null)} disabled={disabled} />}
+    </>
   );
 }
 
 function AboutCMSForm({ value, onChange, onUpload, disabled }) {
+  const [editingField, setEditingField] = useState(null);
+  const [editingItem, setEditingItem] = useState(null);
   const stats = Array.isArray(value.stats) ? value.stats : [];
   const features = Array.isArray(value.features) ? value.features : [];
-  const updateStat = (index, patch) => {
-    onChange({ stats: stats.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)) });
+  const fields = [
+    { key: "title", label: "About Page Title", value: value.title, onSave: (nextValue) => onChange({ title: nextValue }), clearable: false },
+    { key: "seoTitle", label: "SEO Title", value: value.seoTitle, onSave: (nextValue) => onChange({ seoTitle: nextValue }) },
+    { key: "subtitle", label: "Subtitle", value: value.subtitle, type: "textarea", onSave: (nextValue) => onChange({ subtitle: nextValue }) },
+    { key: "mainDescription", label: "Main Description", value: value.mainDescription, type: "textarea", onSave: (nextValue) => onChange({ mainDescription: nextValue }) },
+    { key: "heroImage", label: "Hero Image", value: value.heroImage, type: "image", onSave: (nextValue) => onChange({ heroImage: nextValue }), onUpload: (file) => onUpload("heroImage", file) },
+    { key: "ownerPhoto", label: "Owner Photo", value: value.ownerPhoto, type: "image", onSave: (nextValue) => onChange({ ownerPhoto: nextValue }), onUpload: (file) => onUpload("ownerPhoto", file) },
+    { key: "ownerName", label: "Owner / Founder Name", value: value.ownerName, onSave: (nextValue) => onChange({ ownerName: nextValue }) },
+    { key: "ownerDesignation", label: "Owner Designation", value: value.ownerDesignation, onSave: (nextValue) => onChange({ ownerDesignation: nextValue }) },
+    { key: "ownerBio", label: "Owner Bio", value: value.ownerBio, type: "textarea", onSave: (nextValue) => onChange({ ownerBio: nextValue }) },
+    { key: "ownerQuote", label: "Owner Quote", value: value.ownerQuote, type: "textarea", onSave: (nextValue) => onChange({ ownerQuote: nextValue }) },
+    { key: "visionTitle", label: "Vision Title", value: value.visionTitle, onSave: (nextValue) => onChange({ visionTitle: nextValue }) },
+    { key: "missionTitle", label: "Mission Title", value: value.missionTitle, onSave: (nextValue) => onChange({ missionTitle: nextValue }) },
+    { key: "visionContent", label: "Vision Content", value: value.visionContent, type: "textarea", onSave: (nextValue) => onChange({ visionContent: nextValue }) },
+    { key: "missionContent", label: "Mission Content", value: value.missionContent, type: "textarea", onSave: (nextValue) => onChange({ missionContent: nextValue }) },
+    { key: "storyTitle", label: "Story Title", value: value.storyTitle, onSave: (nextValue) => onChange({ storyTitle: nextValue }) },
+    { key: "seoDescription", label: "SEO Description", value: value.seoDescription, type: "textarea", onSave: (nextValue) => onChange({ seoDescription: nextValue }) },
+    { key: "storyContent", label: "Company Story", value: value.storyContent, type: "textarea", onSave: (nextValue) => onChange({ storyContent: nextValue }) },
+  ];
+  const clearField = (field) => {
+    if (field.clearable === false) return;
+    if (window.confirm(`Clear ${field.label}?`)) field.onSave("");
   };
-  const updateFeature = (index, patch) => {
-    onChange({ features: features.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)) });
+  const openItemEditor = (type, index = null) => {
+    const list = type === "stats" ? stats : features;
+    const defaults = type === "stats" ? { label: "", value: "" } : { title: "", desc: "" };
+    setEditingItem({ type, index, item: typeof index === "number" ? list[index] : defaults });
   };
+  const saveItem = (draft) => {
+    const list = editingItem.type === "stats" ? stats : features;
+    const nextItems = typeof editingItem.index === "number" ? list.map((item, index) => (index === editingItem.index ? draft : item)) : [...list, draft];
+    onChange({ [editingItem.type]: nextItems });
+    setEditingItem(null);
+  };
+  const removeItem = (type, index) => {
+    if (!window.confirm("Delete this item?")) return;
+    const list = type === "stats" ? stats : features;
+    onChange({ [type]: list.filter((_, itemIndex) => itemIndex !== index) });
+  };
+
   return (
-    <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-xl font-bold">About Us CMS</h3>
-          <p className="mt-1 text-sm text-slate-500">Edit the client-facing About Us page, owner profile, story, and SEO content.</p>
+    <div className="space-y-6">
+      <CmsFieldsTable
+        title="About Us CMS"
+        description="Edit the client-facing About Us page, owner profile, story, and SEO content."
+        fields={fields}
+        onEdit={setEditingField}
+        onClear={clearField}
+      />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-xl font-bold">Stats</h3>
+              <p className="mt-1 text-sm text-slate-500">Counters shown on the About page.</p>
+            </div>
+            <button type="button" className="wf-btn wf-btn-secondary" onClick={() => openItemEditor("stats")}><Plus size={16} /> Add</button>
+          </div>
+          <HomeItemsTable
+            className="mt-5"
+            emptyLabel="No stats added yet."
+            items={stats}
+            columns={[
+              { label: "Label", render: (item) => item.label || "-" },
+              { label: "Value", render: (item) => item.value || "-" },
+            ]}
+            onEdit={(index) => openItemEditor("stats", index)}
+            onDelete={(index) => removeItem("stats", index)}
+          />
+        </div>
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-xl font-bold">Why Choose Us Cards</h3>
+              <p className="mt-1 text-sm text-slate-500">Cards shown in the About page feature section.</p>
+            </div>
+            <button type="button" className="wf-btn wf-btn-secondary" onClick={() => openItemEditor("features")}><Plus size={16} /> Add</button>
+          </div>
+          <HomeItemsTable
+            className="mt-5"
+            emptyLabel="No cards added yet."
+            items={features}
+            columns={[
+              { label: "Title", render: (item) => item.title || "-" },
+              { label: "Description", render: (item) => item.desc || "-" },
+            ]}
+            onEdit={(index) => openItemEditor("features", index)}
+            onDelete={(index) => removeItem("features", index)}
+          />
         </div>
       </div>
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
-        <Field label="About Page Title" name="title" value={value.title} onChange={(event) => onChange({ title: event.target.value })} />
-        <Field label="SEO Title" name="seoTitle" value={value.seoTitle} onChange={(event) => onChange({ seoTitle: event.target.value })} />
-        <label className="md:col-span-2">
-          <span className="wf-label">Subtitle</span>
-          <textarea className="wf-input min-h-24" value={value.subtitle || ""} onChange={(event) => onChange({ subtitle: event.target.value })} />
-        </label>
-        <label className="md:col-span-2">
-          <span className="wf-label">Main Description</span>
-          <textarea className="wf-input min-h-24" value={value.mainDescription || ""} onChange={(event) => onChange({ mainDescription: event.target.value })} />
-        </label>
-        <ImageUrlField label="Hero Image" value={value.heroImage} onChange={(heroImage) => onChange({ heroImage })} onUpload={(file) => onUpload("heroImage", file)} disabled={disabled} />
-        <ImageUrlField label="Owner Photo" value={value.ownerPhoto} onChange={(ownerPhoto) => onChange({ ownerPhoto })} onUpload={(file) => onUpload("ownerPhoto", file)} disabled={disabled} />
-        <Field label="Owner / Founder Name" name="ownerName" value={value.ownerName} onChange={(event) => onChange({ ownerName: event.target.value })} />
-        <Field label="Owner Designation" name="ownerDesignation" value={value.ownerDesignation} onChange={(event) => onChange({ ownerDesignation: event.target.value })} />
-        <label className="md:col-span-2">
-          <span className="wf-label">Owner Bio</span>
-          <textarea className="wf-input min-h-24" value={value.ownerBio || ""} onChange={(event) => onChange({ ownerBio: event.target.value })} />
-        </label>
-        <label className="md:col-span-2">
-          <span className="wf-label">Owner Quote</span>
-          <textarea className="wf-input min-h-20" value={value.ownerQuote || ""} onChange={(event) => onChange({ ownerQuote: event.target.value })} />
-        </label>
-        <Field label="Vision Title" name="visionTitle" value={value.visionTitle} onChange={(event) => onChange({ visionTitle: event.target.value })} />
-        <Field label="Mission Title" name="missionTitle" value={value.missionTitle} onChange={(event) => onChange({ missionTitle: event.target.value })} />
-        <label>
-          <span className="wf-label">Vision Content</span>
-          <textarea className="wf-input min-h-24" value={value.visionContent || ""} onChange={(event) => onChange({ visionContent: event.target.value })} />
-        </label>
-        <label>
-          <span className="wf-label">Mission Content</span>
-          <textarea className="wf-input min-h-24" value={value.missionContent || ""} onChange={(event) => onChange({ missionContent: event.target.value })} />
-        </label>
-        <Field label="Story Title" name="storyTitle" value={value.storyTitle} onChange={(event) => onChange({ storyTitle: event.target.value })} />
-        <label>
-          <span className="wf-label">SEO Description</span>
-          <textarea className="wf-input min-h-24" value={value.seoDescription || ""} onChange={(event) => onChange({ seoDescription: event.target.value })} />
-        </label>
-        <label className="md:col-span-2">
-          <span className="wf-label">Company Story</span>
-          <textarea className="wf-input min-h-28" value={value.storyContent || ""} onChange={(event) => onChange({ storyContent: event.target.value })} />
-        </label>
-      </div>
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-          <div className="flex items-center justify-between">
-            <h4 className="font-extrabold">Stats</h4>
-            <button type="button" className="wf-btn wf-btn-secondary" onClick={() => onChange({ stats: [...stats, { label: "", value: "" }] })}><Plus size={16} /> Add</button>
-          </div>
-          <div className="mt-4 space-y-3">
-            {stats.map((item, index) => (
-              <div key={`${item.label}-${index}`} className="grid gap-2 rounded-xl bg-white p-3 sm:grid-cols-[1fr_1fr_auto]">
-                <input className="wf-input" value={item.label || ""} onChange={(event) => updateStat(index, { label: event.target.value })} placeholder="Label" />
-                <input className="wf-input" value={item.value || ""} onChange={(event) => updateStat(index, { value: event.target.value })} placeholder="Value" />
-                <button type="button" className="grid h-12 w-12 place-items-center rounded-xl border border-red-100 text-red-600" onClick={() => onChange({ stats: stats.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 size={16} /></button>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-          <div className="flex items-center justify-between">
-            <h4 className="font-extrabold">Why Choose Us Cards</h4>
-            <button type="button" className="wf-btn wf-btn-secondary" onClick={() => onChange({ features: [...features, { title: "", desc: "" }] })}><Plus size={16} /> Add</button>
-          </div>
-          <div className="mt-4 space-y-3">
-            {features.map((item, index) => (
-              <div key={`${item.title}-${index}`} className="rounded-xl bg-white p-3">
-                <div className="flex gap-2">
-                  <input className="wf-input" value={item.title || ""} onChange={(event) => updateFeature(index, { title: event.target.value })} placeholder="Card title" />
-                  <button type="button" className="grid h-12 w-12 shrink-0 place-items-center rounded-xl border border-red-100 text-red-600" onClick={() => onChange({ features: features.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 size={16} /></button>
-                </div>
-                <textarea className="wf-input mt-2 min-h-20" value={item.desc || ""} onChange={(event) => updateFeature(index, { desc: event.target.value })} placeholder="Card description" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      {disabled && <p className="rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-700">Uploading or saving content...</p>}
+      {editingField && <CmsFieldModal field={editingField} onClose={() => setEditingField(null)} disabled={disabled} />}
+      {editingItem && (
+        <SimpleItemModal
+          title={`${typeof editingItem.index === "number" ? "Edit" : "Add"} ${editingItem.type === "stats" ? "Stat" : "Feature Card"}`}
+          item={editingItem.item}
+          fields={editingItem.type === "stats"
+            ? [{ key: "label", label: "Label" }, { key: "value", label: "Value" }]
+            : [{ key: "title", label: "Card Title" }, { key: "desc", label: "Card Description", type: "textarea" }]}
+          onClose={() => setEditingItem(null)}
+          onSave={saveItem}
+        />
+      )}
     </div>
   );
 }

@@ -22,14 +22,14 @@ export default function BrandLogo({ compact = false, light = false, large = fals
           <span
             className={`font-extrabold tracking-tight ${
               large ? "text-[18px]" : "text-[14px]"
-            } text-[#f6c945] drop-shadow-[0_1px_1px_rgba(15,23,42,0.35)]`}
+            } ${light ? "text-white" : "text-slate-950"}`}
           >
             {primary}
           </span>
           <span
             className={`font-semibold tracking-wide ${
               large ? "mt-[5px] text-[12px]" : "mt-[3px] text-[10px]"
-            } ${light ? "text-[#d8a5ff]" : "text-[#8e2a9f]"}`}
+            } ${light ? "text-blue-200" : "text-slate-500"}`}
           >
             {secondary}
           </span>

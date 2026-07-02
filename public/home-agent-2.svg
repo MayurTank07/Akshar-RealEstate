@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="Broker profile icon">
+  <rect width="160" height="160" rx="80" fill="#dcfce7"/>
+  <circle cx="80" cy="58" r="30" fill="#16a34a"/>
+  <path d="M31 140c9-32 27-48 49-48s40 16 49 48z" fill="#064e3b"/>
+  <path d="M47 126h66" stroke="#86efac" stroke-width="8" stroke-linecap="round"/>
+</svg>

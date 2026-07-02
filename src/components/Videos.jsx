@@ -1,6 +1,7 @@
 import { Play } from "lucide-react";
 import useSiteContent from "../hooks/useSiteContent";
 import { defaultHomeSectionsContent } from "../config/navigationContent";
+import { fallbackHomeMedia, resolveHomeMedia } from "../utils/homeMedia";
 
 export default function Videos() {
   const { homeSectionsContent } = useSiteContent();
@@ -29,16 +30,19 @@ export default function Videos() {
       {/* Video Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 px-6 md:px-12 lg:px-20">
 
-        {videos.map((v, i) => (
+        {videos.map((v, i) => {
+          const image = resolveHomeMedia(v.image, "video", i);
+          return (
           <div key={i} className="flex flex-col">
 
             {/* Video Card */}
             <a href={v.url || "#"} className="relative h-64 rounded-2xl overflow-hidden group block" onClick={(event) => !v.url && event.preventDefault()}>
 
               <img
-                src={v.image}
+                src={image}
                 alt=""
                 className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                onError={(event) => { event.currentTarget.src = fallbackHomeMedia("video", i); }}
               />
 
               {/* Overlay */}
@@ -78,7 +82,8 @@ export default function Videos() {
             </div>
 
           </div>
-        ))}
+        );
+        })}
 
       </div>
 

@@ -1,5 +1,6 @@
 import useSiteContent from "../hooks/useSiteContent";
 import { defaultHomeSectionsContent } from "../config/navigationContent";
+import { fallbackHomeMedia, resolveHomeMedia } from "../utils/homeMedia";
 
 export default function Testimonials() {
   const { homeSectionsContent } = useSiteContent();
@@ -27,7 +28,9 @@ export default function Testimonials() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        {testimonials.map((t) => (
+        {testimonials.map((t, index) => {
+          const image = resolveHomeMedia(t.image, "testimonial", index);
+          return (
           <div
             key={`${t.name}-${t.role}`}
             className="bg-gray-50 sm:bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300 h-full"
@@ -49,9 +52,10 @@ export default function Testimonials() {
             <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden flex-shrink-0">
                 <img
-                  src={t.image}
+                  src={image}
                   alt={t.name}
                   className="w-full h-full object-cover"
+                  onError={(event) => { event.currentTarget.src = fallbackHomeMedia("testimonial", index); }}
                 />
               </div>
 
@@ -66,7 +70,8 @@ export default function Testimonials() {
             </div>
 
           </div>
-        ))}
+        );
+        })}
       </div>
 
     </div>

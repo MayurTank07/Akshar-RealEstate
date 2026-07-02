@@ -3,12 +3,12 @@
     "id": 1,
     "name": "Vikram Patel",
     "city": "Vadodara",
-    "image": "/a1.jpg"
+    "image": "/home-agent-1.svg"
   },
   {
     "id": 2,
     "name": "Rakesh Dahiyal",
     "city": "Vadodara",
-    "image": "/a2.jpg"
+    "image": "/home-agent-2.svg"
   }
 ]

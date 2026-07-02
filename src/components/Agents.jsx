@@ -1,5 +1,6 @@
 import useSiteContent from "../hooks/useSiteContent";
 import { defaultHomeSectionsContent } from "../config/navigationContent";
+import { fallbackHomeMedia, resolveHomeMedia } from "../utils/homeMedia";
 
 export default function Agents() {
   const { homeSectionsContent } = useSiteContent();
@@ -27,7 +28,9 @@ export default function Agents() {
 
       {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-        {agents.map((agent) => (
+        {agents.map((agent, index) => {
+          const image = resolveHomeMedia(agent.image, "agent", index);
+          return (
           <div
             key={`${agent.name}-${agent.city}`}
             className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-md transition group"
@@ -36,9 +39,10 @@ export default function Agents() {
             {/* Avatar */}
             <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 sm:border-4 border-white shadow mb-3 sm:mb-4 mx-auto sm:mx-0">
               <img
-                src={agent.image}
+                src={image}
                 alt={agent.name}
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                onError={(event) => { event.currentTarget.src = fallbackHomeMedia("agent", index); }}
               />
             </div>
 
@@ -67,7 +71,8 @@ export default function Agents() {
             )}
 
           </div>
-        ))}
+        );
+        })}
       </div>
 
     </div>
