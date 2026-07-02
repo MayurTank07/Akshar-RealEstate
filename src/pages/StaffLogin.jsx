@@ -67,7 +67,7 @@ export default function StaffLogin() {
               </div>
               <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blue-600">Staff Login</p>
               <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950">Welcome back</h2>
-              <p className="mt-2 text-sm text-slate-500">Login with admin or supervisor credentials.</p>
+              <p className="mt-2 text-sm text-slate-500">Login with your staff credentials.</p>
             </div>
 
             {error && (

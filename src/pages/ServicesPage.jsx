@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 const services = [
   {
     title: "Property for Rent",
-    description: "Curated rental homes and commercial spaces with location checks, owner coordination, and visit planning.",
+    description: "Curated rental homes and commercial spaces with location checks, owner coordination, and requirement follow-up.",
     icon: KeyRound,
   },
   {
@@ -36,7 +36,7 @@ const services = [
   },
 ];
 
-const steps = ["Requirement discovery", "Verified shortlist", "Site visit coordination", "Negotiation support", "Closure assistance"];
+const steps = ["Requirement discovery", "Verified shortlist", "Requirement coordination", "Negotiation support", "Closure assistance"];
 
 export default function ServicesPage() {
   const navigate = useNavigate();

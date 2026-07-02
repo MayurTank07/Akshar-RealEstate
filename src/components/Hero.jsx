@@ -38,7 +38,7 @@ export default function Hero() {
 
   const localities = ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Anand"];
   const tabs = ["Buy", "Rent", "Sell", "Pre Leased", "Barter", "ROI", "New Projects"];
-  const highlights = ["Verified homes", "Gujarat focused", "Site visits"];
+  const highlights = ["Verified homes", "Gujarat focused", "Expert guidance"];
 
   useEffect(() => {
     publicApi.properties().then((r) => { if (r.data?.length) setProperties(r.data); }).catch(() => {});

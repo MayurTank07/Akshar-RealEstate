@@ -91,10 +91,11 @@ export const ownerApi = {
     files.forEach((file) => formData.append("files", file));
     return request("/public/owner/uploads", { method: "POST", body: formData, authRequired: true, token: getUserToken() });
   },
-  uploadProof: (files, documentType) => {
+  uploadProof: (files, documentType, customDocumentName = "") => {
     const formData = new FormData();
     files.forEach((file) => formData.append("files", file));
     formData.append("documentType", documentType);
+    if (customDocumentName) formData.append("customDocumentName", customDocumentName);
     return request("/public/owner/proofs", { method: "POST", body: formData, authRequired: true, token: getUserToken() });
   },
 };

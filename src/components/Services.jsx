@@ -49,7 +49,7 @@ export default function Services() {
           </h2>
 
           <p className="max-w-2xl text-base leading-relaxed text-slate-600">
-            Expert help for verification, valuation, legal checks, and property visits across Gujarat.
+            Expert help for verification, valuation, legal checks, and property guidance across Gujarat.
           </p>
         </div>
 

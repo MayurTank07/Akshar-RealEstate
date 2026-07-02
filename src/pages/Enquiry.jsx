@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { publicApi } from "../services/api";
 import { formatINR } from "../utils/currency";
+import { buildInternationalPhone, countryCodeOptions, normalizePhoneDigits } from "../utils/countryCodes";
 import {
   Building2,
   Calendar,
@@ -48,6 +49,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
   const [form, setForm] = useState({
     name: "",
     email: "",
+    countryCode: "+91",
     phone: "",
     age: "",
     location: "",
@@ -66,7 +68,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
 
   const update = (event) => {
     const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
+    setForm((current) => ({ ...current, [name]: name === "phone" ? normalizePhoneDigits(value) : value }));
     if (errors[name]) {
       setErrors((current) => ({ ...current, [name]: null }));
     }
@@ -95,6 +97,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
   const submit = async () => {
     const enquiryPayload = {
       ...form,
+      phone: buildInternationalPhone(form.countryCode, form.phone),
       location: form.location.trim(),
       preferredLocation: form.location.trim(),
       propertyType: form.type,
@@ -193,7 +196,13 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-5">
                   <InputGroup label="Full Name" icon={<User size={18} />} name="name" value={form.name} onChange={update} error={errors.name} placeholder="Raj Sharma" />
                   <InputGroup label="Email Address" icon={<Mail size={18} />} name="email" value={form.email} onChange={update} error={errors.email} placeholder="customer@example.com" />
-                  <InputGroup label="Phone Number" icon={<Phone size={18} />} name="phone" value={form.phone} onChange={update} error={errors.phone} placeholder="9876543210" />
+                  <PhoneInputGroup
+                    label="Phone Number"
+                    countryCode={form.countryCode}
+                    phone={form.phone}
+                    onChange={update}
+                    error={errors.phone}
+                  />
                   <InputGroup label="Age" icon={<Calendar size={18} />} name="age" type="number" value={form.age} onChange={update} placeholder="25" />
                 </div>
 
@@ -275,7 +284,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
                 <ReviewSection title="Contact Information" onEdit={() => setStep(1)}>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <ReviewItem label="Name" value={form.name} />
-                    <ReviewItem label="Phone" value={form.phone} />
+                    <ReviewItem label="Phone" value={`${form.countryCode} ${form.phone}`} />
                     <ReviewItem label="Email" value={form.email} />
                     <ReviewItem label="Location" value={form.location.trim()} />
                   </div>
@@ -307,6 +316,40 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
           {errors.submit && <p className="bg-red-50 px-4 py-3 text-sm font-bold text-red-600">{errors.submit}</p>}
         </div>
       </div>
+    </div>
+  );
+}
+
+function PhoneInputGroup({ label, countryCode, phone, onChange, error }) {
+  return (
+    <div>
+      <label className="wf-label flex items-center gap-2">
+        <Phone size={16} />
+        {label}
+      </label>
+      <div className={`grid grid-cols-[116px_1fr] overflow-hidden rounded-2xl border bg-white ${error ? "border-red-500" : "border-slate-200"} focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100`}>
+        <select
+          name="countryCode"
+          value={countryCode}
+          onChange={onChange}
+          className="min-h-12 border-0 border-r border-slate-200 bg-slate-50 px-3 text-sm font-extrabold text-slate-700 outline-none"
+          aria-label="Country code"
+        >
+          {countryCodeOptions.map((option) => (
+            <option key={`${option.label}-${option.value}`} value={option.value}>{option.value}</option>
+          ))}
+        </select>
+        <input
+          name="phone"
+          value={phone}
+          onChange={onChange}
+          inputMode="numeric"
+          autoComplete="tel-national"
+          placeholder="9876543210"
+          className="min-h-12 border-0 px-4 text-sm font-semibold text-slate-900 outline-none"
+        />
+      </div>
+      {error && <p className="mt-1.5 text-xs font-semibold text-red-600">{error}</p>}
     </div>
   );
 }

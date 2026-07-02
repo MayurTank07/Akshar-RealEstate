@@ -86,6 +86,8 @@ const defaultSupervisorPermissions = [
   "assigned:view",
 ];
 
+const PROPERTY_TEXT_LIMIT = 1000;
+
 const propertyOptionGroups = {
   amenities: ["Parking", "Lift", "Security", "Garden", "Swimming Pool", "Gym", "CCTV", "Power Backup", "Club House", "WiFi", "Air Conditioning", "Water Supply", "Balcony", "Furnished", "Semi Furnished", "Modular Kitchen", "Visitor Parking", "Kids Play Area", "Fire Safety", "Pet Friendly"],
   features: ["Corner Property", "Wide Road Access", "Road Facing", "Vaastu Compliant", "Gated Community", "Prime Location", "High Footfall", "Main Road Touch", "Near Metro", "Near School", "Near Hospital", "Near Market", "New Construction", "Ready Possession", "High ROI"],
@@ -155,6 +157,7 @@ const emptyProperty = {
   image: "",
   gallery: [],
   description: "",
+  nearbyLandmarks: "",
   videoUrl: "",
   amenities: [],
   features: [],
@@ -189,6 +192,11 @@ const emptyProperty = {
   source: "",
 };
 
+function ownerProofLabel(proof = {}) {
+  if (proof.documentType === "Other" && proof.customDocumentName) return proof.customDocumentName;
+  return proof.documentType || "Owner proof";
+}
+
 function generatePropertyDescription(property) {
   const title = property.title?.trim() || "This premium property";
   const type = property.type?.trim() || "property";
@@ -222,7 +230,7 @@ function generatePropertyDescription(property) {
   const commercial = price && price !== "₹0" ? ` The property is offered at ${price}, with details available for serious enquiries.` : "";
   const features = amenityText ? ` Key lifestyle and utility highlights include ${amenityText}.` : "";
   const additionalFeatures = featureText ? ` The listing also stands out for ${featureText}.` : "";
-  const close = " Connect with Akshar Estate The Property HUB for verified Ahmedabad market guidance, broker-assisted pricing support, and a private site visit.";
+  const close = " Connect with Akshar Estate The Property HUB for verified Ahmedabad market guidance, broker-assisted pricing support, and private consultation.";
   return `${overview}${projectDetails.length ? ` It is ${projectDetails.join(" and ")}.` : ""}${details.length ? ` It offers ${details.join(", ")}.` : ""}${features}${additionalFeatures}${commercial} ${close}`;
 }
 
@@ -1534,6 +1542,14 @@ function PropertyModal({ property, onClose, onSaved }) {
       setError("Please complete the highlighted required fields before saving.");
       return;
     }
+    if (String(nextForm.description || "").length > PROPERTY_TEXT_LIMIT) {
+      setError(`Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
+      return;
+    }
+    if (String(nextForm.nearbyLandmarks || "").length > PROPERTY_TEXT_LIMIT) {
+      setError(`Nearby landmarks must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
+      return;
+    }
     const requiresDeal = ["sold", "rented"].includes(nextForm.status);
     const missingDeal = requiresDeal && [
       ["finalPrice", "Final sold/rented price"],
@@ -1610,13 +1626,16 @@ function PropertyModal({ property, onClose, onSaved }) {
   };
 
   const descriptionSuggestions = [
-    "Verified listing with transparent details and guided site visits.",
+    "Verified listing with transparent details and guided property assistance.",
     "Well connected to daily conveniences, business hubs, and key roads.",
     "A strong option for end users and long-term investors alike.",
   ];
 
   const appendDescriptionSuggestion = (suggestion) => {
-    setForm((current) => ({ ...current, description: `${current.description.trim()}${current.description.trim() ? " " : ""}${suggestion}` }));
+    setForm((current) => {
+      const nextDescription = `${current.description.trim()}${current.description.trim() ? " " : ""}${suggestion}`;
+      return { ...current, description: nextDescription.slice(0, PROPERTY_TEXT_LIMIT) };
+    });
   };
 
   return (
@@ -1689,10 +1708,22 @@ function PropertyModal({ property, onClose, onSaved }) {
                 }}
               />
               <ComboField label="City" name="city" value={form.city} options={cityOptions} onChange={update} required error={fieldErrors.city} placeholder="Select City" masterGroup="cities" onAddOption={addMasterOption} />
-              <Field label="Map Address" name="map.address" value={form.map.address} onChange={update} placeholder="Full address for map and site visits" />
+              <Field label="Map Address" name="map.address" value={form.map.address} onChange={update} placeholder="Full address for map and client coordination" />
               <Field label="Pincode" name="map.pincode" value={form.map.pincode} onChange={update} />
               <Field label="State" name="map.state" value={form.map.state} onChange={update} />
               <Field label="Map Embed URL" name="map.embedUrl" value={form.map.embedUrl} onChange={update} />
+              <label className="md:col-span-2">
+                <span className="wf-label">Nearby Landmarks</span>
+                <textarea
+                  className="wf-input min-h-24"
+                  name="nearbyLandmarks"
+                  value={form.nearbyLandmarks || ""}
+                  onChange={update}
+                  maxLength={PROPERTY_TEXT_LIMIT}
+                  placeholder="Nearby schools, roads, malls, or public landmarks"
+                />
+                <span className="mt-1.5 block text-right text-xs font-semibold text-slate-400">{String(form.nearbyLandmarks || "").length}/{PROPERTY_TEXT_LIMIT}</span>
+              </label>
             </div>
           </FormSection>
 
@@ -1839,11 +1870,12 @@ function PropertyModal({ property, onClose, onSaved }) {
 	                  <p className="text-sm font-extrabold text-slate-900">Ahmedabad-focused professional listing copy</p>
 	                  <p className="mt-1 text-xs font-semibold text-slate-500">Uses property identity, deal, project, builder, location, price, measurement, ownership, furnishing, amenities, and features.</p>
 	                </div>
-	                <button type="button" onClick={() => setForm((current) => ({ ...current, description: generatePropertyDescription(current) }))} className="wf-btn wf-btn-primary shrink-0">
+	                <button type="button" onClick={() => setForm((current) => ({ ...current, description: generatePropertyDescription(current).slice(0, PROPERTY_TEXT_LIMIT) }))} className="wf-btn wf-btn-primary shrink-0">
 	                  <Sparkles size={16} /> Auto Generate Description
 	                </button>
 	              </div>
-	              <textarea className="wf-input mt-4 min-h-40 bg-white leading-6" name="description" value={form.description} onChange={update} placeholder="Write a natural, premium property description or generate a complete starting point above." />
+	              <textarea className="wf-input mt-4 min-h-40 bg-white leading-6" name="description" value={form.description} onChange={update} maxLength={PROPERTY_TEXT_LIMIT} placeholder="Write a natural, premium property description or generate a complete starting point above." />
+	              <span className="mt-1.5 block text-right text-xs font-semibold text-slate-400">{String(form.description || "").length}/{PROPERTY_TEXT_LIMIT}</span>
 	              <div className="mt-3 flex flex-wrap gap-2">
 	                {descriptionSuggestions.map((suggestion) => (
 	                  <button key={suggestion} type="button" onClick={() => appendDescriptionSuggestion(suggestion)} className="rounded-full border border-blue-100 bg-white px-3 py-1.5 text-left text-xs font-bold text-blue-700 hover:bg-blue-50">
@@ -3262,7 +3294,7 @@ function OwnerRequestDetailModal({ request, remarks, setRemarks, saving, onClose
                     <FileText size={18} className="shrink-0 text-blue-600" />
                     <span className="min-w-0">
                       <span className="block truncate font-black text-slate-900">{proof.originalName}</span>
-                      <span className="mt-1 block text-xs font-semibold text-slate-500">{proof.documentType} · {proof.status || "uploaded"}</span>
+                      <span className="mt-1 block text-xs font-semibold text-slate-500">{ownerProofLabel(proof)} · {proof.status || "uploaded"}</span>
                     </span>
                     <Download size={16} className="ml-auto shrink-0 text-slate-400" />
                   </a>
@@ -3406,6 +3438,14 @@ function OwnerContentEditModal({ request, saving, onClose, onSave }) {
       setError(`Construction year must be between 1900 and ${new Date().getFullYear()}.`);
       return;
     }
+    if (String(form.propertyDetails.description || "").length > PROPERTY_TEXT_LIMIT) {
+      setError(`Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
+      return;
+    }
+    if (String(form.propertyDetails.nearbyLandmarks || "").length > PROPERTY_TEXT_LIMIT) {
+      setError(`Nearby landmarks must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
+      return;
+    }
     try {
       setError("");
       await onSave(request._id, {
@@ -3510,8 +3550,16 @@ function OwnerContentEditModal({ request, saving, onClose, onSave }) {
                   </select>
                 </label>
               </div>
-              <label className="mt-3 block"><span className="wf-label">Description</span><textarea className="wf-input min-h-28" value={form.propertyDetails.description} onChange={(event) => updateDetails("description", event.target.value)} /></label>
-              <label className="mt-3 block"><span className="wf-label">Nearby landmarks</span><textarea className="wf-input min-h-20" value={form.propertyDetails.nearbyLandmarks} onChange={(event) => updateDetails("nearbyLandmarks", event.target.value)} /></label>
+              <label className="mt-3 block">
+                <span className="wf-label">Description</span>
+                <textarea className="wf-input min-h-28" value={form.propertyDetails.description} onChange={(event) => updateDetails("description", event.target.value)} maxLength={PROPERTY_TEXT_LIMIT} />
+                <span className="mt-1.5 block text-right text-xs font-semibold text-slate-400">{String(form.propertyDetails.description || "").length}/{PROPERTY_TEXT_LIMIT}</span>
+              </label>
+              <label className="mt-3 block">
+                <span className="wf-label">Nearby landmarks</span>
+                <textarea className="wf-input min-h-20" value={form.propertyDetails.nearbyLandmarks} onChange={(event) => updateDetails("nearbyLandmarks", event.target.value)} maxLength={PROPERTY_TEXT_LIMIT} />
+                <span className="mt-1.5 block text-right text-xs font-semibold text-slate-400">{String(form.propertyDetails.nearbyLandmarks || "").length}/{PROPERTY_TEXT_LIMIT}</span>
+              </label>
             </FormSection>
           </div>
           <FormSection title="Images & Documents" subtitle="Upload, remove, and reorder public listing images. Owner proofs are managed separately and cannot be exposed here.">

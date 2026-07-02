@@ -18,7 +18,7 @@ export function buildPropertySeo(property) {
   const canonical = `${window.location.origin}/property/${property._id || property.id || ""}`;
   const metaTitle = compact(`${compact(title, 32)} | ${type} in ${compact(location, 24)} | Ahmedabad Broker`, 68);
   const metaDescription = compact(
-    `Explore ${title}, a verified ${type.toLowerCase()} in ${location}. Get Ahmedabad-focused broker-assisted ${dealType.toLowerCase()} guidance, pricing support, and private site visits from ${SITE_NAME}.`,
+    `Explore ${title}, a verified ${type.toLowerCase()} in ${location}. Get Ahmedabad-focused broker-assisted ${dealType.toLowerCase()} guidance, pricing support, and private consultation from ${SITE_NAME}.`,
     160
   );
   const keywords = [

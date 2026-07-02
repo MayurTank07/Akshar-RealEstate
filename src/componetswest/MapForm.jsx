@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Play, MapPin, Bookmark, ChevronDown } from 'lucide-react';
 import { publicApi } from '../services/api';
+import { buildInternationalPhone, countryCodeOptions, normalizePhoneDigits } from '../utils/countryCodes';
 
 export default function PropertyInformation({ property }) {
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", homeLoan: false });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", homeLoan: false });
   const [message, setMessage] = useState("");
   const broker = property?.broker || {};
   const contactName = broker.name || "Akshar Estate Expert";
@@ -22,7 +23,8 @@ export default function PropertyInformation({ property }) {
       await publicApi.createEnquiry({
         name: `${form.firstName} ${form.lastName}`.trim(),
         email: form.email,
-        phone: form.phone,
+        countryCode: form.countryCode,
+        phone: buildInternationalPhone(form.countryCode, form.phone),
         preferredLocation: property?.city || property?.location || "",
         propertyType: property?.type || "",
         propertyTitle: property?.title || "",
@@ -31,7 +33,7 @@ export default function PropertyInformation({ property }) {
         source: "property-detail",
       });
       setMessage("Thanks. Our team will contact you shortly.");
-      setForm({ firstName: "", lastName: "", email: "", phone: "", homeLoan: false });
+      setForm({ firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", homeLoan: false });
     } catch (error) {
       setMessage(error.message || "Could not submit enquiry. Please try again.");
     }
@@ -39,7 +41,7 @@ export default function PropertyInformation({ property }) {
 
   const update = (event) => {
     const { name, value, type, checked } = event.target;
-    setForm((current) => ({ ...current, [name]: type === "checkbox" ? checked : value }));
+    setForm((current) => ({ ...current, [name]: type === "checkbox" ? checked : name === "phone" ? normalizePhoneDigits(value) : value }));
   };
 
   return (
@@ -140,8 +142,19 @@ export default function PropertyInformation({ property }) {
               <input name="email" type="email" value={form.email} onChange={update} placeholder="E-mail*" className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
               
               <div className="flex gap-2">
-                <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white min-w-[80px]">
-                  +91 <ChevronDown className="w-4 h-4 text-gray-400" />
+                <div className="relative min-w-[96px]">
+                  <select
+                    name="countryCode"
+                    value={form.countryCode}
+                    onChange={update}
+                    className="h-full w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-3 pr-7 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500"
+                    aria-label="Country code"
+                  >
+                    {countryCodeOptions.map((option) => (
+                      <option key={`${option.label}-${option.value}`} value={option.value}>{option.value}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 </div>
                 <input name="phone" value={form.phone} onChange={update} placeholder="Phone number*" className="flex-1 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
               </div>

@@ -70,6 +70,7 @@ const initialForm = {
 const amenities = ["Parking", "Lift", "Security", "Garden", "Power Backup", "Gym", "CCTV", "Club House", "Balcony", "Water Supply"];
 const propertyAgeOptions = ["", "Under Construction", "New / 0-1 Years", "1-3 Years", "3-5 Years", "5-10 Years", "10+ Years"];
 const ownerProofTypes = ["Ownership Proof", "Electricity Bill", "Tax Bill", "Index Copy", "Other"];
+const PROPERTY_TEXT_LIMIT = 1000;
 
 function cloneForm(form) {
   return JSON.parse(JSON.stringify(form));
@@ -111,6 +112,11 @@ function buildPayload(form) {
       constructionYear: form.propertyDetails.constructionYear ? Number(form.propertyDetails.constructionYear) : null,
     },
   };
+}
+
+function ownerProofLabel(proof = {}) {
+  if (proof.documentType === "Other" && proof.customDocumentName) return proof.customDocumentName;
+  return proof.documentType || "Owner proof";
 }
 
 export default function Profile() {
@@ -299,6 +305,7 @@ function OwnerPropertyForm({ user, request, onCancel, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [proofType, setProofType] = useState("Ownership Proof");
+  const [customProofName, setCustomProofName] = useState("");
   const [uploadingProof, setUploadingProof] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -340,6 +347,8 @@ function OwnerPropertyForm({ user, request, onCancel, onSaved }) {
       items.push(`Construction year must be between 1900 and ${new Date().getFullYear()}.`);
     }
     if ((form.propertyDetails?.description ?? "").trim().length < 20) items.push("Property description must be at least 20 characters.");
+    if ((form.propertyDetails?.description ?? "").length > PROPERTY_TEXT_LIMIT) items.push(`Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
+    if ((form.propertyDetails?.nearbyLandmarks ?? "").length > PROPERTY_TEXT_LIMIT) items.push(`Nearby landmarks must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
     const photoCount = form.media?.photos?.length ?? 0;
     if (photoCount < 4) items.push(`At least 4 property photos are required (${photoCount} uploaded).`);
     if (photoCount > 10) items.push(`Maximum 10 property photos allowed (${photoCount} uploaded).`);
@@ -396,10 +405,16 @@ function OwnerPropertyForm({ user, request, onCancel, onSaved }) {
   const uploadProofs = async (files) => {
     const selectedFiles = Array.from(files || []);
     if (!selectedFiles.length) return;
+    const isOtherProof = proofType === "Other";
+    const cleanCustomName = customProofName.trim();
+    if (isOtherProof && !cleanCustomName) {
+      setError("Custom document name is required when owner proof type is Others.");
+      return;
+    }
     setUploadingProof(true);
     setError("");
     try {
-      const response = await ownerApi.uploadProof(selectedFiles, proofType);
+      const response = await ownerApi.uploadProof(selectedFiles, proofType, isOtherProof ? cleanCustomName : "");
       setForm((current) => ({
         ...current,
         media: {
@@ -407,6 +422,7 @@ function OwnerPropertyForm({ user, request, onCancel, onSaved }) {
           ownerProofs: [...(current.media?.ownerProofs ?? []), ...(response.data ?? [])],
         },
       }));
+      if (isOtherProof) setCustomProofName("");
       setSuccess("Owner proof uploaded securely.");
     } catch (err) {
       setError(err.message || "Owner proof upload failed.");
@@ -501,8 +517,8 @@ function OwnerPropertyForm({ user, request, onCancel, onSaved }) {
             <SelectField label="Parking" value={form.propertyDetails.parking} onChange={(value) => updateProperty("parking", value)} options={["", "No Parking", "1 Car", "2 Cars", "Open Parking", "Reserved Parking"]} />
             <SelectField label="Facing" value={form.propertyDetails.facing} onChange={(value) => updateProperty("facing", value)} options={["", "East", "West", "North", "South", "North-East", "Road Facing", "Garden Facing"]} />
             <SelectField label="Property age" value={form.propertyDetails.ageOfProperty} onChange={(value) => updateProperty("ageOfProperty", value)} options={propertyAgeOptions} helper="Property age means how old the property/building is since construction completion." />
-            <TextArea label="Property description" value={form.propertyDetails.description} onChange={(value) => updateProperty("description", value)} required />
-            <TextArea label="Nearby landmarks" value={form.propertyDetails.nearbyLandmarks} onChange={(value) => updateProperty("nearbyLandmarks", value)} />
+            <TextArea label="Property description" value={form.propertyDetails.description} onChange={(value) => updateProperty("description", value)} required maxLength={PROPERTY_TEXT_LIMIT} />
+            <TextArea label="Nearby landmarks" value={form.propertyDetails.nearbyLandmarks} onChange={(value) => updateProperty("nearbyLandmarks", value)} maxLength={PROPERTY_TEXT_LIMIT} />
             <div className="lg:col-span-2">
               <label className="wf-label">Amenities</label>
               <div className="flex flex-wrap gap-2">
@@ -577,19 +593,31 @@ function OwnerPropertyForm({ user, request, onCancel, onSaved }) {
               <p className="mb-4 text-xs font-semibold leading-5 text-slate-500">Proofs are visible only to authorized admin and supervisor staff. They are never shown on the public website.</p>
               <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
                 <select value={proofType} onChange={(event) => setProofType(event.target.value)} className="wf-input min-h-12 rounded-2xl bg-white font-semibold">
-                  {ownerProofTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+                  {ownerProofTypes.map((type) => <option key={type} value={type}>{type === "Other" ? "Others" : type}</option>)}
                 </select>
                 <label className="wf-btn wf-btn-primary cursor-pointer">
                   <Upload size={16} /> {uploadingProof ? "Uploading..." : "Upload proof"}
                   <input type="file" multiple accept="image/*,application/pdf" className="hidden" disabled={uploadingProof} onChange={(event) => { uploadProofs(event.target.files); event.target.value = ""; }} />
                 </label>
               </div>
+              {proofType === "Other" && (
+                <label className="mt-3 block">
+                  <span className="wf-label">Custom document name *</span>
+                  <input
+                    className="wf-input min-h-12 rounded-2xl bg-white font-semibold"
+                    value={customProofName}
+                    onChange={(event) => setCustomProofName(event.target.value)}
+                    placeholder="e.g. Society share certificate"
+                    maxLength={80}
+                  />
+                </label>
+              )}
               <div className="mt-4 space-y-2">
                 {safeOwnerProofs.map((proof, index) => (
                   <div key={`${proof.url}-${index}`} className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 ring-1 ring-blue-100">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-black text-slate-900">{proof.originalName}</p>
-                      <p className="mt-0.5 text-xs font-semibold text-slate-500">{proof.documentType} · {proof.status || "uploaded"}</p>
+                      <p className="mt-0.5 text-xs font-semibold text-slate-500">{ownerProofLabel(proof)} · {proof.status || "uploaded"}</p>
                     </div>
                     <button type="button" onClick={() => removeProof(index)} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-rose-600 hover:bg-rose-50" aria-label={`Remove ${proof.originalName}`}>
                       <Trash2 size={16} />
@@ -864,11 +892,13 @@ function SelectField({ label, value, onChange, options, helper = "" }) {
   );
 }
 
-function TextArea({ label, value, onChange, required = false }) {
+function TextArea({ label, value, onChange, required = false, maxLength }) {
+  const count = String(value ?? "").length;
   return (
     <label className="block lg:col-span-2">
       <span className="wf-label">{label}{required ? " *" : ""}</span>
-      <textarea value={value ?? ""} onChange={(event) => onChange(event.target.value)} rows={4} className="wf-input min-h-28 rounded-2xl bg-white font-semibold" required={required} />
+      <textarea value={value ?? ""} onChange={(event) => onChange(event.target.value)} rows={4} className="wf-input min-h-28 rounded-2xl bg-white font-semibold" required={required} maxLength={maxLength} />
+      {maxLength && <span className={`mt-1.5 block text-right text-xs font-semibold ${count >= maxLength ? "text-amber-600" : "text-slate-400"}`}>{count}/{maxLength}</span>}
     </label>
   );
 }

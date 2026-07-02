@@ -11,7 +11,7 @@ export default function WhatWeDo() {
 
   const cards = [
     {
-      title: "Guided Site Visits",
+      title: "Guided Property Support",
       image: "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1000",
       className: "col-span-2 md:col-span-1 lg:col-span-2 lg:row-span-2",
     },
@@ -44,7 +44,7 @@ export default function WhatWeDo() {
             Real estate guidance from search to closing
           </h2>
           <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-600">
-            We make buying, selling, and investing simpler with verified listings, site visits,
+            We make buying, selling, and investing simpler with verified listings,
             document checks, virtual tours, and market-backed advisory.
           </p>
         </div>

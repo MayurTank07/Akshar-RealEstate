@@ -16,11 +16,11 @@ const legalContent = {
       },
       {
         title: "Property Enquiry Data",
-        body: "When you enquire about a property, we use the details you provide to understand your requirement, contact you, recommend suitable listings, schedule visits, and coordinate follow-up with our internal team or assigned supervisor.",
+        body: "When you enquire about a property, we use the details you provide to understand your requirement, contact you, recommend suitable listings, and coordinate follow-up with our internal team or assigned supervisor.",
       },
       {
         title: "Contact Details Usage",
-        body: "Your phone number, WhatsApp number, and email address may be used to respond to enquiries, send property updates, share visit confirmations, and provide service-related communication. We do not sell your contact details to unrelated third parties.",
+        body: "Your phone number, WhatsApp number, and email address may be used to respond to enquiries, send property updates, share service confirmations, and provide service-related communication. We do not sell your contact details to unrelated third parties.",
       },
       {
         title: "Cookies and Basic Analytics",
@@ -65,11 +65,11 @@ const legalContent = {
       },
       {
         title: "Brokerage and Commission",
-        body: "Brokerage, commission, service charges, or consulting fees, if applicable, will be communicated based on the property, transaction type, and agreed service scope. Users should confirm fee terms before proceeding with site visits, booking, or documentation.",
+        body: "Brokerage, commission, service charges, or consulting fees, if applicable, will be communicated based on the property, transaction type, and agreed service scope. Users should confirm fee terms before proceeding with booking, documentation, or other transaction steps.",
       },
       {
         title: "No Guarantee of Deal Closure",
-        body: "Submitting an enquiry, visiting a property, or receiving assistance from our team does not guarantee purchase, sale, rent, lease, loan approval, documentation completion, or final deal closure.",
+        body: "Submitting an enquiry, reviewing a property, or receiving assistance from our team does not guarantee purchase, sale, rent, lease, loan approval, documentation completion, or final deal closure.",
       },
       {
         title: "Limitation of Liability",

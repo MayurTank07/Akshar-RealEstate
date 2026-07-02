@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle2, Mail, MessageCircle, Phone, Calendar } from 'lucide-react';
+import { CheckCircle2, Mail, MessageCircle, Phone } from 'lucide-react';
 import { formatINR } from '../utils/currency';
 import { displayPropertyCode } from '../utils/propertyCode';
 import useAuth from '../contexts/useAuth';
@@ -156,11 +156,6 @@ export default function PropertyAmenities({ property, whatsappLink }) {
           <button type="button" onClick={handleCallClick} className="w-full bg-[#059669] hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-50">
             <Phone className="w-5 h-5 fill-current" />
             Call Now
-          </button>
-          
-          <button className="w-full bg-white border-2 border-[#2563eb] text-[#2563eb] font-bold py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-50 transition-colors">
-            <Calendar className="w-5 h-5" />
-            Schedule Visit
           </button>
         </div>
 
