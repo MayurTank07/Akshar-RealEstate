@@ -4731,6 +4731,7 @@ function SettingsSection() {
 }
 
 function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, uploadImage, disabled }) {
+  const [editingHomeItem, setEditingHomeItem] = useState(null);
   const item = (key) => content.find((entry) => entry.key === key);
   const field = (key) => item(key) || { _id: key, value: "" };
   const update = (key, value) => {
@@ -4739,20 +4740,21 @@ function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, u
   };
   const section = (key) => ({ ...defaultHomeSectionsContent[key], ...(homeSections?.[key] || {}) });
   const updateSection = (key, patch) => updateHomeSections({ [key]: { ...section(key), ...patch } });
-  const updateSectionItem = (key, index, patch) => {
+  const saveSectionItem = (key, index, nextItem) => {
     const current = section(key);
     const items = Array.isArray(current.items) ? current.items : [];
-    updateSection(key, { items: items.map((entry, itemIndex) => (itemIndex === index ? { ...entry, ...patch } : entry)) });
-  };
-  const addSectionItem = (key, nextItem) => {
-    const current = section(key);
-    const items = Array.isArray(current.items) ? current.items : [];
-    updateSection(key, { items: [...items, nextItem] });
+    const nextItems = typeof index === "number" ? items.map((entry, itemIndex) => (itemIndex === index ? nextItem : entry)) : [...items, nextItem];
+    updateSection(key, { items: nextItems });
+    setEditingHomeItem(null);
   };
   const removeSectionItem = (key, index) => {
     const current = section(key);
     const items = Array.isArray(current.items) ? current.items : [];
     updateSection(key, { items: items.filter((_, itemIndex) => itemIndex !== index) });
+  };
+  const openHomeItemEditor = (key, index = null) => {
+    const items = Array.isArray(section(key).items) ? section(key).items : [];
+    setEditingHomeItem({ key, index, item: typeof index === "number" ? items[index] : createHomeSectionItem(key) });
   };
   const videos = section("videos");
   const agents = section("agents");
@@ -4778,69 +4780,52 @@ function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, u
         </div>
       </div>
 
-      <HomeSectionEditor title="Videos Section" section={videos} onChange={(patch) => updateSection("videos", patch)}>
-        <div className="space-y-3">
-          {(Array.isArray(videos.items) ? videos.items : []).map((video, index) => (
-            <div key={`video-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <Field label="Title" name={`video-title-${index}`} value={video.title || ""} onChange={(event) => updateSectionItem("videos", index, { title: event.target.value })} placeholder="Bungalow for Sale" />
-                <Field label="Location" name={`video-location-${index}`} value={video.location || ""} onChange={(event) => updateSectionItem("videos", index, { location: event.target.value })} placeholder="Karali, Vadodara" />
-                <Field label="Image URL" name={`video-image-${index}`} value={video.image || ""} onChange={(event) => updateSectionItem("videos", index, { image: event.target.value })} placeholder="/v1.jpg" />
-                <Field label="Video Link" name={`video-url-${index}`} value={video.url || ""} onChange={(event) => updateSectionItem("videos", index, { url: event.target.value })} placeholder="https://youtube.com/..." />
-                <Field label="Overlay Text" name={`video-overlay-${index}`} value={video.overlay || ""} onChange={(event) => updateSectionItem("videos", index, { overlay: event.target.value })} placeholder="Property video" />
-                <Field label="Button Text" name={`video-button-${index}`} value={video.button || ""} onChange={(event) => updateSectionItem("videos", index, { button: event.target.value })} placeholder="Contact Agent" />
-                <StatusSelect value={video.enabled !== false} onChange={(enabled) => updateSectionItem("videos", index, { enabled })} />
-                <DeleteRowButton onClick={() => removeSectionItem("videos", index)} />
-              </div>
-            </div>
-          ))}
-          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => addSectionItem("videos", { title: "", location: "", image: "", overlay: "", button: "", url: "", enabled: true })}><Plus size={16} /> Add Video</button>
-        </div>
+      <HomeSectionEditor title="Videos Section" section={videos} onChange={(patch) => updateSection("videos", patch)} addLabel="Add Video" onAdd={() => openHomeItemEditor("videos")}>
+        <HomeItemsTable
+          emptyLabel="No videos added yet."
+          items={videos.items}
+          columns={[
+            { label: "Title", render: (video) => video.title || "-" },
+            { label: "Location", render: (video) => video.location || "-" },
+            { label: "Overlay", render: (video) => video.overlay || "-" },
+            { label: "Video Link", render: (video) => video.url || "-" },
+            { label: "Status", render: (video) => <StatusBadge active={video.enabled !== false} /> },
+          ]}
+          onEdit={(index) => openHomeItemEditor("videos", index)}
+          onDelete={(index) => removeSectionItem("videos", index)}
+        />
       </HomeSectionEditor>
 
-      <HomeSectionEditor title="Agents Section" section={agents} onChange={(patch) => updateSection("agents", patch)}>
-        <div className="space-y-3">
-          {(Array.isArray(agents.items) ? agents.items : []).map((agent, index) => (
-            <div key={`agent-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <Field label="Name" name={`agent-name-${index}`} value={agent.name || ""} onChange={(event) => updateSectionItem("agents", index, { name: event.target.value })} placeholder="Vikram Patel" />
-                <Field label="City" name={`agent-city-${index}`} value={agent.city || ""} onChange={(event) => updateSectionItem("agents", index, { city: event.target.value })} placeholder="Vadodara" />
-                <Field label="Photo URL" name={`agent-image-${index}`} value={agent.image || ""} onChange={(event) => updateSectionItem("agents", index, { image: event.target.value })} placeholder="/a1.jpg" />
-                <Field label="Link URL" name={`agent-link-${index}`} value={agent.linkUrl || ""} onChange={(event) => updateSectionItem("agents", index, { linkUrl: event.target.value })} placeholder="/contact" />
-                <label className="md:col-span-2 xl:col-span-4">
-                  <span className="wf-label">Description</span>
-                  <textarea className="wf-input min-h-20" value={agent.description || ""} onChange={(event) => updateSectionItem("agents", index, { description: event.target.value })} />
-                </label>
-                <Field label="Link Text" name={`agent-link-text-${index}`} value={agent.linkText || ""} onChange={(event) => updateSectionItem("agents", index, { linkText: event.target.value })} placeholder="View Agent Profile" />
-                <StatusSelect value={agent.enabled !== false} onChange={(enabled) => updateSectionItem("agents", index, { enabled })} />
-                <DeleteRowButton onClick={() => removeSectionItem("agents", index)} />
-              </div>
-            </div>
-          ))}
-          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => addSectionItem("agents", { name: "", city: "", image: "", description: "", linkText: "View Agent Profile", linkUrl: "", enabled: true })}><Plus size={16} /> Add Agent</button>
-        </div>
+      <HomeSectionEditor title="Agents Section" section={agents} onChange={(patch) => updateSection("agents", patch)} addLabel="Add Agent" onAdd={() => openHomeItemEditor("agents")}>
+        <HomeItemsTable
+          emptyLabel="No agents added yet."
+          items={agents.items}
+          columns={[
+            { label: "Name", render: (agent) => agent.name || "-" },
+            { label: "City", render: (agent) => agent.city || "-" },
+            { label: "Description", render: (agent) => agent.description || "-" },
+            { label: "Link", render: (agent) => agent.linkUrl || "-" },
+            { label: "Status", render: (agent) => <StatusBadge active={agent.enabled !== false} /> },
+          ]}
+          onEdit={(index) => openHomeItemEditor("agents", index)}
+          onDelete={(index) => removeSectionItem("agents", index)}
+        />
       </HomeSectionEditor>
 
-      <HomeSectionEditor title="Testimonials Section" section={testimonials} onChange={(patch) => updateSection("testimonials", patch)}>
-        <div className="space-y-3">
-          {(Array.isArray(testimonials.items) ? testimonials.items : []).map((testimonial, index) => (
-            <div key={`testimonial-${index}`} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                <Field label="Client Name" name={`testimonial-name-${index}`} value={testimonial.name || ""} onChange={(event) => updateSectionItem("testimonials", index, { name: event.target.value })} placeholder="Ananya Desai" />
-                <Field label="Role" name={`testimonial-role-${index}`} value={testimonial.role || ""} onChange={(event) => updateSectionItem("testimonials", index, { role: event.target.value })} placeholder="Homeowner" />
-                <Field label="Photo URL" name={`testimonial-image-${index}`} value={testimonial.image || ""} onChange={(event) => updateSectionItem("testimonials", index, { image: event.target.value })} placeholder="/t1.jpg" />
-                <Field label="Rating" name={`testimonial-rating-${index}`} type="number" value={testimonial.rating || 5} onChange={(event) => updateSectionItem("testimonials", index, { rating: Number(event.target.value || 5) })} placeholder="5" />
-                <label className="md:col-span-2 xl:col-span-4">
-                  <span className="wf-label">Testimonial Text</span>
-                  <textarea className="wf-input min-h-20" value={testimonial.text || ""} onChange={(event) => updateSectionItem("testimonials", index, { text: event.target.value })} />
-                </label>
-                <StatusSelect value={testimonial.enabled !== false} onChange={(enabled) => updateSectionItem("testimonials", index, { enabled })} />
-                <DeleteRowButton onClick={() => removeSectionItem("testimonials", index)} />
-              </div>
-            </div>
-          ))}
-          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => addSectionItem("testimonials", { name: "", role: "", image: "", text: "", rating: 5, enabled: true })}><Plus size={16} /> Add Testimonial</button>
-        </div>
+      <HomeSectionEditor title="Testimonials Section" section={testimonials} onChange={(patch) => updateSection("testimonials", patch)} addLabel="Add Testimonial" onAdd={() => openHomeItemEditor("testimonials")}>
+        <HomeItemsTable
+          emptyLabel="No testimonials added yet."
+          items={testimonials.items}
+          columns={[
+            { label: "Client Name", render: (testimonial) => testimonial.name || "-" },
+            { label: "Role", render: (testimonial) => testimonial.role || "-" },
+            { label: "Testimonial", render: (testimonial) => testimonial.text || "-" },
+            { label: "Rating", render: (testimonial) => testimonial.rating || 5 },
+            { label: "Status", render: (testimonial) => <StatusBadge active={testimonial.enabled !== false} /> },
+          ]}
+          onEdit={(index) => openHomeItemEditor("testimonials", index)}
+          onDelete={(index) => removeSectionItem("testimonials", index)}
+        />
       </HomeSectionEditor>
 
       <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
@@ -4849,29 +4834,45 @@ function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, u
             <h3 className="text-xl font-bold">Stats Section</h3>
             <p className="mt-1 text-sm text-slate-500">Edit the counters displayed below testimonials.</p>
           </div>
-          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => addSectionItem("stats", { value: "", label: "", enabled: true })}><Plus size={16} /> Add Stat</button>
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={() => openHomeItemEditor("stats")}><Plus size={16} /> Add Stat</button>
         </div>
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          {(Array.isArray(stats.items) ? stats.items : []).map((stat, index) => (
-            <div key={`stat-${index}`} className="grid gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4 sm:grid-cols-[1fr_1fr_130px_auto]">
-              <Field label="Value" name={`stat-value-${index}`} value={stat.value || ""} onChange={(event) => updateSectionItem("stats", index, { value: event.target.value })} placeholder="10K+" />
-              <Field label="Label" name={`stat-label-${index}`} value={stat.label || ""} onChange={(event) => updateSectionItem("stats", index, { label: event.target.value })} placeholder="Happy Clients" />
-              <StatusSelect value={stat.enabled !== false} onChange={(enabled) => updateSectionItem("stats", index, { enabled })} />
-              <DeleteRowButton onClick={() => removeSectionItem("stats", index)} />
-            </div>
-          ))}
-        </div>
+        <HomeItemsTable
+          className="mt-5"
+          emptyLabel="No stats added yet."
+          items={stats.items}
+          columns={[
+            { label: "Value", render: (stat) => stat.value || "-" },
+            { label: "Label", render: (stat) => stat.label || "-" },
+            { label: "Status", render: (stat) => <StatusBadge active={stat.enabled !== false} /> },
+          ]}
+          onEdit={(index) => openHomeItemEditor("stats", index)}
+          onDelete={(index) => removeSectionItem("stats", index)}
+        />
       </div>
+      {editingHomeItem && (
+        <HomeItemModal
+          editor={editingHomeItem}
+          onClose={() => setEditingHomeItem(null)}
+          onSave={(nextItem) => saveSectionItem(editingHomeItem.key, editingHomeItem.index, nextItem)}
+        />
+      )}
     </div>
   );
 }
 
-function HomeSectionEditor({ title, section, onChange, children }) {
+function HomeSectionEditor({ title, section, onChange, addLabel, onAdd, children }) {
   return (
     <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_10px_28px_rgba(15,23,42,0.14)] sm:p-6">
-      <div>
-        <h3 className="text-xl font-bold">{title}</h3>
-        <p className="mt-1 text-sm text-slate-500">Manage the items displayed on the home page.</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-xl font-bold">{title}</h3>
+          <p className="mt-1 text-sm text-slate-500">Manage the items displayed on the home page.</p>
+        </div>
+        {onAdd && (
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={onAdd}>
+            <Plus size={16} /> {addLabel}
+          </button>
+        )}
       </div>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <Field label="Eyebrow" name={`${title}-eyebrow`} value={section.eyebrow || ""} onChange={(event) => onChange({ eyebrow: event.target.value })} placeholder="Optional label" />
@@ -4886,6 +4887,153 @@ function HomeSectionEditor({ title, section, onChange, children }) {
   );
 }
 
+function createHomeSectionItem(key) {
+  const defaults = {
+    videos: { title: "", location: "", image: "", overlay: "", button: "Contact Agent", url: "", enabled: true },
+    agents: { name: "", city: "", image: "", description: "", linkText: "View Agent Profile", linkUrl: "", enabled: true },
+    testimonials: { name: "", role: "", image: "", text: "", rating: 5, enabled: true },
+    stats: { value: "", label: "", enabled: true },
+  };
+  return defaults[key] || { enabled: true };
+}
+
+function HomeItemsTable({ items = [], columns = [], emptyLabel, onEdit, onDelete, className = "" }) {
+  const safeItems = Array.isArray(items) ? items : [];
+  const deleteItem = (index) => {
+    if (window.confirm("Delete this item?")) onDelete(index);
+  };
+
+  return (
+    <div className={`overflow-hidden rounded-2xl border border-slate-100 bg-white ${className}`}>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="bg-slate-50 text-xs font-black uppercase tracking-wide text-slate-500">
+            <tr>
+              {columns.map((column) => (
+                <th key={column.label} className="px-4 py-3">{column.label}</th>
+              ))}
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {safeItems.length ? safeItems.map((entry, index) => (
+              <tr key={`${entry.title || entry.name || entry.label || "item"}-${index}`} className="align-top transition hover:bg-slate-50">
+                {columns.map((column) => (
+                  <td key={column.label} className="max-w-[280px] px-4 py-3 font-semibold text-slate-700">
+                    <div className="line-clamp-2 break-words">{column.render(entry, index)}</div>
+                  </td>
+                ))}
+                <td className="px-4 py-3">
+                  <div className="flex justify-end gap-2">
+                    <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-blue-100 bg-white text-blue-600 transition hover:bg-blue-50" onClick={() => onEdit(index)} aria-label="Edit item">
+                      <Edit3 size={15} />
+                    </button>
+                    <button type="button" className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-red-100 bg-white text-red-600 transition hover:bg-red-50" onClick={() => deleteItem(index)} aria-label="Delete item">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            )) : (
+              <tr>
+                <td colSpan={columns.length + 1} className="px-4 py-8 text-center font-semibold text-slate-500">{emptyLabel}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function StatusBadge({ active }) {
+  return (
+    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-black ${active ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+      {active ? "Active" : "Inactive"}
+    </span>
+  );
+}
+
+function HomeItemModal({ editor, onClose, onSave }) {
+  const [draft, setDraft] = useState(() => ({ ...createHomeSectionItem(editor.key), ...(editor.item || {}) }));
+  const update = (patch) => setDraft((current) => ({ ...current, ...patch }));
+  const title = `${typeof editor.index === "number" ? "Edit" : "Add"} ${homeItemLabel(editor.key)}`;
+
+  const submit = (event) => {
+    event.preventDefault();
+    onSave({ ...draft, rating: editor.key === "testimonials" ? Number(draft.rating || 5) : draft.rating });
+  };
+
+  return createPortal(
+    <div className="fixed inset-0 z-[650] grid place-items-center bg-slate-950/55 p-4 backdrop-blur-sm">
+      <form onSubmit={submit} className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-600">Home CMS</p>
+            <h3 className="mt-1 text-2xl font-black text-slate-950">{title}</h3>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Close">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {editor.key === "videos" && (
+            <>
+              <Field label="Title" name="home-video-title" value={draft.title || ""} onChange={(event) => update({ title: event.target.value })} placeholder="Bungalow for Sale" />
+              <Field label="Location" name="home-video-location" value={draft.location || ""} onChange={(event) => update({ location: event.target.value })} placeholder="Karali, Vadodara" />
+              <Field label="Image URL" name="home-video-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/v1.jpg" />
+              <Field label="Video Link" name="home-video-url" value={draft.url || ""} onChange={(event) => update({ url: event.target.value })} placeholder="https://youtube.com/..." />
+              <Field label="Overlay Text" name="home-video-overlay" value={draft.overlay || ""} onChange={(event) => update({ overlay: event.target.value })} placeholder="Property video" />
+              <Field label="Button Text" name="home-video-button" value={draft.button || ""} onChange={(event) => update({ button: event.target.value })} placeholder="Contact Agent" />
+            </>
+          )}
+          {editor.key === "agents" && (
+            <>
+              <Field label="Name" name="home-agent-name" value={draft.name || ""} onChange={(event) => update({ name: event.target.value })} placeholder="Vikram Patel" />
+              <Field label="City" name="home-agent-city" value={draft.city || ""} onChange={(event) => update({ city: event.target.value })} placeholder="Vadodara" />
+              <Field label="Photo URL" name="home-agent-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/a1.jpg" />
+              <Field label="Link URL" name="home-agent-link" value={draft.linkUrl || ""} onChange={(event) => update({ linkUrl: event.target.value })} placeholder="/contact" />
+              <label className="md:col-span-2">
+                <span className="wf-label">Description</span>
+                <textarea className="wf-input min-h-24" value={draft.description || ""} onChange={(event) => update({ description: event.target.value })} />
+              </label>
+              <Field label="Link Text" name="home-agent-link-text" value={draft.linkText || ""} onChange={(event) => update({ linkText: event.target.value })} placeholder="View Agent Profile" />
+            </>
+          )}
+          {editor.key === "testimonials" && (
+            <>
+              <Field label="Client Name" name="home-testimonial-name" value={draft.name || ""} onChange={(event) => update({ name: event.target.value })} placeholder="Ananya Desai" />
+              <Field label="Role" name="home-testimonial-role" value={draft.role || ""} onChange={(event) => update({ role: event.target.value })} placeholder="Homeowner" />
+              <Field label="Photo URL" name="home-testimonial-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/t1.jpg" />
+              <Field label="Rating" name="home-testimonial-rating" type="number" value={draft.rating || 5} onChange={(event) => update({ rating: event.target.value })} placeholder="5" />
+              <label className="md:col-span-2">
+                <span className="wf-label">Testimonial Text</span>
+                <textarea className="wf-input min-h-28" value={draft.text || ""} onChange={(event) => update({ text: event.target.value })} />
+              </label>
+            </>
+          )}
+          {editor.key === "stats" && (
+            <>
+              <Field label="Value" name="home-stat-value" value={draft.value || ""} onChange={(event) => update({ value: event.target.value })} placeholder="10K+" />
+              <Field label="Label" name="home-stat-label" value={draft.label || ""} onChange={(event) => update({ label: event.target.value })} placeholder="Happy Clients" />
+            </>
+          )}
+          <StatusSelect value={draft.enabled !== false} onChange={(enabled) => update({ enabled })} />
+        </div>
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="submit" className="wf-btn wf-btn-primary"><Save size={16} /> Save Item</button>
+        </div>
+      </form>
+    </div>,
+    document.body
+  );
+}
+
+function homeItemLabel(key) {
+  return { videos: "Video", agents: "Agent", testimonials: "Testimonial", stats: "Stat" }[key] || "Item";
+}
+
 function StatusSelect({ value, onChange }) {
   return (
     <label>
@@ -4895,14 +5043,6 @@ function StatusSelect({ value, onChange }) {
         <option value="inactive">Inactive</option>
       </select>
     </label>
-  );
-}
-
-function DeleteRowButton({ onClick }) {
-  return (
-    <button type="button" className="mt-6 grid h-12 w-12 place-items-center rounded-xl border border-red-100 bg-white text-red-600 transition hover:bg-red-50" onClick={onClick} aria-label="Delete item">
-      <Trash2 size={16} />
-    </button>
   );
 }
 
