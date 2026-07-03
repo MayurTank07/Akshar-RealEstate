@@ -45,12 +45,14 @@ export function sanitizePublicProperty(property) {
           name: property.broker.name || "Akshar Estate Expert",
           phone: property.broker.phone || "+91 1800-123-4567",
           designation: property.broker.designation || "Real Estate Expert",
+          companyName: property.broker.companyName || "",
           avatar: property.broker.avatar || "",
         }
       : {
           name: "Akshar Estate Expert",
           phone: "+91 1800-123-4567",
           designation: "Real Estate Expert",
+          companyName: "Akshar Estate The Property HUB",
           avatar: "",
         },
   };

@@ -9,6 +9,7 @@ export default function PropertyInformation({ property }) {
   const broker = property?.broker || {};
   const contactName = broker.name || "Akshar Estate Expert";
   const contactPhone = broker.phone || "+91 1800-123-4567";
+  const companyName = broker.companyName || "";
   const initials = contactName.split(" ").map((item) => item[0]).join("").slice(0, 2).toUpperCase() || "AE";
   const videoThumb = property?.image || property?.gallery?.[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1200";
   const mapImage = "https://images.unsplash.com/photo-1524813686514-a57563d77965?auto=format&fit=crop&q=80&w=1200";
@@ -126,7 +127,7 @@ export default function PropertyInformation({ property }) {
               </div>
               <div>
                 <h4 className="font-bold text-gray-900 leading-none mb-1">{contactName}</h4>
-                <p className="text-xs text-gray-400">Real Estate Expert</p>
+                {companyName && <p className="text-xs text-gray-400">{companyName}</p>}
                 <p className="text-blue-600 text-xs font-semibold mt-1">{contactPhone}</p>
               </div>
             </div>

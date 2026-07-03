@@ -2634,7 +2634,7 @@ function SupervisorsSection() {
   const activeCount = supervisors.filter((item) => item.status === "active").length;
   const visibleSupervisors = supervisors.filter((item) => {
     const search = query.trim().toLowerCase();
-    const matchesQuery = !search || [item.name, item.email, item.phone, item.designation].some((value) => String(value || "").toLowerCase().includes(search));
+    const matchesQuery = !search || [item.name, item.email, item.phone, item.designation, item.companyName].some((value) => String(value || "").toLowerCase().includes(search));
     const matchesStatus = status === "all" || item.status === status;
     return matchesQuery && matchesStatus;
   });
@@ -2747,6 +2747,7 @@ function SupervisorsSection() {
                   <h3 className="truncate text-base font-bold sm:text-lg">{item.name}</h3>
                   <p className="mt-0.5 truncate text-xs text-slate-500 sm:text-sm">{item.email}</p>
                   {item.designation && <p className="mt-0.5 text-xs font-semibold text-blue-600">{item.designation}</p>}
+                  {item.companyName && <p className="mt-0.5 text-xs font-semibold text-slate-500">{item.companyName}</p>}
                 </div>
               </div>
               <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass(item.status)}`}>{item.status}</span>
@@ -2826,6 +2827,7 @@ function SupervisorModal({ supervisor, onClose, onSaved }) {
     password: isEdit ? "" : "Supervisor@12345",
     phone: supervisor?.phone || "",
     designation: supervisor?.designation || "Property Supervisor",
+    companyName: supervisor?.companyName || "",
     coverImage: supervisor?.coverImage || "",
     role: "supervisor",
     status: supervisor?.status || "active",
@@ -2918,6 +2920,7 @@ function SupervisorModal({ supervisor, onClose, onSaved }) {
               <Field label="Email" name="email" type="email" value={form.email} onChange={update} required />
               <Field label="Phone" name="phone" value={form.phone} onChange={update} />
               <Field label="Designation" name="designation" value={form.designation} onChange={update} />
+              <Field label="Company Name" name="companyName" value={form.companyName} onChange={update} placeholder="Company shown on property enquiry form" />
               <SearchableDropdown
                 label="Status"
                 name="status"
@@ -2970,6 +2973,7 @@ function SupervisorDetails({ supervisor, onClose }) {
             <div>
               <h3 className="text-2xl font-extrabold">{supervisor.name}</h3>
               <p className="text-sm text-slate-500">{supervisor.email}</p>
+              {supervisor.companyName && <p className="mt-1 text-sm font-semibold text-blue-600">{supervisor.companyName}</p>}
             </div>
           </div>
           <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>

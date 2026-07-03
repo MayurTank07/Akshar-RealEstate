@@ -10,6 +10,9 @@ const Footer = () => {
   const siteContent = useSiteContent();
   const contact = { ...defaultContactContent, ...(siteContent.contactContent || {}) };
   const socials = contact.socials || {};
+  const contactPhones = Array.from(
+    new Set([contact.phone, contact.secondaryPhone].map((phone) => String(phone || '').trim()).filter(Boolean))
+  );
   const footerActions = [
     { icon: Share2, label: 'Enquiry', to: '/enquiry' },
     { icon: Globe, label: 'Properties', to: '/properties' },
@@ -99,14 +102,14 @@ const Footer = () => {
                 <MapPin size={14} className="sm:size-[18px] text-blue-500 mt-0.5 sm:mt-1 flex-shrink-0" />
                 <span className="break-words">{contact.address}</span>
               </li>
-              <li className="flex items-center gap-2 sm:gap-3">
-                <Phone size={14} className="sm:size-[18px] text-blue-500 flex-shrink-0" />
-                <span>{contact.phone}</span>
-              </li>
-              {contact.secondaryPhone && (
+              {contactPhones.length > 0 && (
                 <li className="flex items-center gap-2 sm:gap-3">
                   <Phone size={14} className="sm:size-[18px] text-blue-500 flex-shrink-0" />
-                  <span>{contact.secondaryPhone}</span>
+                  <span className="flex flex-col gap-1 leading-relaxed">
+                    {contactPhones.map((phone) => (
+                      <span key={phone} className="break-words">{phone}</span>
+                    ))}
+                  </span>
                 </li>
               )}
               {contact.email && (
