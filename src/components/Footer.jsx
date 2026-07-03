@@ -103,6 +103,12 @@ const Footer = () => {
                 <Phone size={14} className="sm:size-[18px] text-blue-500 flex-shrink-0" />
                 <span>{contact.phone}</span>
               </li>
+              {contact.secondaryPhone && (
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <Phone size={14} className="sm:size-[18px] text-blue-500 flex-shrink-0" />
+                  <span>{contact.secondaryPhone}</span>
+                </li>
+              )}
               {contact.email && (
                 <li className="flex items-center gap-2 sm:gap-3">
                   <Mail size={14} className="sm:size-[18px] text-blue-500 flex-shrink-0" />

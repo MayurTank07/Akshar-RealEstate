@@ -5524,6 +5524,7 @@ function ContactCMSForm({ value, onChange, disabled }) {
   const fields = [
     { key: "title", label: "Page Title", value: value.title, onSave: (nextValue) => onChange({ title: nextValue }), clearable: false },
     { key: "phone", label: "Phone Number", value: value.phone, onSave: (nextValue) => onChange({ phone: nextValue }) },
+    { key: "secondaryPhone", label: "Alternate Phone Number", value: value.secondaryPhone || "", onSave: (nextValue) => onChange({ secondaryPhone: nextValue }) },
     { key: "subtitle", label: "Subtitle", value: value.subtitle, type: "textarea", onSave: (nextValue) => onChange({ subtitle: nextValue }) },
     { key: "email", label: "Email", value: value.email, type: "email", onSave: (nextValue) => onChange({ email: nextValue }) },
     { key: "officeTiming", label: "Office Timing", value: value.officeTiming, onSave: (nextValue) => onChange({ officeTiming: nextValue }) },

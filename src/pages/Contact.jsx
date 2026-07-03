@@ -22,6 +22,7 @@ export default function Contact() {
           <div className="grid gap-4">
             <ContactItem icon={MapPin} label="Office" value={contact.address} />
             <ContactItem icon={Phone} label="Phone" value={contact.phone} />
+            {contact.secondaryPhone && <ContactItem icon={Phone} label="Alternate Phone" value={contact.secondaryPhone} />}
             <ContactItem icon={MessageCircle} label="WhatsApp" value={contact.whatsapp} />
             <ContactItem icon={Mail} label="Email" value={contact.email} />
             <ContactItem icon={Clock} label="Office Timing" value={contact.officeTiming} />
