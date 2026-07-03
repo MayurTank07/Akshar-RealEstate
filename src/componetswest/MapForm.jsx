@@ -11,7 +11,7 @@ export default function PropertyInformation({ property }) {
   const contactPhone = broker.phone || "+91 1800-123-4567";
   const companyName = broker.companyName || "";
   const initials = contactName.split(" ").map((item) => item[0]).join("").slice(0, 2).toUpperCase() || "AE";
-  const videoThumb = property?.image || property?.gallery?.[0] || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1200";
+  const videoThumb = property?.image || property?.gallery?.[0] || "https://placehold.co/1200x700/f8fafc/475569?text=No+Property+Image";
   const mapImage = "https://images.unsplash.com/photo-1524813686514-a57563d77965?auto=format&fit=crop&q=80&w=1200";
   const description = property?.description?.trim()
     || "Experience premium real estate designed for modern living, strong connectivity, practical layouts, and verified Akshar Estate assistance from enquiry to closure.";
@@ -78,7 +78,7 @@ export default function PropertyInformation({ property }) {
                 </div>
                 <div className="absolute top-8 w-full text-center">
                    <h3 className="text-white text-4xl font-black uppercase tracking-tighter drop-shadow-lg">
-                    Luxury Apartment Tour
+                    {property?.title || "Property Tour"}
                    </h3>
                 </div>
               </div>

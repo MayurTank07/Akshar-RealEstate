@@ -41,6 +41,7 @@ import { useStaffAuth } from "../contexts/useStaffAuth";
 import { publicApi, staffApi, toQueryString } from "../services/api";
 import { formatINR, parseINRAmount } from "../utils/currency";
 import { displayPropertyCode, isReadablePropertyCode } from "../utils/propertyCode";
+import { defaultSectionsForProperty, propertySectionOptions } from "../utils/propertyTypeRules";
 import { defaultAboutContent, defaultContactContent, defaultHomeSectionsContent, defaultNavbarAreas, defaultTopLists, enabledSorted, normalizeAreaName } from "../config/navigationContent";
 
 const navItems = [
@@ -118,6 +119,16 @@ const propertyOptionGroups = {
   priceUnits: ["Thousand", "Lakh", "Crore", "Per Month", "Per Sqft", "Per Sqyd"],
 };
 
+const preferredMeasurementUnits = [
+  { label: "Sq Ft", value: "sqft", description: "Most common for flats, shops, offices" },
+  { label: "Sq Yard", value: "sq-yard", description: "Common for plots" },
+  { label: "Sq Meter", value: "sq-meter", description: "Metric area" },
+  { label: "Vigha", value: "vigha", description: "Common Gujarat land unit" },
+  { label: "Acre", value: "acre", description: "Large land parcels" },
+  { label: "Guntha", value: "guntha", description: "Land parcels" },
+  { label: "Hectare", value: "hectare", description: "Large agriculture land" },
+];
+
 function hasStaffPermission(user, permission) {
   if (!permission || user.role === "admin") return true;
   return (user.permissions || []).includes(permission);
@@ -156,6 +167,7 @@ const emptyProperty = {
   ownerName: "",
   image: "",
   gallery: [],
+  media: [],
   description: "",
   nearbyLandmarks: "",
   videoUrl: "",
@@ -167,6 +179,20 @@ const emptyProperty = {
   floorNumber: "",
   totalFloors: "",
   furnishing: "",
+  kitchen: "",
+  balcony: "",
+  landArea: "",
+  plotSize: "",
+  roadAccess: "",
+  waterAvailability: "",
+  electricityAvailability: "",
+  zoning: "",
+  frontage: "",
+  washrooms: "",
+  businessSuitability: "",
+  pantry: "",
+  loadingAccess: "",
+  legalNotes: "",
   propertyTags: [],
   isNewProject: false,
   isPreLeased: false,
@@ -234,6 +260,62 @@ function generatePropertyDescription(property) {
   return `${overview}${projectDetails.length ? ` It is ${projectDetails.join(" and ")}.` : ""}${details.length ? ` It offers ${details.join(", ")}.` : ""}${features}${additionalFeatures}${commercial} ${close}`;
 }
 
+function enabledSectionSet(sections = []) {
+  return new Set(sections.filter(Boolean));
+}
+
+function mediaAssetForUrl(media = [], url = "") {
+  const cleanUrl = String(url || "").trim();
+  if (!cleanUrl) return null;
+  return media.find((item) => String(item?.url || "").trim() === cleanUrl) || null;
+}
+
+function buildPropertyMedia({ existingMedia = [], uploadedFiles = [], image = "", gallery = [] }) {
+  const uploadedByUrl = new Map(uploadedFiles.filter((item) => item?.url).map((item) => [item.url, item]));
+  const urls = Array.from(new Set([image, ...gallery].map((item) => String(item || "").trim()).filter(Boolean)));
+  return urls.map((url) => {
+    const uploaded = uploadedByUrl.get(url);
+    if (uploaded) {
+      return {
+        url,
+        publicId: uploaded.publicId || "",
+        resourceType: uploaded.resourceType || "image",
+        originalName: uploaded.originalName || "",
+        size: uploaded.size || 0,
+      };
+    }
+    const existing = mediaAssetForUrl(existingMedia, url);
+    return existing ? { ...existing, url } : { url, publicId: "", resourceType: "image" };
+  });
+}
+
+function clearFieldsForDisabledSections(property, sections) {
+  const active = enabledSectionSet(sections);
+  const next = { ...property };
+  if (!active.has("rooms")) {
+    Object.assign(next, { beds: 0, baths: 0, kitchen: "", balcony: "", furnishing: "", floorNumber: "", totalFloors: "", parking: "", yearBuilt: null, ageOfProperty: "" });
+  }
+  if (!active.has("land")) {
+    Object.assign(next, { landArea: "", plotSize: "", roadAccess: "", waterAvailability: "", electricityAvailability: "", zoning: "" });
+  }
+  if (!active.has("commercial")) {
+    Object.assign(next, { frontage: "", washrooms: "", businessSuitability: "", pantry: "", loadingAccess: "" });
+  }
+  if (!active.has("amenities")) {
+    Object.assign(next, { amenities: [], facilities: [], highlights: [], propertyTags: [] });
+  }
+  if (!active.has("features")) next.features = [];
+  if (!active.has("nearby")) next.nearbyLandmarks = "";
+  if (!active.has("legal")) next.legalNotes = "";
+  if (!active.has("seo")) {
+    next.seo = { metaTitle: "", metaDescription: "", slug: "" };
+    next.topDeveloper = "";
+    next.visibility = next.visibility || "public";
+    next.source = next.source || "pricing";
+  }
+  return next;
+}
+
 function statusClass(status) {
   const normalized = String(status).toLowerCase();
   if (normalized === "active" || normalized === "closed" || normalized === "approved" || normalized === "sold") return "bg-emerald-100 text-emerald-700";
@@ -255,6 +337,19 @@ function labelize(value) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function measurementUnitLabel(value = "") {
+  const normalized = String(value || "").trim().toLowerCase();
+  const preferred = preferredMeasurementUnits.find((item) => item.value === normalized);
+  if (preferred) return preferred.label;
+  if (normalized === "sqyd" || normalized === "sqyds") return "Sq Yard";
+  return labelize(value);
+}
+
+function buildMeasurementUnitOptions(units = []) {
+  const merged = [...preferredMeasurementUnits, ...units.map((value) => ({ label: measurementUnitLabel(value), value }))];
+  return [...new Map(merged.filter((item) => item.value).map((item) => [String(item.value), item])).values()];
 }
 
 function uniqueOptions(items, accessor) {
@@ -1342,7 +1437,9 @@ function PropertyModal({ property, onClose, onSaved }) {
     highlights: property.highlights || [],
     propertyTags: property.propertyTags || [],
     gallery: property.gallery || [],
+    media: property.media || [],
   }));
+  const [enabledSections, setEnabledSections] = useState(() => defaultSectionsForProperty(property));
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
@@ -1403,6 +1500,18 @@ function PropertyModal({ property, onClose, onSaved }) {
   const developerOptions = useMemo(() => [...new Set([...(masterOptions.developers || []), ...topDeveloperOptions])], [masterOptions.developers, topDeveloperOptions]);
   const projectOptions = useMemo(() => [...new Set([...(masterOptions.projects || []), ...topProjectOptions])], [masterOptions.projects, topProjectOptions]);
   const cityOptions = useMemo(() => [...new Set([...(masterOptions.cities || []), ...cmsOptions.navbarAreas.map((item) => (typeof item === "object" ? item.city : "Ahmedabad")).filter(Boolean)])], [cmsOptions.navbarAreas, masterOptions.cities]);
+  const measurementUnitOptions = useMemo(() => buildMeasurementUnitOptions(masterOptions.measurementUnits || []), [masterOptions.measurementUnits]);
+  const activeSections = useMemo(() => enabledSectionSet(enabledSections), [enabledSections]);
+  const sectionEnabled = useCallback((sectionKey) => activeSections.has(sectionKey), [activeSections]);
+
+  const togglePropertySection = (sectionKey) => {
+    setEnabledSections((current) => {
+      const next = new Set(current);
+      if (next.has(sectionKey)) next.delete(sectionKey);
+      else next.add(sectionKey);
+      return propertySectionOptions.filter((section) => next.has(section.key)).map((section) => section.key);
+    });
+  };
 
   const addMasterOption = async (group, value) => {
     const nextValue = String(value || "").trim().replace(/\s+/g, " ");
@@ -1470,6 +1579,9 @@ function PropertyModal({ property, onClose, onSaved }) {
     const rawValue = name === "propertyCode" ? value.toUpperCase() : value;
     const nextValue = type === "checkbox" ? checked : numberFields.includes(name) ? (rawValue === "" ? null : Number(rawValue)) : rawValue;
     updatePath(name, nextValue);
+    if (name === "type" || name === "category") {
+      setEnabledSections(defaultSectionsForProperty({ ...form, [name]: rawValue }));
+    }
     if (name === "category" && String(value).trim().toLowerCase() === "new projects") {
       updatePath("isNewProject", true);
     }
@@ -1584,31 +1696,46 @@ function PropertyModal({ property, onClose, onSaved }) {
         }
       }
       let uploadedUrls = [];
+      let uploadedFiles = [];
       if (pendingFiles.length) {
         const response = await staffApi.uploadPropertyImages(pendingFiles.map((item) => item.file));
-        uploadedUrls = response.data.urls;
+        uploadedUrls = response.data.urls || [];
+        uploadedFiles = response.data.files || uploadedUrls.map((url) => ({ url }));
       }
-      const gallery = [...nextForm.gallery.map((item) => item.trim()).filter(Boolean), ...uploadedUrls];
+      const gallery = Array.from(new Set([...nextForm.gallery.map((item) => item.trim()).filter(Boolean), ...uploadedUrls]));
       if (!nextForm.image && !gallery[0]) {
         throw new Error("Please add at least one property image.");
       }
+      const primaryImage = nextForm.image || gallery[0];
+      const normalizedMedia = buildPropertyMedia({
+        existingMedia: nextForm.media || [],
+        uploadedFiles,
+        image: primaryImage,
+        gallery,
+      });
       const measurementValue = nextForm.measurement?.value || nextForm.sqft || 0;
       const measurementUnit = nextForm.measurement?.unit || "sqft";
+      const cleanedForm = clearFieldsForDisabledSections(nextForm, enabledSections);
+      const computedArea = measurementValue ? `${measurementValue} ${measurementUnit}` : "";
+      const landArea = sectionEnabled("land") ? computedArea : cleanedForm.landArea;
       const payload = {
         ...nextForm,
+        ...cleanedForm,
         status: nextForm.status || "active",
         visibility: nextForm.visibility || "public",
         source: nextForm.source || "pricing",
         tag: nextForm.tag || "Standard",
         isNewProject: Boolean(nextForm.isNewProject || String(nextForm.category || "").trim().toLowerCase() === "new projects"),
         propertyCode,
-        image: nextForm.image || gallery[0],
+        image: primaryImage,
         gallery,
+        media: normalizedMedia,
         assignedTo: typeof nextForm.assignedTo === "object" ? nextForm.assignedTo?._id || null : nextForm.assignedTo || null,
         dealEnquiryId: nextForm.dealSource === "enquiry" ? nextForm.dealEnquiryId || null : null,
         measurement: { ...nextForm.measurement, unit: nextForm.measurement?.unit || "sqft", value: measurementValue },
+        landArea,
         sqft: nextForm.sqft || (measurementUnit === "sqft" ? measurementValue : 0),
-        area: nextForm.area || `${measurementValue} ${measurementUnit}`,
+        area: computedArea || nextForm.area || "",
         badge: nextForm.badge || nextForm.tag,
       };
       if (nextForm._id) await staffApi.updateProperty(nextForm._id, payload);
@@ -1663,6 +1790,9 @@ function PropertyModal({ property, onClose, onSaved }) {
         {uploading && <p className="mb-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-700">Uploading images and saving property...</p>}
 
         <div className="space-y-6">
+          <SectionTogglePanel enabledSections={enabledSections} onToggle={togglePropertySection} />
+
+          {sectionEnabled("basic") && (
           <FormSection title="Basic Details" subtitle="Start with the essential listing identity. Required fields are marked and validated before save.">
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Property Title" name="title" value={form.title} onChange={update} required error={fieldErrors.title} placeholder="e.g. Premium 3 BHK Apartment in Thaltej" helperText="Use a clear, client-friendly listing title." />
@@ -1674,7 +1804,9 @@ function PropertyModal({ property, onClose, onSaved }) {
 	              <ComboField label="Top Project" name="topProject" value={form.topProject} options={projectOptions} onChange={update} placeholder="Select linked project" masterGroup="projects" onAddOption={addMasterOption} />
             </div>
           </FormSection>
+          )}
 
+          {sectionEnabled("price") && (
           <FormSection title="Pricing & Deal" subtitle="Capture the commercial positioning and current deal stage. ROI is available as a reusable deal type.">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               <MoneyField label="Price" name="price" value={form.priceAmount || form.price} onChange={update} required error={fieldErrors.price} helperText="Enter the numeric INR amount." />
@@ -1688,7 +1820,9 @@ function PropertyModal({ property, onClose, onSaved }) {
               <Field label="Property ID" name="propertyCode" value={form.propertyCode} onChange={update} placeholder={propertyCodeLoading ? "Generating next Property ID..." : "Auto: AETP-AHMD-0001"} />
             </div>
           </FormSection>
+          )}
 
+          {sectionEnabled("location") && (
           <FormSection title="Location" subtitle="Choose an existing area or add one once and reuse it for future listings.">
             <div className="grid gap-4 md:grid-cols-2">
               <LocationAutocompleteField
@@ -1720,6 +1854,13 @@ function PropertyModal({ property, onClose, onSaved }) {
               <Field label="Pincode" name="map.pincode" value={form.map.pincode} onChange={update} />
               <Field label="State" name="map.state" value={form.map.state} onChange={update} />
               <Field label="Map Embed URL" name="map.embedUrl" value={form.map.embedUrl} onChange={update} />
+            </div>
+          </FormSection>
+          )}
+
+          {sectionEnabled("nearby") && (
+          <FormSection title="Nearby Landmarks" subtitle="Add visible nearby roads, schools, transport, and locality anchors.">
+            <div className="grid gap-4">
               <label className="md:col-span-2">
                 <span className="wf-label">Nearby Landmarks</span>
                 <textarea
@@ -1734,7 +1875,9 @@ function PropertyModal({ property, onClose, onSaved }) {
               </label>
             </div>
           </FormSection>
+          )}
 
+          {sectionEnabled("seo") && (
 	          <FormSection title="SEO / Visibility" subtitle="Publishing controls stay simple. Ahmedabad-focused search metadata is generated automatically on each public property page.">
 	            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 	              <ComboField label="Top Developer" name="topDeveloper" value={form.topDeveloper} options={developerOptions} onChange={update} placeholder="Select linked developer" masterGroup="developers" onAddOption={addMasterOption} />
@@ -1760,7 +1903,9 @@ function PropertyModal({ property, onClose, onSaved }) {
 	              </div>
             </div>
           </FormSection>
+          )}
 
+          {sectionEnabled("media") && (
           <FormSection title="Media Gallery" subtitle="Upload/select multiple images, preview them, and reorder the public gallery.">
             <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
               <div>
@@ -1819,37 +1964,88 @@ function PropertyModal({ property, onClose, onSaved }) {
               </div>
             </div>
           </FormSection>
+          )}
 
-	          <FormSection title="Property Specifications" subtitle="Structured measurements and attributes used across cards and detail pages.">
+          {sectionEnabled("rooms") && (
+	          <FormSection title="Room Details" subtitle="Residential fields for flats, houses, bungalows, villas, penthouses, and farmhouses.">
             <div className="grid gap-4 md:grid-cols-3">
               <ComboField label="BHK / Bedrooms" name="beds" value={String(form.beds ?? "")} options={masterOptions.bhk} onChange={update} placeholder="Select BHK" masterGroup="bhk" onAddOption={addMasterOption} />
               <Field label="Bathrooms" name="baths" type="number" value={form.baths} onChange={update} />
+              <Field label="Built-up / Carpet Area" name="measurement.value" type="number" value={form.measurement.value || ""} onChange={update} placeholder="e.g. 1450" helperText="Enter number only; select unit separately." />
+	              <SearchableDropdown label="Area Unit" name="measurement.unit" value={form.measurement.unit} onChange={update} placeholder="Select Area Unit" options={measurementUnitOptions} masterGroup="measurementUnits" onAddOption={addMasterOption} />
               <Field label="Legacy Sqft" name="sqft" type="number" value={form.sqft} onChange={update} />
-              <Field label="Measurement Value" name="measurement.value" type="number" value={form.measurement.value ?? ""} onChange={update} />
-	              <SearchableDropdown label="Measurement Unit" name="measurement.unit" value={form.measurement.unit} onChange={update} placeholder="Select Measurement Unit" options={(masterOptions.measurementUnits || []).map((value) => ({ label: labelize(value), value }))} masterGroup="measurementUnits" onAddOption={addMasterOption} />
-              <OptionSelect label="Property Status" name="propertyStatus" value={form.propertyStatus} options={masterOptions.propertyStatus} onChange={update} masterGroup="propertyStatus" onAddOption={addMasterOption} />
-              <OptionSelect label="Construction Status" name="constructionStatus" value={form.constructionStatus} options={masterOptions.constructionStatus} onChange={update} masterGroup="constructionStatus" onAddOption={addMasterOption} />
-              <OptionSelect label="Possession Status" name="possessionStatus" value={form.possessionStatus} options={masterOptions.possessionStatus} onChange={update} masterGroup="possessionStatus" onAddOption={addMasterOption} />
-	              <OptionSelect label="Facing" name="facing" value={form.facing} options={masterOptions.facing} onChange={update} masterGroup="facing" onAddOption={addMasterOption} />
-	              <OptionSelect label="Ownership" name="ownership" value={form.ownership} options={masterOptions.ownership} onChange={update} masterGroup="ownership" onAddOption={addMasterOption} />
+              <Field label="Kitchen" name="kitchen" value={form.kitchen} onChange={update} placeholder="Modular, open, dry/wet..." />
+              <Field label="Balcony" name="balcony" value={form.balcony} onChange={update} placeholder="No. of balconies or details" />
               <ComboField label="Floor Number" name="floorNumber" value={form.floorNumber} options={masterOptions.floors} onChange={update} masterGroup="floors" onAddOption={addMasterOption} />
               <ComboField label="Total Floors" name="totalFloors" value={form.totalFloors} options={masterOptions.floors} onChange={update} masterGroup="floors" onAddOption={addMasterOption} />
               <ComboField label="Parking" name="parking" value={form.parking} options={masterOptions.parking} onChange={update} placeholder="Select Parking" masterGroup="parking" onAddOption={addMasterOption} />
               <OptionSelect label="Furnishing" name="furnishing" value={form.furnishing} options={masterOptions.furnishing} onChange={update} masterGroup="furnishing" onAddOption={addMasterOption} />
+	              <OptionSelect label="Facing" name="facing" value={form.facing} options={masterOptions.facing} onChange={update} masterGroup="facing" onAddOption={addMasterOption} />
               <Field label="Year Built" name="yearBuilt" type="number" value={form.yearBuilt ?? ""} onChange={update} />
             </div>
           </FormSection>
+          )}
 
-          <FormSection title="Features & Amenities" subtitle="Select reusable options or add a new master item once for future listings.">
+          {sectionEnabled("land") && (
+	          <FormSection title="Land / Plot Details" subtitle="Enter the total plot or land area once, then select the unit. Add dimensions only when length and width are known.">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Field label="Total Area Value" name="measurement.value" type="number" value={form.measurement.value || ""} onChange={update} placeholder="e.g. 4500" helperText="Enter number only. Select sqft, sq-yard, vigha, acre, etc. from the next field." />
+	              <SearchableDropdown label="Area Unit" name="measurement.unit" value={form.measurement.unit} onChange={update} placeholder="Select Area Unit" options={measurementUnitOptions} masterGroup="measurementUnits" onAddOption={addMasterOption} helperText="Choose the measurement unit instead of typing it with the number." />
+              <Field label="Plot Dimensions (optional)" name="plotSize" value={form.plotSize} onChange={update} placeholder="e.g. 45 x 90 ft" helperText="Use only when exact length x width is known." />
+              <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 md:col-span-3">
+                <p className="text-xs font-extrabold uppercase tracking-wide text-blue-700">Area Preview</p>
+                <p className="mt-1 text-sm font-bold text-blue-950">{form.measurement.value ? `${form.measurement.value} ${measurementUnitLabel(form.measurement.unit || "sqft")}` : "Add area value and unit"}</p>
+              </div>
+              <Field label="Road Access" name="roadAccess" value={form.roadAccess} onChange={update} placeholder="Main road, internal road, width..." />
+              <Field label="Water Availability" name="waterAvailability" value={form.waterAvailability} onChange={update} placeholder="Borewell, canal, municipal..." />
+              <Field label="Electricity Availability" name="electricityAvailability" value={form.electricityAvailability} onChange={update} placeholder="Available / nearby / not available" />
+              <Field label="Zoning" name="zoning" value={form.zoning} onChange={update} placeholder="Agriculture, residential, NA..." />
+              <OptionSelect label="Ownership" name="ownership" value={form.ownership} options={masterOptions.ownership} onChange={update} masterGroup="ownership" onAddOption={addMasterOption} />
+              <OptionSelect label="Facing" name="facing" value={form.facing} options={masterOptions.facing} onChange={update} masterGroup="facing" onAddOption={addMasterOption} />
+              <OptionSelect label="Property Status" name="propertyStatus" value={form.propertyStatus} options={masterOptions.propertyStatus} onChange={update} masterGroup="propertyStatus" onAddOption={addMasterOption} />
+            </div>
+          </FormSection>
+          )}
+
+          {sectionEnabled("commercial") && (
+	          <FormSection title="Commercial Details" subtitle="Commercial fields for shops, offices, warehouses, showrooms, and industrial spaces.">
+            <div className="grid gap-4 md:grid-cols-3">
+              <Field label="Commercial Area" name="measurement.value" type="number" value={form.measurement.value || ""} onChange={update} placeholder="e.g. 650" helperText="Enter number only; select unit separately." />
+	              <SearchableDropdown label="Area Unit" name="measurement.unit" value={form.measurement.unit} onChange={update} placeholder="Select Area Unit" options={measurementUnitOptions} masterGroup="measurementUnits" onAddOption={addMasterOption} />
+              <Field label="Frontage" name="frontage" value={form.frontage} onChange={update} placeholder="Road/shop frontage" />
+              <Field label="Washrooms" name="washrooms" value={form.washrooms} onChange={update} placeholder="Private/common/no washroom" />
+              <Field label="Pantry" name="pantry" value={form.pantry} onChange={update} placeholder="Available / not available" />
+              <Field label="Loading Access" name="loadingAccess" value={form.loadingAccess} onChange={update} placeholder="Dock, truck access, goods lift..." />
+              <Field label="Business Suitability" name="businessSuitability" value={form.businessSuitability} onChange={update} placeholder="Retail, clinic, office, storage..." />
+              <ComboField label="Floor Number" name="floorNumber" value={form.floorNumber} options={masterOptions.floors} onChange={update} masterGroup="floors" onAddOption={addMasterOption} />
+              <ComboField label="Total Floors" name="totalFloors" value={form.totalFloors} options={masterOptions.floors} onChange={update} masterGroup="floors" onAddOption={addMasterOption} />
+              <ComboField label="Parking" name="parking" value={form.parking} options={masterOptions.parking} onChange={update} placeholder="Select Parking" masterGroup="parking" onAddOption={addMasterOption} />
+              <OptionSelect label="Ownership" name="ownership" value={form.ownership} options={masterOptions.ownership} onChange={update} masterGroup="ownership" onAddOption={addMasterOption} />
+              <OptionSelect label="Property Status" name="propertyStatus" value={form.propertyStatus} options={masterOptions.propertyStatus} onChange={update} masterGroup="propertyStatus" onAddOption={addMasterOption} />
+            </div>
+          </FormSection>
+          )}
+
+          {sectionEnabled("features") && (
+          <FormSection title="Property Features" subtitle="Add visible property-specific features, facilities, highlights, and tags.">
             <div className="space-y-6">
-              <SelectableTagGroup label="Amenities" value={form.amenities} options={masterOptions.amenities} masterGroup="amenities" onAddOption={addMasterOption} onChange={(items) => setForm((current) => ({ ...current, amenities: items }))} />
               <SelectableTagGroup label="Property Features" value={form.features} options={masterOptions.features} masterGroup="features" onAddOption={addMasterOption} onChange={(items) => setForm((current) => ({ ...current, features: items }))} />
               <SelectableTagGroup label="Facilities" value={form.facilities} options={masterOptions.facilities} masterGroup="facilities" onAddOption={addMasterOption} onChange={(items) => setForm((current) => ({ ...current, facilities: items }))} />
               <SelectableTagGroup label="Highlights" value={form.highlights} options={masterOptions.highlights} masterGroup="highlights" onAddOption={addMasterOption} onChange={(items) => setForm((current) => ({ ...current, highlights: items }))} />
               <SelectableTagGroup label="Property Tags" value={form.propertyTags} options={masterOptions.propertyTags} masterGroup="propertyTags" onAddOption={addMasterOption} onChange={(items) => setForm((current) => ({ ...current, propertyTags: items }))} />
             </div>
           </FormSection>
+          )}
 
+          {sectionEnabled("amenities") && (
+          <FormSection title="Amenities" subtitle="Select apartment, residential, or project amenities that should appear on the website.">
+            <div className="space-y-6">
+              <SelectableTagGroup label="Amenities" value={form.amenities} options={masterOptions.amenities} masterGroup="amenities" onAddOption={addMasterOption} onChange={(items) => setForm((current) => ({ ...current, amenities: items }))} />
+            </div>
+          </FormSection>
+          )}
+
+          {sectionEnabled("owner") && (
 	          <FormSection title="Contact & Internal Notes" subtitle="Optional CRM-only deal, contact, and mapping fields for the sales team.">
             <div className="grid gap-4 md:grid-cols-3">
               <ToggleField label="Pre-Leased" name="isPreLeased" checked={form.isPreLeased} onChange={update} />
@@ -1870,7 +2066,23 @@ function PropertyModal({ property, onClose, onSaved }) {
               </label>
             </div>
 	          </FormSection>
+          )}
 
+          {sectionEnabled("legal") && (
+          <FormSection title="Legal / Documents" subtitle="Capture ownership, legal, and document readiness details without showing unrelated residential fields.">
+            <div className="grid gap-4 md:grid-cols-2">
+              <OptionSelect label="Ownership" name="ownership" value={form.ownership} options={masterOptions.ownership} onChange={update} masterGroup="ownership" onAddOption={addMasterOption} />
+              <OptionSelect label="Construction Status" name="constructionStatus" value={form.constructionStatus} options={masterOptions.constructionStatus} onChange={update} masterGroup="constructionStatus" onAddOption={addMasterOption} />
+              <OptionSelect label="Possession Status" name="possessionStatus" value={form.possessionStatus} options={masterOptions.possessionStatus} onChange={update} masterGroup="possessionStatus" onAddOption={addMasterOption} />
+              <label className="md:col-span-2">
+                <span className="wf-label">Legal Notes / Documents</span>
+                <textarea className="wf-input min-h-24" name="legalNotes" value={form.legalNotes || ""} onChange={update} placeholder="Title clearance, 7/12, NA, NOC, society transfer, document status..." />
+              </label>
+            </div>
+          </FormSection>
+          )}
+
+          {sectionEnabled("description") && (
 	          <FormSection title="Description" subtitle="Generate the final client-ready narrative after the listing details, media, and amenities are complete.">
 	            <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 sm:p-5">
 	              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1893,6 +2105,7 @@ function PropertyModal({ property, onClose, onSaved }) {
 	              </div>
 	            </div>
 	          </FormSection>
+          )}
         </div>
         </div>
         <FormFooterActions
@@ -2124,6 +2337,28 @@ function Field({ label, name, value, onChange, type = "text", required = false, 
       <input className={`wf-input ${error ? "border-red-300 bg-red-50/30" : ""}`} name={name} type={type} value={value ?? ""} onChange={onChange} required={required} placeholder={placeholder} aria-invalid={Boolean(error)} />
       {(error || helperText) && <span className={`mt-1.5 block text-xs font-semibold ${error ? "text-red-600" : "text-slate-400"}`}>{error || helperText}</span>}
     </label>
+  );
+}
+
+function SectionTogglePanel({ enabledSections = [], onToggle }) {
+  const enabled = enabledSectionSet(enabledSections);
+  return (
+    <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h4 className="text-base font-extrabold text-slate-950">Form Sections</h4>
+          <p className="text-xs font-semibold text-slate-500">Defaults change with property type. Turn sections on only when they apply.</p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {propertySectionOptions.map((section) => (
+          <label key={section.key} className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-sm font-bold transition ${enabled.has(section.key) ? "border-blue-200 bg-blue-50 text-blue-700" : "border-slate-200 bg-slate-50 text-slate-500"}`}>
+            <input type="checkbox" checked={enabled.has(section.key)} onChange={() => onToggle(section.key)} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+            {section.label}
+          </label>
+        ))}
+      </div>
+    </div>
   );
 }
 

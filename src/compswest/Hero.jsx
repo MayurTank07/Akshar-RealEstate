@@ -463,7 +463,7 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
         className="cursor-pointer overflow-hidden rounded-[20px] border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 xl:flex xl:h-full xl:flex-col"
       >
         <div className="relative h-44 shrink-0">
-          <img src={item.image || "/house.jpg"} className="h-full w-full object-cover" alt={item.title} />
+          <img src={item.image || item.gallery?.[0] || "https://placehold.co/900x650/f8fafc/475569?text=No+Property+Image"} className="h-full w-full object-cover" alt={item.title} />
           <div className={`absolute left-3 top-3 ${badgeColor} rounded-md px-2 py-0.5 text-[9px] font-bold uppercase tracking-tight text-white`}>{badgeLabel}</div>
           <button
             type="button"

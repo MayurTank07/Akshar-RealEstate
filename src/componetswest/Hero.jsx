@@ -6,6 +6,7 @@ import {
 
 import Navbar from '../components/PricingNavbar';
 import { formatINR } from '../utils/currency';
+import { supportsRooms } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
 
 const PropertyDetails = ({ property }) => {
@@ -14,18 +15,8 @@ const PropertyDetails = ({ property }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const fallbackImages = [
-    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=1000",
-    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=400",
-    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=400",
-    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&q=80&w=400",
-    "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&q=80&w=400",
-    "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&q=80&w=400",
-    "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&q=80&w=400",
-  ];
-
   const images = Array.from(new Set([property?.image, ...(property?.gallery || [])].filter(Boolean)));
-  const galleryImages = images.length ? images : fallbackImages;
+  const galleryImages = images.length ? images : ["https://placehold.co/1200x800/f8fafc/475569?text=No+Property+Image"];
 
   const handleCall = () => {
     if (!isAuthenticated) {
@@ -38,13 +29,13 @@ const PropertyDetails = ({ property }) => {
     window.location.href = `tel:${phoneNumber.replace(/\s/g, "")}`;
   };
 
-  const title = property?.title || "Nathani Heavens";
-  const propertyLocation = property?.location || "Bodakdev, Ahmedabad";
-  const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "₹3 Cr - ₹3.81 Cr";
+  const title = property?.title || "Property";
+  const propertyLocation = property?.location || property?.city || "";
+  const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "Price on request";
   const measurement = property?.measurement;
   const unit = measurement?.unit;
-  const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "3 BHK");
-  const propertyType = property?.beds ? `${property.beds} BHK` : "Premium Home";
+  const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "");
+  const propertyType = supportsRooms(property) && property?.beds ? `${property.beds} BHK` : property?.type || property?.category || "Property";
   const propertyStatus = property?.propertyStatus || (property?.status ? property.status.charAt(0).toUpperCase() + property.status.slice(1) : "Ready");
   const investmentMetric = property?.roi || (property?.isPreLeased ? "Pre-Leased" : "Verified");
 

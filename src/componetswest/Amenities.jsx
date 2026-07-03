@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle2, Mail, MessageCircle, Phone } from 'lucide-react';
 import { formatINR } from '../utils/currency';
 import { displayPropertyCode } from '../utils/propertyCode';
+import { compactSpecs } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
 
 export default function PropertyAmenities({ property, whatsappLink }) {
@@ -10,13 +11,7 @@ export default function PropertyAmenities({ property, whatsappLink }) {
   const navigate = useNavigate();
   const location = useLocation();
   const autoActioned = useRef(false);
-  const fallbackAmenities = [
-    "Swimming Pool", "Private Garden", "Smart Home System",
-    "Home Theater", "Gym", "Parking for 3 Cars",
-    "24/7 Security", "Backup Power", "Central AC",
-    "Modular Kitchen", "Landscaped Lawn", "Servant Quarter"
-  ];
-  const amenities = property?.amenities?.length ? property.amenities : fallbackAmenities;
+  const amenities = property?.amenities || [];
   const features = property?.features || [];
   const facilities = property?.facilities || [];
   const phone = property?.broker?.phone || "+9118001234567";
@@ -55,42 +50,29 @@ export default function PropertyAmenities({ property, whatsappLink }) {
     }
     if (whatsappLink) window.open(whatsappLink, "_blank", "noopener,noreferrer");
   };
-  const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "₹8.5 Cr";
-  const measurement = property?.measurement;
-  const unit = measurement?.unit;
-  const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "");
-
-  const details = [
-    ["Property Type", property?.type || "Villa"],
-    ["Category", property?.category],
-    ["Availability", property?.availability],
-    ["Facing", property?.facing],
-    ["Year Built", property?.yearBuilt || "Not specified"],
-    ["Property ID", displayPropertyCode(property?.propertyCode)],
-    ["Status", property?.propertyStatus || property?.status || "Ready"],
-    ["Area", area],
-    ["Parking", property?.parking],
-    ["Furnishing", property?.furnishing],
-    ["ROI", property?.roi],
-  ].filter(([, value]) => value !== undefined && value !== null && value !== "");
+  const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "Price on request";
+  const details = compactSpecs({ ...property, propertyCode: displayPropertyCode(property?.propertyCode) });
 
   return (
     <div className="max-w-4xl mx-auto p-6 font-sans">
       
-      {/* Amenities Section */}
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Amenities</h2>
-      <div className="bg-white border border-gray-100 rounded-[20px] p-8 shadow-sm mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-8">
-          {amenities.map((item) => (
-            <div key={item} className="flex items-center gap-3">
-              <div className="bg-[#ecfdf5] rounded-full p-0.5">
-                <CheckCircle2 className="w-4 h-4 text-[#10b981]" />
-              </div>
-              <span className="text-[13px] text-gray-600 font-medium">{item}</span>
+      {amenities.length > 0 && (
+        <>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Amenities</h2>
+          <div className="bg-white border border-gray-100 rounded-[20px] p-8 shadow-sm mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-8">
+              {amenities.map((item) => (
+                <div key={item} className="flex items-center gap-3">
+                  <div className="bg-[#ecfdf5] rounded-full p-0.5">
+                    <CheckCircle2 className="w-4 h-4 text-[#10b981]" />
+                  </div>
+                  <span className="text-[13px] text-gray-600 font-medium">{item}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
 
       {features.length > 0 && (
         <>

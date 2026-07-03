@@ -193,7 +193,7 @@ function PropertyCard({ property }) {
     >
       <div className="relative h-56 overflow-hidden bg-slate-100 sm:h-60">
         <img
-          src={property.image || "/house.jpg"}
+          src={property.image || property.gallery?.[0] || "https://placehold.co/900x650/f8fafc/475569?text=No+Property+Image"}
           alt={property.title}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
