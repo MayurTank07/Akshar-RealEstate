@@ -41,16 +41,23 @@ export function sanitizePublicProperty(property) {
       state: map.state || "",
     },
     broker: property.broker && typeof property.broker === "object"
-      ? {
-          name: property.broker.name || "Akshar Estate Expert",
-          phone: property.broker.phone || "+91 1800-123-4567",
-          designation: property.broker.designation || "Real Estate Expert",
-          companyName: property.broker.companyName || "",
-          avatar: property.broker.avatar || "",
-        }
+      ? (() => {
+          const hasDirectContact = property.broker.hasDirectContact !== false && Boolean(property.broker.whatsapp || property.broker.phone);
+          return {
+            name: property.broker.name || "Akshar Estate Expert",
+            phone: property.broker.phone || "+91 1800-123-4567",
+            whatsapp: hasDirectContact ? property.broker.whatsapp || property.broker.phone || "" : "",
+            hasDirectContact,
+            designation: property.broker.designation || "Real Estate Expert",
+            companyName: property.broker.companyName || "",
+            avatar: property.broker.avatar || "",
+          };
+        })()
       : {
           name: "Akshar Estate Expert",
           phone: "+91 1800-123-4567",
+          whatsapp: "",
+          hasDirectContact: false,
           designation: "Real Estate Expert",
           companyName: "Akshar Estate The Property HUB",
           avatar: "",

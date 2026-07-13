@@ -1,19 +1,29 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, Link, useParams } from "react-router-dom";
 import Hero from "../componetswest/Hero";
 import Amenities from "../componetswest/Amenities";
 import MapForm from "../componetswest/MapForm";
 import Footer from "../components/Footer";
 import { publicApi } from "../services/api";
-import useSiteContent from "../hooks/useSiteContent";
-import { defaultContactContent } from "../config/navigationContent";
-import { generateWhatsAppLink, propertyWhatsAppMessage } from "../utils/whatsapp";
+import useAuth from "../contexts/useAuth";
+import {
+  generateWhatsAppLink,
+  normalizeEnquirerName,
+  propertyWhatsAppMessage,
+  propertyWhatsAppNumber,
+  saveEnquirerName,
+  storedEnquirerName,
+  userDisplayName,
+  validateEnquirerName,
+} from "../utils/whatsapp";
 import { sanitizePublicProperty } from "../utils/propertyData";
 import { syncPropertySeo } from "../utils/propertySeo";
 
 export default function PropertyDetails() {
   const location = useLocation();
   const { id } = useParams();
+  const { user } = useAuth();
+  const autoWhatsAppHandled = useRef(false);
   const initialProperty = useMemo(
     () => sanitizePublicProperty(location.state?.property),
     [location.state?.property]
@@ -23,8 +33,7 @@ export default function PropertyDetails() {
     : (/^[a-f\d]{24}$/i.test(initialProperty?._id || "") ? initialProperty._id : null);
   const [property, setProperty] = useState(initialProperty);
   const [loading, setLoading] = useState(Boolean(remoteId));
-  const siteContent = useSiteContent();
-  const contact = { ...defaultContactContent, ...(siteContent.contactContent || {}) };
+  const [namePrompt, setNamePrompt] = useState({ open: false, name: storedEnquirerName(), error: "" });
 
   useEffect(() => {
     if (!remoteId) return;
@@ -46,6 +55,42 @@ export default function PropertyDetails() {
   }, [remoteId]);
 
   useEffect(() => syncPropertySeo(property), [property]);
+
+  const whatsappNumber = propertyWhatsAppNumber(property);
+  const whatsappAvailable = Boolean(generateWhatsAppLink(whatsappNumber, "Hello"));
+  const enquirerName = () => userDisplayName(user) || storedEnquirerName();
+
+  const openPropertyWhatsApp = (rawName) => {
+    const name = normalizeEnquirerName(rawName);
+    const error = validateEnquirerName(name);
+    if (error) {
+      setNamePrompt({ open: true, name, error });
+      return;
+    }
+    const link = generateWhatsAppLink(whatsappNumber, propertyWhatsAppMessage(property, { customerName: name }));
+    if (!link) return;
+    saveEnquirerName(name);
+    setNamePrompt({ open: false, name, error: "" });
+    window.open(link, "_blank", "noopener,noreferrer");
+  };
+
+  const requestWhatsAppEnquiry = () => {
+    if (!whatsappAvailable) return;
+    const name = enquirerName();
+    const error = validateEnquirerName(name);
+    if (error) {
+      setNamePrompt({ open: true, name, error: "" });
+      return;
+    }
+    openPropertyWhatsApp(name);
+  };
+
+  useEffect(() => {
+    if (!property || autoWhatsAppHandled.current || !location.state?.triggerWhatsApp) return;
+    autoWhatsAppHandled.current = true;
+    window.setTimeout(requestWhatsAppEnquiry, 300);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [property, location.state?.triggerWhatsApp]);
   
   // Handle property not found
   if (loading) {
@@ -69,18 +114,16 @@ export default function PropertyDetails() {
     );
   }
 
-  const whatsappLink = generateWhatsAppLink(contact.whatsapp || import.meta.env.VITE_WHATSAPP_NUMBER, propertyWhatsAppMessage(property));
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section from componetswest */}
-      <Hero property={property} />
+      <Hero property={property} whatsappAvailable={whatsappAvailable} onWhatsAppEnquiry={requestWhatsAppEnquiry} />
 
       {/* Map Form Section from componetswest */}
       <MapForm property={property} />
 
       {/* Amenities Section from componetswest */}
-      <Amenities property={property} whatsappLink={whatsappLink} />
+      <Amenities property={property} whatsappAvailable={whatsappAvailable} onWhatsAppEnquiry={requestWhatsAppEnquiry} />
 
       {/* Back Button */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -94,6 +137,54 @@ export default function PropertyDetails() {
 
       {/* Footer */}
       <Footer />
+      <WhatsAppNamePrompt
+        state={namePrompt}
+        onChange={(name) => setNamePrompt((current) => ({ ...current, name, error: "" }))}
+        onClose={() => setNamePrompt((current) => ({ ...current, open: false, error: "" }))}
+        onSubmit={() => openPropertyWhatsApp(namePrompt.name)}
+      />
+    </div>
+  );
+}
+
+function WhatsAppNamePrompt({ state, onChange, onClose, onSubmit }) {
+  if (!state.open) return null;
+  return (
+    <div className="fixed inset-0 z-[700] flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-[0_25px_80px_rgba(15,23,42,0.28)]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-950">Enter your name</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">Enter your name to continue with the WhatsApp enquiry.</p>
+          </div>
+          <button type="button" onClick={onClose} className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Close WhatsApp name prompt">
+            x
+          </button>
+        </div>
+        <form
+          className="mt-5 space-y-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            onSubmit();
+          }}
+        >
+          <label>
+            <span className="mb-2 block text-sm font-bold text-slate-700">Your name</span>
+            <input
+              autoFocus
+              className="wf-input"
+              value={state.name}
+              onChange={(event) => onChange(event.target.value)}
+              placeholder="e.g. Mayur Tank"
+            />
+          </label>
+          {state.error && <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{state.error}</p>}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={onClose} className="wf-btn wf-btn-secondary">Cancel</button>
+            <button type="submit" className="wf-btn bg-[#25D366] text-white hover:bg-[#1ebe5d]">Continue to WhatsApp</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { displayPropertyCode } from '../utils/propertyCode';
 import { compactSpecs } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
 
-export default function PropertyAmenities({ property, whatsappLink }) {
+export default function PropertyAmenities({ property, whatsappAvailable, onWhatsAppEnquiry }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,16 +17,13 @@ export default function PropertyAmenities({ property, whatsappLink }) {
   const phone = property?.broker?.phone || "+9118001234567";
 
   const triggerCall = location.state?.triggerCall || false;
-  const triggerWhatsApp = location.state?.triggerWhatsApp || false;
 
   useEffect(() => {
     if (autoActioned.current || !isAuthenticated) return;
-    if (!triggerCall && !triggerWhatsApp) return;
+    if (!triggerCall) return;
     autoActioned.current = true;
     if (triggerCall) {
       setTimeout(() => { window.location.href = `tel:${phone.replace(/\s/g, "")}`; }, 300);
-    } else if (triggerWhatsApp && whatsappLink) {
-      setTimeout(() => { window.open(whatsappLink, "_blank", "noopener,noreferrer"); }, 300);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
@@ -42,13 +39,7 @@ export default function PropertyAmenities({ property, whatsappLink }) {
   };
 
   const handleWhatsAppClick = () => {
-    if (!isAuthenticated) {
-      navigate("/register", {
-        state: { redirectTo: `${location.pathname}${location.search}`, fromWhatsApp: true, property },
-      });
-      return;
-    }
-    if (whatsappLink) window.open(whatsappLink, "_blank", "noopener,noreferrer");
+    onWhatsAppEnquiry?.();
   };
   const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "Price on request";
   const details = compactSpecs({ ...property, propertyCode: displayPropertyCode(property?.propertyCode) });
@@ -124,16 +115,16 @@ export default function PropertyAmenities({ property, whatsappLink }) {
             Send Enquiry
           </a>
 
-          {whatsappLink && (
-            <button
-              type="button"
-              onClick={handleWhatsAppClick}
-              className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-100"
-            >
-              <MessageCircle className="w-5 h-5 fill-current" />
-              Enquire on WhatsApp
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleWhatsAppClick}
+            disabled={!whatsappAvailable}
+            title={whatsappAvailable ? "Enquire on WhatsApp" : "WhatsApp number is not available for this property"}
+            className="w-full bg-[#25D366] hover:bg-[#1ebe5d] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-100 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none"
+          >
+            <MessageCircle className="w-5 h-5 fill-current" />
+            {whatsappAvailable ? "Enquire on WhatsApp" : "WhatsApp unavailable"}
+          </button>
 
           <button type="button" onClick={handleCallClick} className="w-full bg-[#059669] hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-50">
             <Phone className="w-5 h-5 fill-current" />

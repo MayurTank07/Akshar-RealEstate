@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Play, MapPin, Bookmark, ChevronDown } from 'lucide-react';
 import { publicApi } from '../services/api';
 import { buildInternationalPhone, countryCodeOptions, normalizePhoneDigits } from '../utils/countryCodes';
+import { publicGoogleMapsEmbedUrl, publicMapLabel } from '../utils/googleMaps';
 
 export default function PropertyInformation({ property }) {
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", homeLoan: false });
@@ -12,7 +13,10 @@ export default function PropertyInformation({ property }) {
   const companyName = broker.companyName || "";
   const initials = contactName.split(" ").map((item) => item[0]).join("").slice(0, 2).toUpperCase() || "AE";
   const videoThumb = property?.image || property?.gallery?.[0] || "https://placehold.co/1200x700/f8fafc/475569?text=No+Property+Image";
-  const mapImage = "https://images.unsplash.com/photo-1524813686514-a57563d77965?auto=format&fit=crop&q=80&w=1200";
+  const mapEmbedUrl = publicGoogleMapsEmbedUrl(property);
+  const mapLabel = publicMapLabel(property);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
   const description = property?.description?.trim()
     || "Experience premium real estate designed for modern living, strong connectivity, practical layouts, and verified Akshar Estate assistance from enquiry to closure.";
 
@@ -87,25 +91,47 @@ export default function PropertyInformation({ property }) {
 
           {/* Map View */}
           <section>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Map View</h2>
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-xl font-bold text-gray-900">Map View</h2>
+              <p className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm">
+                <MapPin className="h-3.5 w-3.5 shrink-0 text-blue-600" />
+                <span className="truncate">{mapLabel}</span>
+              </p>
+            </div>
             <div className="relative rounded-2xl overflow-hidden shadow-lg h-[400px]">
-              {property?.map?.embedUrl ? (
-                <iframe title="Property map" src={property.map.embedUrl} className="h-full w-full border-0" loading="lazy" />
+              {mapEmbedUrl && !mapFailed ? (
+                <>
+                  {!mapLoaded && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-100">
+                      <div className="text-center">
+                        <span className="mx-auto block h-8 w-8 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
+                        <p className="mt-3 text-sm font-bold text-slate-700">Loading map...</p>
+                      </div>
+                    </div>
+                  )}
+                  <iframe
+                    title={`${property?.title || "Property"} area map`}
+                    src={mapEmbedUrl}
+                    className="h-full w-full border-0"
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    allowFullScreen
+                    onLoad={() => setMapLoaded(true)}
+                    onError={() => {
+                      setMapFailed(true);
+                      setMapLoaded(false);
+                    }}
+                  />
+                </>
               ) : (
-                <img src={mapImage} className="w-full h-full object-cover" alt="Map View" />
-              )}
-              {/* Custom Pin Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex flex-col items-center">
-                   <div className="bg-white px-3 py-1 rounded shadow-md text-[10px] font-bold mb-1 border border-gray-100">
-                    {property?.map?.address || property?.location || "Urban Living"}
-                   </div>
-                   <div className="relative">
-                     <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-lg animate-pulse" />
-                     <MapPin className="w-8 h-8 text-red-500 -mt-7 drop-shadow-md" />
-                   </div>
+                <div className="flex h-full w-full items-center justify-center bg-slate-100 p-6 text-center">
+                  <div>
+                    <MapPin className="mx-auto h-8 w-8 text-blue-600" />
+                    <p className="mt-3 text-sm font-bold text-slate-700">{mapFailed ? "Map could not be loaded right now." : "Map location is not available yet."}</p>
+                    <p className="mt-1 text-xs font-semibold text-slate-500">{mapLabel}</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </section>
         </div>

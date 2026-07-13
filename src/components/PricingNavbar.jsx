@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Bookmark, ChevronDown, Clock, Home, Menu, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowRight, Bookmark, ChevronDown, Clock, Home, Search, SlidersHorizontal, X } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import SavedBadge from "./SavedBadge";
 import useAuth from "../contexts/useAuth";
@@ -34,6 +34,7 @@ export default function PricingNavbar({
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recent] = useState(() => getRecent());
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const searchContainerRef = useRef(null);
   const toggleMenu = (menu) => setOpenMenu((current) => (current === menu ? null : menu));
 
@@ -65,6 +66,12 @@ export default function PricingNavbar({
     setOpenMenu(null);
   };
 
+  const toggleMobileSearch = () => {
+    setMobileSearchOpen((current) => !current);
+    setOpenMenu(null);
+    setShowSuggestions(false);
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
       <div className="wf-container flex min-h-[72px] flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between">
@@ -79,15 +86,17 @@ export default function PricingNavbar({
 
           <button
             type="button"
-            className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100 lg:hidden"
-            onClick={() => onToggleFilters ? onToggleFilters() : navigate("/properties")}
-            aria-label={onToggleFilters ? "Open filters" : "View properties"}
+            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-100 lg:hidden"
+            onClick={toggleMobileSearch}
+            aria-expanded={mobileSearchOpen}
+            aria-label={mobileSearchOpen ? "Hide search filters" : "Show search filters"}
           >
-            <Menu size={21} />
+            {mobileSearchOpen ? <X size={18} /> : <SlidersHorizontal size={18} />}
+            Filter
           </button>
         </div>
 
-        <div className="flex w-full min-w-0 flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm sm:flex-row lg:max-w-2xl">
+        <div className={`${mobileSearchOpen ? "flex" : "hidden"} w-full min-w-0 flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm sm:flex-row lg:flex lg:max-w-2xl`}>
           <div className="relative grid gap-2 sm:min-w-[230px] sm:grid-cols-[0.8fr_1.2fr]">
             <button
               type="button"
@@ -148,14 +157,16 @@ export default function PricingNavbar({
                   <X size={16} />
                 </button>
               )}
-              <button
-                type="button"
-                onClick={onToggleFilters}
-                className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50 xl:hidden"
-                aria-label="Toggle filters"
-              >
-                <SlidersHorizontal size={17} />
-              </button>
+              {onToggleFilters && (
+                <button
+                  type="button"
+                  onClick={onToggleFilters}
+                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50 xl:hidden"
+                  aria-label="Toggle filters"
+                >
+                  <SlidersHorizontal size={17} />
+                </button>
+              )}
             </div>
 
             {showSuggestions && (

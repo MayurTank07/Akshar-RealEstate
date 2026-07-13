@@ -23,6 +23,7 @@ import {
   Menu,
   MessageSquare,
   MapPin,
+  SlidersHorizontal,
   Plus,
   Save,
   Search,
@@ -47,6 +48,7 @@ import { defaultAboutContent, defaultContactContent, defaultHomeSectionsContent,
 const navItems = [
   { key: "dashboard", label: "Dashboard", icon: BarChart3, roles: ["admin", "supervisor"], permission: "dashboard:access" },
   { key: "properties", label: "Property Management", icon: Building2, roles: ["admin", "supervisor"], permission: "assigned:view" },
+  { key: "advanced-filter", label: "Advanced Property Filter", icon: SlidersHorizontal, roles: ["admin", "supervisor"], permission: "assigned:view" },
   { key: "supervisors", label: "Supervisor Management", icon: Users, roles: ["admin"] },
   { key: "owners", label: "Owner Management", icon: UserCheck, roles: ["admin", "supervisor"], permission: "owner_management" },
   { key: "enquiries", label: "Enquiries", icon: MessageSquare, roles: ["admin", "supervisor"], permission: "enquiries:view" },
@@ -499,6 +501,7 @@ export default function AdminWorkspace({ scope = "admin" }) {
         <main className="px-3 py-5 sm:px-5 sm:py-7 md:px-8 md:py-8">
           {activeSection === "dashboard" && <DashboardSection scope={scope} />}
           {activeSection === "properties" && <PropertiesSection canDelete={canDeleteProperty} canCreate={canCreateProperty} />}
+          {activeSection === "advanced-filter" && <AdvancedPropertyFilterSection scope={scope} />}
           {activeSection === "supervisors" && <SupervisorsSection />}
           {activeSection === "owners" && <OwnersSection />}
           {activeSection === "enquiries" && <EnquiriesSection canDelete={staffUser.role === "admin"} canManage={canManageLeads} />}
@@ -861,7 +864,7 @@ function NotificationFallbackModal({ item, onClose }) {
 }
 
 function ProfilePanel({ user, onClose, onSaved, onLogout }) {
-  const [form, setForm] = useState({ name: user.name || "", email: user.email || "", phone: user.phone || "", designation: user.designation || "", avatar: user.avatar || "", coverImage: user.coverImage || "" });
+  const [form, setForm] = useState({ name: user.name || "", email: user.email || "", phone: user.phone || "", whatsapp: user.whatsapp || "", designation: user.designation || "", avatar: user.avatar || "", coverImage: user.coverImage || "" });
   const [passwords, setPasswords] = useState({ currentPassword: "", newPassword: "" });
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -980,6 +983,7 @@ function ProfilePanel({ user, onClose, onSaved, onLogout }) {
           <Field label="Name" name="name" value={form.name} onChange={update} required />
           <Field label="Email" name="email" type="email" value={form.email} onChange={update} required />
           <Field label="Contact Number" name="phone" value={form.phone} onChange={update} />
+          <Field label="WhatsApp Number" name="whatsapp" value={form.whatsapp} onChange={update} />
           <Field label="Designation" name="designation" value={form.designation} onChange={update} />
           <button disabled={saving} className="wf-btn wf-btn-primary w-full">{saving ? "Saving..." : "Save Profile"}</button>
         </form>
@@ -1195,30 +1199,39 @@ function PropertiesSection({ canDelete, canCreate }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const requestIdRef = useRef(0);
+  const skipNextAutoLoadRef = useRef(false);
+  const firstAutoLoadRef = useRef(true);
 
-  const load = async (nextFilters = filters) => {
+  const load = useCallback(async (nextFilters = filters) => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setLoading(true);
     try {
       setError("");
       const response = await staffApi.properties(buildQuery(nextFilters));
+      if (requestId !== requestIdRef.current) return;
       setProperties(response.data);
       setFilterOptions((current) => ({
         cities: uniqueOptions([...response.data, ...current.cities.map((city) => ({ city }))], (item) => item.city),
         types: uniqueOptions([...response.data, ...current.types.map((type) => ({ type }))], (item) => item.type),
       }));
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       setError(err.message || "Unable to load properties.");
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     let active = true;
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     staffApi
       .properties(buildQuery({ search: initialSearch }))
       .then((response) => {
-        if (!active) return;
+        if (!active || requestId !== requestIdRef.current) return;
         setProperties(response.data);
         setFilterOptions({
           cities: uniqueOptions(response.data, (item) => item.city),
@@ -1227,10 +1240,10 @@ function PropertiesSection({ canDelete, canCreate }) {
         setError("");
       })
       .catch((err) => {
-        if (active) setError(err.message || "Unable to load properties.");
+        if (active && requestId === requestIdRef.current) setError(err.message || "Unable to load properties.");
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active && requestId === requestIdRef.current) setLoading(false);
       });
     return () => {
       active = false;
@@ -1241,6 +1254,21 @@ function PropertiesSection({ canDelete, canCreate }) {
     const timer = window.setTimeout(() => setFilters((current) => ({ ...current, search: initialSearch })), 0);
     return () => window.clearTimeout(timer);
   }, [initialSearch]);
+
+  useEffect(() => {
+    if (firstAutoLoadRef.current) {
+      firstAutoLoadRef.current = false;
+      return undefined;
+    }
+    if (skipNextAutoLoadRef.current) {
+      skipNextAutoLoadRef.current = false;
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      load(filters);
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [filters, load]);
 
   useEffect(() => {
     if (!focusedPropertyId || editing || !properties.length) return;
@@ -1276,9 +1304,11 @@ function PropertiesSection({ canDelete, canCreate }) {
   const updateFilter = (name, value) => setFilters((current) => ({ ...current, [name]: value }));
   const clearFilters = () => {
     const next = { search: "", propertyCode: "", city: "all", type: "all", newProject: "all", minPrice: "", maxPrice: "", status: "all", availability: "all" };
+    skipNextAutoLoadRef.current = true;
     setFilters(next);
     load(next);
   };
+  const activeFilterCount = Object.entries(filters).filter(([key, value]) => value !== { search: "", propertyCode: "", city: "all", type: "all", newProject: "all", minPrice: "", maxPrice: "", status: "all", availability: "all" }[key]).length;
 
   return (
     <>
@@ -1325,8 +1355,7 @@ function PropertiesSection({ canDelete, canCreate }) {
             <option value="sold">Sold</option>
             <option value="rented">Rented</option>
           </select>
-          <button onClick={() => load()} className="wf-btn wf-btn-secondary w-full"><Filter size={17} /> Filter</button>
-          <button onClick={clearFilters} className="wf-btn wf-btn-secondary w-full"><X size={17} /> Clear</button>
+          <button onClick={clearFilters} className="wf-btn wf-btn-secondary w-full"><X size={17} /> Reset{activeFilterCount ? ` (${activeFilterCount})` : ""}</button>
         </div>
       </div>
 
@@ -1413,6 +1442,240 @@ function PropertiesSection({ canDelete, canCreate }) {
       </div>
 
       {editing && <PropertyModal property={editing} onClose={closeEditing} onSaved={() => { setNotice(editing._id ? "Property updated successfully." : "Property created successfully."); closeEditing(); load(); }} />}
+    </>
+  );
+}
+
+const advancedFilterDefaults = {
+  keyword: "",
+  location: "",
+  city: "all",
+  type: "all",
+  bhk: "all",
+  dealType: "all",
+  minPrice: "",
+  maxPrice: "",
+  availability: "available",
+  status: "active",
+  newProject: "all",
+};
+
+function AdvancedPropertyFilterSection({ scope }) {
+  const navigate = useNavigate();
+  const [filters, setFilters] = useState(advancedFilterDefaults);
+  const [results, setResults] = useState([]);
+  const [options, setOptions] = useState({ cities: [], types: [], locations: [], dealTypes: [] });
+  const [loading, setLoading] = useState(true);
+  const [searched, setSearched] = useState(false);
+  const [error, setError] = useState("");
+  const requestIdRef = useRef(0);
+  const skipNextAutoSearchRef = useRef(false);
+
+  const buildAdvancedQuery = useCallback((nextFilters) => {
+    const terms = [
+      nextFilters.keyword,
+      nextFilters.location,
+      nextFilters.bhk !== "all" ? `${nextFilters.bhk}bhk` : "",
+      nextFilters.dealType !== "all" ? nextFilters.dealType : "",
+    ].filter(Boolean).join(" ");
+    return {
+      limit: 500,
+      search: terms,
+      city: nextFilters.city,
+      type: nextFilters.type,
+      minPrice: nextFilters.minPrice,
+      maxPrice: nextFilters.maxPrice,
+      availability: nextFilters.availability,
+      status: nextFilters.status,
+      newProject: nextFilters.newProject,
+    };
+  }, []);
+
+  const refineAdvancedResults = useCallback((items, nextFilters) => items.filter((property) => {
+    if (nextFilters.bhk !== "all" && Number(property.beds || 0) !== Number(nextFilters.bhk)) return false;
+    if (nextFilters.dealType !== "all" && String(property.dealType || "").toLowerCase() !== nextFilters.dealType.toLowerCase()) return false;
+    if (nextFilters.location) {
+      const needle = nextFilters.location.toLowerCase();
+      const haystack = [property.location, property.map?.area, property.map?.address, property.city].join(" ").toLowerCase();
+      if (!haystack.includes(needle)) return false;
+    }
+    return true;
+  }), []);
+
+  const mergeOptions = useCallback((items) => {
+    setOptions((current) => ({
+      cities: uniqueOptions([...items, ...current.cities.map((city) => ({ city }))], (item) => item.city || item.map?.city),
+      types: uniqueOptions([...items, ...current.types.map((type) => ({ type }))], (item) => item.type),
+      locations: uniqueOptions([...items, ...current.locations.map((location) => ({ location }))], (item) => item.location || item.map?.area),
+      dealTypes: uniqueOptions([...items, ...current.dealTypes.map((dealType) => ({ dealType }))], (item) => item.dealType),
+    }));
+  }, []);
+
+  const search = useCallback(async (nextFilters = filters, markSearched = true) => {
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setLoading(true);
+    setError("");
+    try {
+      const response = await staffApi.properties(buildQuery(buildAdvancedQuery(nextFilters)));
+      if (requestId !== requestIdRef.current) return;
+      const refined = refineAdvancedResults(response.data || [], nextFilters);
+      setResults(refined);
+      mergeOptions(response.data || []);
+      if (markSearched) setSearched(true);
+    } catch (err) {
+      if (requestId !== requestIdRef.current) return;
+      setError(err.message || "Unable to search matching properties.");
+      setResults([]);
+    } finally {
+      if (requestId === requestIdRef.current) setLoading(false);
+    }
+  }, [buildAdvancedQuery, filters, mergeOptions, refineAdvancedResults]);
+
+  useEffect(() => {
+    if (skipNextAutoSearchRef.current) {
+      skipNextAutoSearchRef.current = false;
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      search(filters, true);
+    }, 400);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [filters, search]);
+
+  const updateFilter = (name, value) => setFilters((current) => ({ ...current, [name]: value }));
+  const clear = () => {
+    skipNextAutoSearchRef.current = true;
+    setFilters(advancedFilterDefaults);
+    search(advancedFilterDefaults, false);
+    setSearched(false);
+  };
+
+  const activeFilterCount = Object.entries(filters).filter(([key, value]) => value !== advancedFilterDefaults[key]).length;
+  const availableCount = results.filter((item) => !["sold", "rented", "inactive"].includes(String(item.status || "").toLowerCase())).length;
+  const closedCount = results.filter((item) => ["sold", "rented"].includes(String(item.status || "").toLowerCase())).length;
+
+  return (
+    <>
+      <PageTitle
+        title="Advanced Property Filter"
+        subtitle="Check whether a specific type of property is available before responding to clients."
+        action={<button type="button" onClick={clear} className="wf-btn wf-btn-secondary w-full sm:w-auto"><X size={17} /> Reset Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</button>}
+      />
+      <InlineAlert message={error} />
+
+      <div className="mb-6 grid gap-4 lg:grid-cols-3">
+        <StatCard icon={Building2} label="Matching Properties" value={loading ? "..." : results.length} />
+        <StatCard icon={Check} label="Available Matches" value={loading ? "..." : availableCount} color="green" />
+        <StatCard icon={FileText} label="Sold / Rented" value={loading ? "..." : closedCount} color="purple" />
+      </div>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+        }}
+        className="mb-6 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-5"
+      >
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" />
+            <input name="advancedKeyword" className="wf-input pl-10" value={filters.keyword} onChange={(event) => updateFilter("keyword", event.target.value)} placeholder="Project, property ID, builder..." />
+          </div>
+          <LocationAutocompleteField
+            label="Location / Area"
+            name="advancedLocation"
+            value={filters.location}
+            options={options.locations}
+            onChange={(event) => updateFilter("location", event.target.value)}
+            onPlaceSelect={(place) => {
+              updateFilter("location", place.area || place.address || "");
+              if (place.city) updateFilter("city", place.city);
+            }}
+            placeholder="Type gan for Gandhinagar..."
+            helperText="Google suggestions enabled when Maps API key is configured."
+          />
+          <select name="advancedCity" className="wf-input" value={filters.city} onChange={(event) => updateFilter("city", event.target.value)}>
+            <option value="all">All Cities</option>
+            {uniqueOptions([...options.cities, ...propertyOptionGroups.cities], (item) => item).map((city) => <option key={city} value={city}>{city}</option>)}
+          </select>
+          <select name="advancedType" className="wf-input" value={filters.type} onChange={(event) => updateFilter("type", event.target.value)}>
+            <option value="all">All Property Types</option>
+            {uniqueOptions([...options.types, ...propertyOptionGroups.propertyTypes], (item) => item).map((type) => <option key={type} value={type}>{type}</option>)}
+          </select>
+          <select name="advancedBhk" className="wf-input" value={filters.bhk} onChange={(event) => updateFilter("bhk", event.target.value)}>
+            <option value="all">Any BHK / Rooms</option>
+            {propertyOptionGroups.bhk.map((bhk) => <option key={bhk} value={bhk}>{bhk === "0" ? "Non-BHK / Land" : `${bhk} BHK`}</option>)}
+          </select>
+          <select name="advancedDealType" className="wf-input" value={filters.dealType} onChange={(event) => updateFilter("dealType", event.target.value)}>
+            <option value="all">Any Deal Type</option>
+            {uniqueOptions([...options.dealTypes, ...propertyOptionGroups.dealTypes], (item) => item).map((dealType) => <option key={dealType} value={dealType}>{dealType}</option>)}
+          </select>
+          <input name="advancedMinPrice" className="wf-input" type="number" min="0" step="0.01" value={filters.minPrice} onChange={(event) => updateFilter("minPrice", event.target.value)} placeholder="Min budget Cr" />
+          <input name="advancedMaxPrice" className="wf-input" type="number" min="0" step="0.01" value={filters.maxPrice} onChange={(event) => updateFilter("maxPrice", event.target.value)} placeholder="Max budget Cr" />
+          <select name="advancedAvailability" className="wf-input" value={filters.availability} onChange={(event) => updateFilter("availability", event.target.value)}>
+            <option value="available">Available Only</option>
+            <option value="all">All Availability</option>
+            <option value="sold">Sold Only</option>
+            <option value="rented">Rented Only</option>
+          </select>
+          <select name="advancedStatus" className="wf-input" value={filters.status} onChange={(event) => updateFilter("status", event.target.value)}>
+            <option value="active">Active</option>
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="inactive">Inactive</option>
+            <option value="sold">Sold</option>
+            <option value="rented">Rented</option>
+          </select>
+          <select name="advancedNewProject" className="wf-input" value={filters.newProject} onChange={(event) => updateFilter("newProject", event.target.value)}>
+            <option value="all">All Listings</option>
+            <option value="true">New Projects</option>
+            <option value="false">Standard Listings</option>
+          </select>
+          <button type="button" onClick={clear} className="wf-btn wf-btn-secondary"><X size={16} /> Reset Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</button>
+        </div>
+      </form>
+
+      {loading && <LoadingState label="Checking property availability..." />}
+      {!loading && !results.length && (
+        <EmptyState
+          title={searched ? "No matching property available" : "No properties loaded"}
+          description={searched ? "Try expanding the city, budget, BHK, or deal type filters." : "Use the filters above to check property availability."}
+        />
+      )}
+      {!loading && results.length > 0 && (
+        <div className="grid gap-4 xl:grid-cols-2">
+          {results.map((property) => (
+            <div key={property._id} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-5">
+              <div className="flex gap-4">
+                <img src={property.image || property.gallery?.[0] || "https://placehold.co/140x140?text=AETP"} alt={property.title} className="h-24 w-24 shrink-0 rounded-xl object-cover ring-1 ring-slate-100" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="truncate text-base font-extrabold text-slate-950">{property.title}</h3>
+                      <p className="mt-1 text-xs font-bold text-slate-400">ID: {displayPropertyCode(property.propertyCode)}</p>
+                    </div>
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusClass(property.status)}`}>{labelize(property.status)}</span>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                    <OwnerCell label="Location" value={[property.location, property.city].filter(Boolean).join(", ") || "-"} />
+                    <OwnerCell label="Type / BHK" value={[property.type, property.beds ? `${property.beds} BHK` : ""].filter(Boolean).join(" · ") || "-"} />
+                    <OwnerCell label="Deal" value={property.dealType || property.category || "-"} />
+                    <OwnerCell label="Price" value={formatINR(property.priceAmount || property.price)} />
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+                <p className="text-xs font-semibold text-slate-500">{property.availability || property.propertyStatus || "Availability not specified"}</p>
+                <button type="button" onClick={() => navigate(`/${scope}/properties?propertyId=${property._id}&open=edit`)} className="wf-btn wf-btn-secondary text-sm">
+                  <Edit3 size={15} /> Open Property
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   );
 }
@@ -2708,25 +2971,65 @@ function parseGooglePlace(place) {
   };
 }
 
+const GOOGLE_MAPS_AUTH_FAILURE_EVENT = "akshar-google-maps-auth-failure";
+
+function notifyGoogleMapsAuthFailure(message) {
+  window.dispatchEvent(new CustomEvent(GOOGLE_MAPS_AUTH_FAILURE_EVENT, { detail: { message } }));
+}
+
 function loadGoogleMapsPlaces() {
   const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
   if (!apiKey) return Promise.reject(new Error("Google Maps API key is not configured"));
   if (window.google?.maps?.places) return Promise.resolve(window.google);
   if (window.__aksharGoogleMapsPromise) return window.__aksharGoogleMapsPromise;
   window.__aksharGoogleMapsPromise = new Promise((resolve, reject) => {
+    let settled = false;
+    const previousAuthFailure = window.gm_authFailure;
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      window.__aksharGoogleMapsPromise = null;
+      reject(error instanceof Error ? error : new Error("Google Maps could not be loaded"));
+    };
+    window.gm_authFailure = () => {
+      const message = "Google Maps API key is not authorized for this domain";
+      notifyGoogleMapsAuthFailure(message);
+      fail(new Error(message));
+      if (typeof previousAuthFailure === "function") previousAuthFailure();
+    };
     const existing = document.querySelector("script[data-akshar-google-maps='true']");
     if (existing) {
-      existing.addEventListener("load", () => resolve(window.google));
-      existing.addEventListener("error", reject);
+      existing.addEventListener("load", () => {
+        window.setTimeout(() => {
+          if (settled) return;
+          if (window.google?.maps?.places) {
+            settled = true;
+            resolve(window.google);
+          } else {
+            fail(new Error("Google Places library is unavailable"));
+          }
+        }, 400);
+      });
+      existing.addEventListener("error", () => fail(new Error("Google Maps script failed to load")));
       return;
     }
     const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&loading=async`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places&v=weekly&region=IN&loading=async`;
     script.async = true;
     script.defer = true;
     script.dataset.aksharGoogleMaps = "true";
-    script.onload = () => resolve(window.google);
-    script.onerror = reject;
+    script.onload = () => {
+      window.setTimeout(() => {
+        if (settled) return;
+        if (window.google?.maps?.places) {
+          settled = true;
+          resolve(window.google);
+        } else {
+          fail(new Error("Google Places library is unavailable"));
+        }
+      }, 400);
+    };
+    script.onerror = () => fail(new Error("Google Maps script failed to load"));
     document.head.appendChild(script);
   });
   return window.__aksharGoogleMapsPromise;
@@ -2739,6 +3042,15 @@ function LocationAutocompleteField({ label, name, value, options = [], onChange,
   const [mapsError, setMapsError] = useState(() => (apiKey ? "" : "Manual mode: add VITE_GOOGLE_MAPS_API_KEY to enable Google suggestions."));
 
   useEffect(() => {
+    const handleAuthFailure = (event) => {
+      setMapsReady(false);
+      setMapsError(`Manual mode: ${event.detail?.message || "Google Maps API key is not authorized for this domain"}.`);
+    };
+    window.addEventListener(GOOGLE_MAPS_AUTH_FAILURE_EVENT, handleAuthFailure);
+    return () => window.removeEventListener(GOOGLE_MAPS_AUTH_FAILURE_EVENT, handleAuthFailure);
+  }, []);
+
+  useEffect(() => {
     if (!apiKey) {
       return undefined;
     }
@@ -2747,8 +3059,8 @@ function LocationAutocompleteField({ label, name, value, options = [], onChange,
       .then(() => {
         if (active) setMapsReady(true);
       })
-      .catch(() => {
-        if (active) setMapsError("Manual mode: Google location suggestions are unavailable.");
+      .catch((error) => {
+        if (active) setMapsError(`Manual mode: ${error.message || "Google location suggestions are unavailable."}`);
       });
     return () => {
       active = false;
@@ -2760,7 +3072,7 @@ function LocationAutocompleteField({ label, name, value, options = [], onChange,
     const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
       componentRestrictions: { country: "in" },
       fields: ["address_components", "formatted_address", "geometry", "name", "place_id"],
-      types: ["geocode", "establishment"],
+      types: ["geocode"],
     });
     const listener = autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace();
@@ -2869,7 +3181,7 @@ function SupervisorsSection() {
   const activeCount = supervisors.filter((item) => item.status === "active").length;
   const visibleSupervisors = supervisors.filter((item) => {
     const search = query.trim().toLowerCase();
-    const matchesQuery = !search || [item.name, item.email, item.phone, item.designation, item.companyName].some((value) => String(value || "").toLowerCase().includes(search));
+    const matchesQuery = !search || [item.name, item.email, item.phone, item.whatsapp, item.designation, item.companyName].some((value) => String(value || "").toLowerCase().includes(search));
     const matchesStatus = status === "all" || item.status === status;
     return matchesQuery && matchesStatus;
   });
@@ -3061,6 +3373,7 @@ function SupervisorModal({ supervisor, onClose, onSaved }) {
     email: supervisor?.email || "",
     password: isEdit ? "" : "Supervisor@12345",
     phone: supervisor?.phone || "",
+    whatsapp: supervisor?.whatsapp || "",
     designation: supervisor?.designation || "Property Supervisor",
     companyName: supervisor?.companyName || "",
     coverImage: supervisor?.coverImage || "",
@@ -3153,7 +3466,8 @@ function SupervisorModal({ supervisor, onClose, onSaved }) {
               </div>
               <Field label="Name" name="name" value={form.name} onChange={update} required />
               <Field label="Email" name="email" type="email" value={form.email} onChange={update} required />
-              <Field label="Phone" name="phone" value={form.phone} onChange={update} />
+              <Field label="Contact Number" name="phone" value={form.phone} onChange={update} />
+              <Field label="WhatsApp Number" name="whatsapp" value={form.whatsapp} onChange={update} />
               <Field label="Designation" name="designation" value={form.designation} onChange={update} />
               <Field label="Company Name" name="companyName" value={form.companyName} onChange={update} placeholder="Company shown on property enquiry form" />
               <SearchableDropdown

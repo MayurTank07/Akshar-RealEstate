@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  MapPin, Phone, ChevronRight, ShieldCheck
+  MapPin, MessageCircle, Phone, ChevronRight, ShieldCheck
 } from 'lucide-react';
 
 import Navbar from '../components/PricingNavbar';
@@ -9,7 +9,7 @@ import { formatINR } from '../utils/currency';
 import { supportsRooms } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
 
-const PropertyDetails = ({ property }) => {
+const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -17,6 +17,7 @@ const PropertyDetails = ({ property }) => {
 
   const images = Array.from(new Set([property?.image, ...(property?.gallery || [])].filter(Boolean)));
   const galleryImages = images.length ? images : ["https://placehold.co/1200x800/f8fafc/475569?text=No+Property+Image"];
+  const activeImage = galleryImages[selectedImage] || galleryImages[0];
 
   const handleCall = () => {
     if (!isAuthenticated) {
@@ -27,6 +28,10 @@ const PropertyDetails = ({ property }) => {
     }
     const phoneNumber = property?.broker?.phone || "+9118001234567";
     window.location.href = `tel:${phoneNumber.replace(/\s/g, "")}`;
+  };
+
+  const handleWhatsApp = () => {
+    onWhatsAppEnquiry?.();
   };
 
   const title = property?.title || "Property";
@@ -63,30 +68,41 @@ const PropertyDetails = ({ property }) => {
             <div className="flex items-center justify-end space-x-2 mb-1">
               <span className="text-2xl font-extrabold text-emerald-700">{price}</span>
             </div>
-            <button 
-              onClick={handleCall}
-              className="wf-btn mt-3 w-full bg-emerald-600 text-white hover:bg-emerald-700 md:w-auto"
-            >
-              <Phone size={18} /> Call Now
-            </button>
+            <div className="mt-3 grid w-full grid-cols-2 gap-3 md:flex md:w-auto md:justify-end">
+              <button
+                type="button"
+                onClick={handleWhatsApp}
+                disabled={!whatsappAvailable}
+                title={whatsappAvailable ? "Enquire on WhatsApp" : "WhatsApp number is not available for this property"}
+                className="wf-btn w-full bg-[#25D366] text-white hover:bg-[#1ebe5d] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 md:w-auto"
+              >
+                <MessageCircle size={18} /> WhatsApp
+              </button>
+              <button 
+                onClick={handleCall}
+                className="wf-btn w-full bg-emerald-600 text-white hover:bg-emerald-700 md:w-auto"
+              >
+                <Phone size={18} /> Call Now
+              </button>
+            </div>
           </div>
         </div>
 
         <div className="space-y-4 mb-10">
           <div className="relative h-[320px] w-full overflow-hidden rounded-2xl shadow-sm sm:h-[500px]">
-            <img src={galleryImages[selectedImage] || galleryImages[0]} alt={title} className="w-full h-full object-cover" />
+            <img src={activeImage} alt={title} className="w-full h-full object-cover" />
             <div className="absolute bottom-6 right-6 bg-white/90 backdrop-blur px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2">
                 <ShieldCheck size={14} className="text-blue-600"/> Verified Listing
             </div>
           </div>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 sm:gap-4">
-            {galleryImages.slice(1, 7).map((img, idx) => (
+            {galleryImages.slice(0, 6).map((img, idx) => (
               <div 
                 key={idx} 
-                onClick={() => setSelectedImage(idx + 1)}
-                className={`h-20 cursor-pointer overflow-hidden rounded-xl border-2 transition-all sm:h-24 ${selectedImage === idx + 1 ? 'scale-95 border-blue-500' : 'border-transparent'}`}
+                onClick={() => setSelectedImage(idx)}
+                className={`h-20 cursor-pointer overflow-hidden rounded-xl border-2 transition-all sm:h-24 ${selectedImage === idx ? 'scale-95 border-blue-500' : 'border-transparent'}`}
               >
-                <img src={img} alt="Thumb" className="w-full h-full object-cover" />
+                <img src={img} alt={`${title} thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
               </div>
             ))}
           </div>
