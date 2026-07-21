@@ -1684,13 +1684,14 @@ function AdvancedPropertyFilterSection({ scope }) {
 function PropertyModal({ property, onClose, onSaved }) {
   const { staffUser } = useStaffAuth();
   const initialPropertyCode = isReadablePropertyCode(property.propertyCode) ? String(property.propertyCode).trim().toUpperCase() : "";
-  const [supervisors, setSupervisors] = useState([]);
+  const [assignableStaff, setAssignableStaff] = useState(() => staffUser.role === "supervisor" ? [staffUser] : []);
   const [cmsOptions, setCmsOptions] = useState({ navbarAreas: defaultNavbarAreas, navbarTopLists: defaultTopLists });
   const [masterOptions, setMasterOptions] = useState(propertyOptionGroups);
   const [form, setForm] = useState(() => ({
     ...emptyProperty,
     ...property,
     ownerSellerName: property.ownerSellerName || (property.ownerName && property.ownerName !== "Akshar Estate" ? property.ownerName : ""),
+    assignedTo: staffUser.role === "supervisor" ? staffUser.id || staffUser._id || property.assignedTo || "" : property.assignedTo || "",
     propertyCode: initialPropertyCode,
     measurement: { ...emptyProperty.measurement, ...(property.measurement || {}) },
     contact: { ...emptyProperty.contact, ...(property.contact || {}) },
@@ -1735,12 +1736,12 @@ function PropertyModal({ property, onClose, onSaved }) {
     if (staffUser.role !== "admin") return;
     let active = true;
     staffApi.staff().then((response) => {
-      if (active) setSupervisors(response.data.filter((item) => item.role === "supervisor"));
+      if (active) setAssignableStaff(response.data.filter((item) => ["admin", "supervisor"].includes(item.role) && item.status === "active"));
     }).catch(() => {});
     return () => {
       active = false;
     };
-  }, [staffUser.role]);
+  }, [staffUser]);
 
   useEffect(() => {
     let active = true;
@@ -1766,6 +1767,17 @@ function PropertyModal({ property, onClose, onSaved }) {
   const projectOptions = useMemo(() => [...new Set([...(masterOptions.projects || []), ...topProjectOptions])], [masterOptions.projects, topProjectOptions]);
   const cityOptions = useMemo(() => [...new Set([...(masterOptions.cities || []), ...cmsOptions.navbarAreas.map((item) => (typeof item === "object" ? item.city : "Ahmedabad")).filter(Boolean)])], [cmsOptions.navbarAreas, masterOptions.cities]);
   const measurementUnitOptions = useMemo(() => buildMeasurementUnitOptions(masterOptions.measurementUnits || []), [masterOptions.measurementUnits]);
+  const assignableStaffOptions = useMemo(() => {
+    const options = staffUser.role === "admin" ? [{ label: "Unassigned", value: "", description: "Show the generic public contact fallback" }] : [];
+    return [
+      ...options,
+      ...assignableStaff.map((item) => ({
+        label: `${item.name || "Main Admin"}${item.role === "admin" ? " (Main Admin)" : ""}`,
+        value: item._id || item.id,
+        description: [item.companyName, item.phone].filter(Boolean).join(" - ") || labelize(item.role),
+      })),
+    ];
+  }, [assignableStaff, staffUser.role]);
   const activeSections = useMemo(() => enabledSectionSet(enabledSections), [enabledSections]);
   const sectionEnabled = useCallback((sectionKey) => activeSections.has(sectionKey), [activeSections]);
 
@@ -2065,6 +2077,16 @@ function PropertyModal({ property, onClose, onSaved }) {
               <OptionSelect label="Property Category" name="category" value={form.category} options={masterOptions.category} onChange={update} required error={fieldErrors.category} masterGroup="category" onAddOption={addMasterOption} />
               <ToggleField label="New Projects" name="isNewProject" checked={form.isNewProject} onChange={update} />
               <Field label="Owner / Seller" name="ownerSellerName" value={form.ownerSellerName} onChange={update} placeholder="Owner or seller name" />
+              <SearchableDropdown
+                label="Assigned Supervisor"
+                name="assignedTo"
+                value={form.assignedTo?._id || form.assignedTo || ""}
+                onChange={update}
+                placeholder="Select assigned person"
+                options={assignableStaffOptions}
+                disabled={staffUser.role === "supervisor"}
+                helperText={staffUser.role === "supervisor" ? "Properties you create or edit stay assigned to you." : "Select an active supervisor or Main Admin for the public CTA."}
+              />
 	              <ComboField label="Developer / Builder" name="developerName" value={form.developerName} options={developerOptions} onChange={update} placeholder="Select or type developer" masterGroup="developers" onAddOption={addMasterOption} />
 	              <ComboField label="Top Project" name="topProject" value={form.topProject} options={projectOptions} onChange={update} placeholder="Select linked project" masterGroup="projects" onAddOption={addMasterOption} />
             </div>
@@ -2150,18 +2172,6 @@ function PropertyModal({ property, onClose, onSaved }) {
 	              <SearchableDropdown label="Client-side Source" name="source" value={form.source} onChange={update} placeholder="Select Source" options={[{ label: "Pricing/Listings", value: "pricing" }, { label: "Home Featured", value: "home" }]} />
 	              <SearchableDropdown label="Display Tag" name="tag" value={form.tag} onChange={update} placeholder="Select Display Tag" options={masterOptions.displayTags} masterGroup="displayTags" onAddOption={addMasterOption} />
 	              <ToggleField label="Featured Property" name="featured" checked={form.featured} onChange={update} />
-              {staffUser.role === "admin" && (
-                <div className="md:col-span-2 lg:col-span-3">
-                  <SearchableDropdown
-                    label="Assign Supervisor"
-                    name="assignedTo"
-                    value={form.assignedTo?._id || form.assignedTo || ""}
-                    onChange={update}
-                    placeholder="Unassigned / Admin owned"
-                    options={[{ label: "Unassigned / Admin owned", value: "" }, ...supervisors.map((item) => ({ label: `${item.name} (${item.status})`, value: item._id }))]}
-                  />
-                </div>
-              )}
 	              <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 md:col-span-2 lg:col-span-3">
 	                <p className="text-sm font-extrabold text-blue-900">Automatic property SEO</p>
 	                <p className="mt-1 text-xs font-semibold leading-5 text-blue-700">Meta title, meta description, Ahmedabad-focused keywords, Open Graph tags, canonical URL, and property structured data are generated from the saved listing automatically.</p>
@@ -2701,7 +2711,7 @@ function OptionSelect({ label, name, value, options, onChange, required = false,
   );
 }
 
-function SearchableDropdown({ label, name, value, options = [], onChange, required = false, placeholder = "Select option", allowCustom = false, helperText = "", error = "", masterGroup = "", onAddOption }) {
+function SearchableDropdown({ label, name, value, options = [], onChange, required = false, placeholder = "Select option", allowCustom = false, helperText = "", error = "", masterGroup = "", onAddOption, disabled = false }) {
   const containerRef = useRef(null);
   const inputRef = useRef(null);
   const [open, setOpen] = useState(false);
@@ -2767,6 +2777,7 @@ function SearchableDropdown({ label, name, value, options = [], onChange, requir
   }, [open]);
 
   const emitChange = (nextValue) => {
+    if (disabled) return;
     onChange({ target: { name, value: nextValue, type: "text" } });
     setOpen(false);
     setQuery("");
@@ -2790,12 +2801,14 @@ function SearchableDropdown({ label, name, value, options = [], onChange, requir
   };
 
   const openDropdown = () => {
+    if (disabled) return;
     setQuery("");
     setActiveIndex(0);
     setOpen(true);
   };
 
   const handleKeyDown = (event) => {
+    if (disabled) return;
     if (!open && ["ArrowDown", "Enter", " "].includes(event.key)) {
       event.preventDefault();
       openDropdown();
@@ -2824,7 +2837,7 @@ function SearchableDropdown({ label, name, value, options = [], onChange, requir
       <span className="wf-label">{label}{required && <span className="ml-1 text-red-500">*</span>}</span>
       <div
         className={`flex h-12 w-full items-center gap-2 rounded-xl border bg-white px-3 text-left text-sm font-semibold text-slate-900 shadow-sm outline-none transition ${
-          error ? "border-red-300 bg-red-50/30" : open ? "border-blue-500 ring-4 ring-blue-100" : "border-slate-200 hover:border-slate-300"
+          disabled ? "border-slate-200 bg-slate-100 text-slate-500" : error ? "border-red-300 bg-red-50/30" : open ? "border-blue-500 ring-4 ring-blue-100" : "border-slate-200 hover:border-slate-300"
         }`}
       >
         <Search size={16} className="shrink-0 text-slate-400" />
@@ -2841,14 +2854,15 @@ function SearchableDropdown({ label, name, value, options = [], onChange, requir
             if (allowCustom && !masterGroup) onChange({ target: { name, value: nextQuery, type: "text" } });
           }}
           placeholder={placeholder}
-          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400"
+          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-slate-900 outline-none placeholder:text-slate-400 disabled:text-slate-500"
           aria-haspopup="listbox"
           aria-expanded={open}
           aria-controls={open ? `${name}-dropdown-listbox` : undefined}
           autoComplete="off"
           aria-invalid={Boolean(error)}
+          disabled={disabled}
         />
-        {(query || value) && (
+        {!disabled && (query || value) && (
           <button
             type="button"
             className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
@@ -2861,7 +2875,7 @@ function SearchableDropdown({ label, name, value, options = [], onChange, requir
             <X size={14} />
           </button>
         )}
-        <button
+        {!disabled && <button
           type="button"
           className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
           onClick={(event) => {
@@ -2872,7 +2886,7 @@ function SearchableDropdown({ label, name, value, options = [], onChange, requir
           aria-label={`Open ${label} options`}
         >
           <ChevronDown size={17} className={`transition ${open ? "rotate-180" : ""}`} />
-        </button>
+        </button>}
       </div>
       {(error || helperText) && <span className={`mt-1.5 block text-xs font-semibold ${error ? "text-red-600" : "text-slate-400"}`}>{error || helperText}</span>}
       {required && <input tabIndex={-1} className="pointer-events-none absolute h-px w-px opacity-0" value={value || ""} onChange={() => {}} required />}
