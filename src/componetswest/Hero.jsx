@@ -9,6 +9,11 @@ import { formatINR } from '../utils/currency';
 import { supportsRooms } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
 
+function telHref(phoneNumber = "") {
+  const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
+  return normalized ? `tel:${normalized}` : "";
+}
+
 const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const { isAuthenticated } = useAuth();
@@ -26,8 +31,9 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
       });
       return;
     }
-    const phoneNumber = property?.broker?.phone || "+9118001234567";
-    window.location.href = `tel:${phoneNumber.replace(/\s/g, "")}`;
+    const link = telHref(property?.broker?.phone);
+    if (!link) return;
+    window.location.href = link;
   };
 
   const handleWhatsApp = () => {
@@ -43,6 +49,7 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
   const propertyType = supportsRooms(property) && property?.beds ? `${property.beds} BHK` : property?.type || property?.category || "Property";
   const propertyStatus = property?.propertyStatus || (property?.status ? property.status.charAt(0).toUpperCase() + property.status.slice(1) : "Ready");
   const investmentMetric = property?.roi || (property?.isPreLeased ? "Pre-Leased" : "Verified");
+  const callAvailable = Boolean(telHref(property?.broker?.phone));
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900">
@@ -80,7 +87,9 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
               </button>
               <button 
                 onClick={handleCall}
-                className="wf-btn w-full bg-emerald-600 text-white hover:bg-emerald-700 md:w-auto"
+                disabled={!callAvailable}
+                title={callAvailable ? "Call assigned supervisor" : "Calling number is not available for this property"}
+                className="wf-btn w-full bg-emerald-600 text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 md:w-auto"
               >
                 <Phone size={18} /> Call Now
               </button>

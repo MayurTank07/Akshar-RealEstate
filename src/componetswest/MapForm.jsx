@@ -4,12 +4,18 @@ import { publicApi } from '../services/api';
 import { buildInternationalPhone, countryCodeOptions, normalizePhoneDigits } from '../utils/countryCodes';
 import { publicGoogleMapsEmbedUrl, publicMapLabel } from '../utils/googleMaps';
 
+function telHref(phoneNumber = "") {
+  const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
+  return normalized ? `tel:${normalized}` : "";
+}
+
 export default function PropertyInformation({ property }) {
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", homeLoan: false });
   const [message, setMessage] = useState("");
   const broker = property?.broker || {};
-  const contactName = broker.name || "Akshar Estate Expert";
-  const contactPhone = broker.phone || "+91 1800-123-4567";
+  const contactName = broker.name || "Contact our property expert";
+  const contactPhone = broker.phone || "";
+  const contactPhoneHref = telHref(contactPhone);
   const companyName = broker.companyName || "";
   const initials = contactName.split(" ").map((item) => item[0]).join("").slice(0, 2).toUpperCase() || "AE";
   const videoThumb = property?.image || property?.gallery?.[0] || "https://placehold.co/1200x700/f8fafc/475569?text=No+Property+Image";
@@ -148,13 +154,19 @@ export default function PropertyInformation({ property }) {
 
             {/* Agent Profile */}
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center font-bold text-gray-700 text-lg">
-                {initials}
+              <div className="w-12 h-12 overflow-hidden bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center font-bold text-gray-700 text-lg">
+                {broker.avatar ? <img src={broker.avatar} alt={contactName} className="h-full w-full object-cover" /> : initials}
               </div>
               <div>
                 <h4 className="font-bold text-gray-900 leading-none mb-1">{contactName}</h4>
                 {companyName && <p className="text-xs text-gray-400">{companyName}</p>}
-                <p className="text-blue-600 text-xs font-semibold mt-1">{contactPhone}</p>
+                {contactPhoneHref ? (
+                  <a href={contactPhoneHref} className="mt-1 inline-flex text-xs font-semibold text-blue-600 hover:text-blue-700">
+                    {contactPhone}
+                  </a>
+                ) : (
+                  <p className="text-blue-600 text-xs font-semibold mt-1">Calling number available after assignment</p>
+                )}
               </div>
             </div>
 

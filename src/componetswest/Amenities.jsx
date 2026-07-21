@@ -6,6 +6,11 @@ import { displayPropertyCode } from '../utils/propertyCode';
 import { compactSpecs } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
 
+function telHref(phoneNumber = "") {
+  const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
+  return normalized ? `tel:${normalized}` : "";
+}
+
 export default function PropertyAmenities({ property, whatsappAvailable, onWhatsAppEnquiry }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -14,7 +19,8 @@ export default function PropertyAmenities({ property, whatsappAvailable, onWhats
   const amenities = property?.amenities || [];
   const features = property?.features || [];
   const facilities = property?.facilities || [];
-  const phone = property?.broker?.phone || "+9118001234567";
+  const phone = property?.broker?.phone || "";
+  const callLink = telHref(phone);
 
   const triggerCall = location.state?.triggerCall || false;
 
@@ -23,7 +29,7 @@ export default function PropertyAmenities({ property, whatsappAvailable, onWhats
     if (!triggerCall) return;
     autoActioned.current = true;
     if (triggerCall) {
-      setTimeout(() => { window.location.href = `tel:${phone.replace(/\s/g, "")}`; }, 300);
+      if (callLink) setTimeout(() => { window.location.href = callLink; }, 300);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
@@ -35,7 +41,8 @@ export default function PropertyAmenities({ property, whatsappAvailable, onWhats
       });
       return;
     }
-    window.location.href = `tel:${phone.replace(/\s/g, "")}`;
+    if (!callLink) return;
+    window.location.href = callLink;
   };
 
   const handleWhatsAppClick = () => {
@@ -126,7 +133,7 @@ export default function PropertyAmenities({ property, whatsappAvailable, onWhats
             {whatsappAvailable ? "Enquire on WhatsApp" : "WhatsApp unavailable"}
           </button>
 
-          <button type="button" onClick={handleCallClick} className="w-full bg-[#059669] hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-50">
+          <button type="button" onClick={handleCallClick} disabled={!callLink} className="w-full bg-[#059669] hover:bg-emerald-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-emerald-50 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 disabled:shadow-none">
             <Phone className="w-5 h-5 fill-current" />
             Call Now
           </button>

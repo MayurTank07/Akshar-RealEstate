@@ -6,6 +6,7 @@ export function getPropertyCity(property) {
 
 const PUBLIC_PRIVATE_FIELDS = [
   "ownerName",
+  "ownerSellerName",
   "contact",
   "dealCustomerName",
   "dealCustomerPhone",
@@ -44,8 +45,8 @@ export function sanitizePublicProperty(property) {
       ? (() => {
           const hasDirectContact = property.broker.hasDirectContact !== false && Boolean(property.broker.whatsapp || property.broker.phone);
           return {
-            name: property.broker.name || "Akshar Estate Expert",
-            phone: property.broker.phone || "+91 1800-123-4567",
+            name: property.broker.name || "Contact our property expert",
+            phone: hasDirectContact ? property.broker.phone || "" : "",
             whatsapp: hasDirectContact ? property.broker.whatsapp || property.broker.phone || "" : "",
             hasDirectContact,
             designation: property.broker.designation || "Real Estate Expert",
@@ -54,8 +55,8 @@ export function sanitizePublicProperty(property) {
           };
         })()
       : {
-          name: "Akshar Estate Expert",
-          phone: "+91 1800-123-4567",
+          name: "Contact our property expert",
+          phone: "",
           whatsapp: "",
           hasDirectContact: false,
           designation: "Real Estate Expert",

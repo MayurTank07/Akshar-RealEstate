@@ -167,6 +167,7 @@ const emptyProperty = {
   visibility: "",
   featured: false,
   ownerName: "",
+  ownerSellerName: "",
   image: "",
   gallery: [],
   media: [],
@@ -1390,7 +1391,7 @@ function PropertiesSection({ canDelete, canCreate }) {
                 <td className="px-4 py-4 text-sm text-slate-600">{property.location}</td>
                 <td className="px-4 py-4 font-semibold text-blue-600">{formatINR(property.priceAmount || property.price)}</td>
                 <td className="px-4 py-4"><span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusClass(property.status)}`}>{property.status}</span></td>
-                <td className="px-4 py-4 text-sm text-slate-700">{property.ownerName}</td>
+                <td className="px-4 py-4 text-sm text-slate-700">{property.ownerSellerName || property.ownerName || "—"}</td>
                 <td className="px-6 py-4">
                   <div className="flex justify-end gap-3">
                     <button onClick={() => setEditing(property)} className="grid h-9 w-9 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50" aria-label="Edit property"><Edit3 size={17} /></button>
@@ -1429,7 +1430,7 @@ function PropertiesSection({ canDelete, canCreate }) {
                   <span className="flex items-center gap-1.5 text-slate-600"><Building2 size={14} className="text-slate-400" />{property.location || "—"}</span>
                   <span className="font-semibold text-blue-600">{formatINR(property.priceAmount || property.price)}</span>
                 </div>
-                {property.ownerName && <p className="mt-1.5 text-xs text-slate-500">Owner: {property.ownerName}</p>}
+                {(property.ownerSellerName || property.ownerName) && <p className="mt-1.5 text-xs text-slate-500">Owner: {property.ownerSellerName || property.ownerName}</p>}
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2 border-t border-slate-100 pt-3">
@@ -1689,6 +1690,7 @@ function PropertyModal({ property, onClose, onSaved }) {
   const [form, setForm] = useState(() => ({
     ...emptyProperty,
     ...property,
+    ownerSellerName: property.ownerSellerName || (property.ownerName && property.ownerName !== "Akshar Estate" ? property.ownerName : ""),
     propertyCode: initialPropertyCode,
     measurement: { ...emptyProperty.measurement, ...(property.measurement || {}) },
     contact: { ...emptyProperty.contact, ...(property.contact || {}) },
@@ -2062,7 +2064,7 @@ function PropertyModal({ property, onClose, onSaved }) {
               <ComboField label="Property Type" name="type" value={form.type} options={masterOptions.propertyTypes} onChange={update} required error={fieldErrors.type} placeholder="Select Property Type" masterGroup="propertyTypes" onAddOption={addMasterOption} />
               <OptionSelect label="Property Category" name="category" value={form.category} options={masterOptions.category} onChange={update} required error={fieldErrors.category} masterGroup="category" onAddOption={addMasterOption} />
               <ToggleField label="New Projects" name="isNewProject" checked={form.isNewProject} onChange={update} />
-              <Field label="Owner / Seller" name="ownerName" value={form.ownerName} onChange={update} placeholder="Owner or seller name" />
+              <Field label="Owner / Seller" name="ownerSellerName" value={form.ownerSellerName} onChange={update} placeholder="Owner or seller name" />
 	              <ComboField label="Developer / Builder" name="developerName" value={form.developerName} options={developerOptions} onChange={update} placeholder="Select or type developer" masterGroup="developers" onAddOption={addMasterOption} />
 	              <ComboField label="Top Project" name="topProject" value={form.topProject} options={projectOptions} onChange={update} placeholder="Select linked project" masterGroup="projects" onAddOption={addMasterOption} />
             </div>
