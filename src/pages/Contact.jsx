@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Breadcrumbs from "../components/Breadcrumbs";
 import StructuredData from "../components/StructuredData";
 import useSiteContent from "../hooks/useSiteContent";
 import { defaultContactContent } from "../config/navigationContent";
@@ -25,6 +26,7 @@ export default function Contact() {
       <Navbar />
       <main className="wf-container grid min-h-[70vh] gap-8 pt-32 pb-16 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
         <section>
+          <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Contact Us" }]} className="mb-6" />
           <p className="text-xs font-extrabold uppercase tracking-[0.22em] text-blue-600">Contact</p>
           <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">{contact.title}</h1>
           <p className="mt-4 max-w-xl text-slate-600">{contact.subtitle}</p>

@@ -17,6 +17,7 @@ const STATIC_PAGES = [
   { path: "/about", lastmod: "2026-07-22" },
   { path: "/services", lastmod: "2026-07-22" },
   { path: "/contact", lastmod: "2026-07-22" },
+  { path: "/blog", lastmod: "2026-07-22" },
   { path: "/privacy-policy", lastmod: "2026-07-22" },
   { path: "/terms-of-service", lastmod: "2026-07-22" },
 ];
@@ -50,6 +51,13 @@ function cleanDate(value) {
 
 async function fetchPublicProperties() {
   const response = await fetch(`${API_BASE_URL}/public/properties?limit=100&sort=updatedAt&order=desc`);
+  if (!response.ok) return [];
+  const body = await response.json();
+  return Array.isArray(body?.data) ? body.data : [];
+}
+
+async function fetchPublicBlogs() {
+  const response = await fetch(`${API_BASE_URL}/public/blogs?limit=50`);
   if (!response.ok) return [];
   const body = await response.json();
   return Array.isArray(body?.data) ? body.data : [];
@@ -157,8 +165,13 @@ function propertyTypeEntries(properties) {
   return activeInventoryPageEntries(properties, INTENT_LANDING_PAGES.all);
 }
 
-function blogEntries() {
-  return [];
+function blogEntries(blogs) {
+  return blogs
+    .filter((blog) => blog.slug && blog.isIndexable !== false && !blog.deletedAt)
+    .map((blog) => ({
+      path: `/blog/${blog.slug}`,
+      lastmod: blog.updatedAt || blog.publishedAt,
+    }));
 }
 
 function urlEntry({ path, lastmod }) {
@@ -200,14 +213,15 @@ function requestedSitemap(req) {
 
 export default async function handler(req, res) {
   const file = requestedSitemap(req);
-  const properties = await fetchPublicProperties();
-  const lastmod = newestLastmod(properties) || "2026-07-22";
+  const [properties, blogs] = await Promise.all([fetchPublicProperties(), fetchPublicBlogs()]);
+  const blogLastmod = blogs.map((blog) => blog.updatedAt || blog.publishedAt).filter(Boolean).sort().at(-1);
+  const lastmod = [newestLastmod(properties), blogLastmod, "2026-07-22"].filter(Boolean).sort().at(-1);
   const feeds = {
     "sitemap-pages.xml": pageEntries(),
     "sitemap-properties.xml": propertyEntries(properties),
     "sitemap-locations.xml": locationEntries(properties),
     "sitemap-property-types.xml": propertyTypeEntries(properties),
-    "sitemap-blog.xml": blogEntries(),
+    "sitemap-blog.xml": blogEntries(blogs),
   };
 
   const xml = file === "sitemap.xml"

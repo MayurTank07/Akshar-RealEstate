@@ -1,6 +1,7 @@
 import { ShieldCheck, FileText } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 const legalContent = {
   privacy: {
@@ -91,6 +92,7 @@ export default function LegalPage({ type = "privacy" }) {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <main className="wf-container pt-32 pb-16">
+        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: content.title }]} className="mb-6" />
         <section className="overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-2xl">
           <div className="grid gap-8 p-6 sm:p-10 lg:grid-cols-[0.65fr_0.35fr] lg:p-12">
             <div>

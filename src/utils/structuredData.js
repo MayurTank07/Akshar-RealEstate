@@ -405,3 +405,33 @@ export function buildCollectionPageJsonLd(page = {}, listings = [], { breadcrumb
     ],
   });
 }
+
+export function buildBlogPostingJsonLd(blog = {}, { url = "" } = {}) {
+  const canonical = absoluteUrl(url || `/blog/${blog.slug || ""}`);
+  return pruneSchema({
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${canonical}#blog-post`,
+    headline: blog.title,
+    description: blog.metaDescription || blog.excerpt,
+    image: absoluteUrl(blog.featuredImage),
+    datePublished: blog.publishedAt,
+    dateModified: blog.updatedAt || blog.publishedAt,
+    author: {
+      "@type": "Organization",
+      name: blog.author || BUSINESS_INFO.name,
+    },
+    publisher: {
+      "@type": "Organization",
+      "@id": `${SITE_ORIGIN}/#organization`,
+      name: BUSINESS_INFO.name,
+      logo: {
+        "@type": "ImageObject",
+        url: BUSINESS_INFO.logo,
+      },
+    },
+    mainEntityOfPage: canonical,
+    articleSection: blog.category,
+    about: (blog.relatedLocations || []).map((name) => ({ "@type": "Place", name })),
+  });
+}

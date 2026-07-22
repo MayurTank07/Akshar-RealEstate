@@ -57,6 +57,7 @@ const navItems = [
   { key: "reports", label: "Reports & Export", icon: FileText, roles: ["supervisor"], permission: "reports:export" },
   { key: "users", label: "User Management", icon: User, roles: ["admin"] },
   { key: "page-edits", label: "Page Edits", icon: Edit3, roles: ["admin"] },
+  { key: "blogs", label: "Blog Management", icon: FileText, roles: ["admin"] },
   { key: "certifications", label: "Certifications", icon: Award, roles: ["admin"] },
   { key: "settings", label: "Settings", icon: Settings, roles: ["admin"] },
 ];
@@ -571,6 +572,7 @@ export default function AdminWorkspace({ scope = "admin" }) {
           {activeSection === "reports" && <ReportsSection token={staffToken} role={staffUser.role} />}
           {activeSection === "users" && <UsersSection />}
           {activeSection === "page-edits" && <PageEditsSection />}
+          {activeSection === "blogs" && <BlogManagementSection />}
           {activeSection === "certifications" && <CertificationsAdminSection />}
           {activeSection === "settings" && <SettingsSection />}
         </main>
@@ -5351,6 +5353,217 @@ function ReportsSection({ token, role }) {
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">{reportTypes.map((item) => <button key={item} onClick={() => setType(item)} className={`rounded-xl border p-4 text-center text-sm font-bold capitalize transition-all sm:p-6 ${type === item ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}><FileText size={20} className="mx-auto mb-2 sm:mb-3" />{item}</button>)}</div>
         <h3 className="mt-6 text-base font-bold sm:mt-8 sm:text-lg">Select Date Range</h3>
         <div className="mt-4 space-y-2 sm:space-y-3">{["today", "this-week", "this-month", "last-month", "this-year"].map((item) => <button key={item} onClick={() => setRange(item)} className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left text-sm font-semibold capitalize transition-all sm:p-4 ${range === item ? "border-blue-500 bg-blue-50 text-blue-600 shadow-sm" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}><Calendar size={16} className="shrink-0 sm:h-[18px] sm:w-[18px]" />{item.replace("-", " ")}</button>)}</div>
+      </div>
+    </>
+  );
+}
+
+const emptyBlogDraft = {
+  title: "",
+  slug: "",
+  excerpt: "",
+  body: "",
+  featuredImage: "",
+  metaTitle: "",
+  metaDescription: "",
+  author: "Akshar Estate Editorial Team",
+  publishedAt: "",
+  category: "Buying Guide",
+  relatedLocations: [],
+  status: "draft",
+  isIndexable: false,
+};
+
+function blogDateInput(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+}
+
+function cleanBlogPayload(blog) {
+  return {
+    ...blog,
+    relatedLocations: Array.isArray(blog.relatedLocations) ? blog.relatedLocations : String(blog.relatedLocations || "").split(","),
+    publishedAt: blog.status === "published" ? blog.publishedAt || new Date().toISOString() : null,
+    isIndexable: blog.status === "published" ? Boolean(blog.isIndexable) : false,
+  };
+}
+
+function BlogManagementSection() {
+  const [blogs, setBlogs] = useState([]);
+  const [draft, setDraft] = useState(emptyBlogDraft);
+  const [editingId, setEditingId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  const loadBlogs = useCallback((showLoading = true) => {
+    if (showLoading) setLoading(true);
+    staffApi.blogs()
+      .then((response) => {
+        setBlogs(Array.isArray(response.data) ? response.data : []);
+        setError("");
+      })
+      .catch((err) => setError(err.message || "Unable to load blog posts."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    staffApi.blogs()
+      .then((response) => {
+        if (!active) return;
+        setBlogs(Array.isArray(response.data) ? response.data : []);
+        setError("");
+      })
+      .catch((err) => {
+        if (active) setError(err.message || "Unable to load blog posts.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const updateDraft = (field, value) => {
+    setDraft((current) => ({
+      ...current,
+      [field]: field === "status" && value === "draft" ? value : value,
+      ...(field === "status" && value === "draft" ? { isIndexable: false } : {}),
+    }));
+  };
+
+  const editBlog = (blog) => {
+    setEditingId(blog._id);
+    setDraft({
+      ...emptyBlogDraft,
+      ...blog,
+      publishedAt: blogDateInput(blog.publishedAt),
+      relatedLocations: Array.isArray(blog.relatedLocations) ? blog.relatedLocations : [],
+    });
+    setMessage("");
+    setError("");
+  };
+
+  const resetDraft = () => {
+    setEditingId("");
+    setDraft(emptyBlogDraft);
+  };
+
+  const saveBlog = async (event) => {
+    event.preventDefault();
+    setSaving(true);
+    setMessage("");
+    setError("");
+    try {
+      const payload = cleanBlogPayload(draft);
+      if (editingId) await staffApi.updateBlog(editingId, payload);
+      else await staffApi.createBlog(payload);
+      setMessage(editingId ? "Blog post updated" : "Blog draft created");
+      resetDraft();
+      loadBlogs();
+    } catch (err) {
+      setError(err.message || "Unable to save blog post.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteBlog = async (blog) => {
+    if (!window.confirm(`Delete "${blog.title}" from blog management?`)) return;
+    setSaving(true);
+    setMessage("");
+    setError("");
+    try {
+      await staffApi.deleteBlog(blog._id);
+      setMessage("Blog post deleted");
+      if (editingId === blog._id) resetDraft();
+      loadBlogs();
+    } catch (err) {
+      setError(err.message || "Unable to delete blog post.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <PageTitle title="Blog Management" subtitle="Create property guides, drafts and SEO metadata for public content" action={<button type="button" onClick={resetDraft} className="wf-btn wf-btn-secondary w-full sm:w-auto"><Plus size={17} /> New Draft</button>} />
+      <InlineAlert message={error} />
+      <InlineAlert message={message} tone="green" />
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
+        <form onSubmit={saveBlog} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+          <div className="grid gap-4 lg:grid-cols-2">
+            <Field label="Title" name="blog-title" value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} required />
+            <Field label="Slug" name="blog-slug" value={draft.slug} onChange={(event) => updateDraft("slug", event.target.value)} helperText="Leave blank on new drafts to generate from the title." />
+            <Field label="Category" name="blog-category" value={draft.category} onChange={(event) => updateDraft("category", event.target.value)} />
+            <Field label="Author" name="blog-author" value={draft.author} onChange={(event) => updateDraft("author", event.target.value)} />
+            <Field label="Featured Image URL" name="blog-featured-image" value={draft.featuredImage} onChange={(event) => updateDraft("featuredImage", event.target.value)} />
+            <Field label="Published Date" name="blog-published-at" type="date" value={draft.publishedAt} onChange={(event) => updateDraft("publishedAt", event.target.value)} />
+            <label>
+              <span className="wf-label">Status</span>
+              <select className="wf-input" value={draft.status} onChange={(event) => updateDraft("status", event.target.value)}>
+                <option value="draft">Draft</option>
+                <option value="published">Published</option>
+              </select>
+            </label>
+            <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <input type="checkbox" checked={Boolean(draft.isIndexable)} disabled={draft.status !== "published"} onChange={(event) => updateDraft("isIndexable", event.target.checked)} className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <span className="text-sm font-bold text-slate-700">Allow indexing when published</span>
+            </label>
+          </div>
+          <div className="mt-4 grid gap-4">
+            <label>
+              <span className="wf-label">Excerpt</span>
+              <textarea className="wf-input min-h-24" value={draft.excerpt} onChange={(event) => updateDraft("excerpt", event.target.value)} />
+            </label>
+            <label>
+              <span className="wf-label">Body</span>
+              <textarea className="wf-input min-h-72" value={draft.body} onChange={(event) => updateDraft("body", event.target.value)} />
+            </label>
+            <div className="grid gap-4 lg:grid-cols-2">
+              <label>
+                <span className="wf-label">Meta Title</span>
+                <textarea className="wf-input min-h-20" value={draft.metaTitle} onChange={(event) => updateDraft("metaTitle", event.target.value)} />
+                <span className="mt-1.5 block text-xs font-semibold text-slate-400">{draft.metaTitle?.length || 0}/90 characters</span>
+              </label>
+              <label>
+                <span className="wf-label">Meta Description</span>
+                <textarea className="wf-input min-h-20" value={draft.metaDescription} onChange={(event) => updateDraft("metaDescription", event.target.value)} />
+                <span className="mt-1.5 block text-xs font-semibold text-slate-400">{draft.metaDescription?.length || 0}/180 characters</span>
+              </label>
+            </div>
+            <label>
+              <span className="wf-label">Related Locations</span>
+              <input className="wf-input" value={(draft.relatedLocations || []).join(", ")} onChange={(event) => updateDraft("relatedLocations", event.target.value.split(",").map((item) => item.trim()).filter(Boolean))} placeholder="Kudasan, Sargasan, GIFT City" />
+            </label>
+          </div>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <button type="button" onClick={resetDraft} className="wf-btn wf-btn-secondary w-full sm:w-auto" disabled={saving}>Clear</button>
+            <button type="submit" className="wf-btn wf-btn-primary w-full sm:w-auto" disabled={saving}>{saving ? "Saving..." : editingId ? "Update Blog" : "Create Blog"}</button>
+          </div>
+        </form>
+        <aside className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5">
+          <h3 className="text-base font-extrabold text-slate-950">Existing Posts</h3>
+          {loading && <div className="mt-4"><LoadingState label="Loading blog posts..." /></div>}
+          {!loading && blogs.length === 0 && <div className="mt-4"><EmptyState title="No blog drafts yet" description="Create the first property guide draft." /></div>}
+          <div className="mt-4 space-y-3">
+            {blogs.map((blog) => (
+              <article key={blog._id} className={`rounded-xl border p-3 ${editingId === blog._id ? "border-blue-200 bg-blue-50" : "border-slate-200 bg-slate-50"}`}>
+                <p className="text-sm font-extrabold text-slate-900">{blog.title}</p>
+                <p className="mt-1 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">{blog.status} {blog.isIndexable ? "| indexable" : "| noindex"}</p>
+                <p className="mt-2 text-xs font-semibold text-slate-500">{blog.slug}</p>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" onClick={() => editBlog(blog)} className="wf-btn wf-btn-secondary px-3 py-2 text-xs"><Edit3 size={14} /> Edit</button>
+                  <button type="button" onClick={() => deleteBlog(blog)} className="wf-btn bg-red-50 px-3 py-2 text-xs text-red-700 hover:bg-red-100" disabled={saving}><Trash2 size={14} /> Delete</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </aside>
       </div>
     </>
   );

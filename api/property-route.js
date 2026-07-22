@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { getBhkIntentPage, getPropertyTypeIntentPage, getSaleLandingPage, slugifyLocation } from "../src/config/locationLandingPages.js";
 import { PROPERTY_IMAGE_FALLBACK, imageSrcSet, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildPropertyJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
 
@@ -69,10 +70,28 @@ async function fetchPublicProperties(params = {}) {
   return Array.isArray(body?.data) ? body.data : [];
 }
 
+async function fetchPublicBlogs(params = {}) {
+  const search = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") search.set(key, value);
+  });
+  const response = await fetch(`${API_BASE_URL}/public/blogs?${search.toString()}`);
+  if (!response.ok) return [];
+  const body = await response.json();
+  return Array.isArray(body?.data) ? body.data : [];
+}
+
 async function fetchRelatedProperties(property) {
-  const [sameLocation, sameType] = await Promise.all([
+  const city = property.city || "";
+  const locality = property.locationMaster?.name || property.location || "";
+  const bhk = property.bhk || property.beds || "";
+  const priceAmount = Number(property.priceAmount || 0);
+  const [sameLocation, sameType, sameBhkSource, sameCity, relatedBlogs] = await Promise.all([
     fetchPublicProperties({ location: property.location || property.locationMaster?.name || "", city: property.city || "", limit: 6 }),
     fetchPublicProperties({ type: property.type || property.propertyType || "", city: property.city || "", limit: 6 }),
+    bhk ? fetchPublicProperties({ city, limit: 80 }) : Promise.resolve([]),
+    fetchPublicProperties({ city, limit: 80 }),
+    fetchPublicBlogs({ location: locality || city, limit: 3 }),
   ]);
   const seen = new Set([property._id, property.slug]);
   const unique = (items) => items.filter((item) => {
@@ -84,6 +103,13 @@ async function fetchRelatedProperties(property) {
   return {
     sameLocation: unique(sameLocation).slice(0, 5),
     sameType: unique(sameType).slice(0, 5),
+    sameBhk: unique(sameBhkSource.filter((item) => Number(item.bhk || item.beds || 0) === Number(bhk))).slice(0, 5),
+    similarPrice: unique(sameCity.filter((item) => {
+      const nextPrice = Number(item.priceAmount || 0);
+      if (!priceAmount || !nextPrice) return false;
+      return Math.abs(nextPrice - priceAmount) / priceAmount <= 0.2;
+    })).slice(0, 5),
+    relatedBlogs,
   };
 }
 
@@ -256,36 +282,74 @@ function propertyLink(property) {
   return property?.slug ? canonicalPath(property.slug) : "";
 }
 
+function cityLandingHref(city) {
+  const citySlug = slugifyLocation(city);
+  return getSaleLandingPage(citySlug)?.path || (citySlug ? `/properties-for-sale/${citySlug}` : "/properties");
+}
+
+function localityLandingHref(city, locality) {
+  const citySlug = slugifyLocation(city);
+  const localitySlug = slugifyLocation(locality);
+  return getSaleLandingPage(citySlug, localitySlug)?.path || cityLandingHref(city);
+}
+
+function sameBhkHref(property, city, locality) {
+  const bhk = Number(property.bhk || property.beds || 0);
+  if (!bhk) return "";
+  const clean = getBhkIntentPage(slugifyLocation(city), slugifyLocation(locality), `${bhk}-bhk`);
+  return clean?.path || localityLandingHref(city, locality);
+}
+
+function propertyTypeHref(property, city, locality) {
+  const type = property.type || property.propertyType || "";
+  const normalizedType = slugifyLocation(type);
+  const locationSlug = slugifyLocation(locality || city);
+  const prefix = /plot|land/.test(normalizedType)
+    ? "plots-for-sale"
+    : /commercial|office|shop|retail/.test(normalizedType)
+      ? "commercial-property"
+      : /industrial|warehouse|factory/.test(normalizedType)
+        ? "industrial-property"
+        : "";
+  if (!prefix) return localityLandingHref(city, locality);
+  return getPropertyTypeIntentPage(prefix, locationSlug)?.path || localityLandingHref(city, locality);
+}
+
 function buildInternalLinks(property, related = {}) {
   const city = property.city || "";
   const locality = property.locationMaster?.name || property.location || "";
   const type = property.type || property.propertyType || "";
-  const citySlug = slugify(city);
-  const localitySlug = slugify([locality, city].filter(Boolean).join(" "));
-  const typeSlug = slugify([type, "for", listingAction(property), "in", city].filter(Boolean).join(" "));
   const nearbyLinks = String(property.nearbyLandmarks || "")
     .split(/[,.;\n]/)
     .map((item) => item.trim())
     .filter((item) => item.length > 3)
     .slice(0, 4)
-    .map((item) => ({ label: `Properties near ${item}`, href: `/purchase/buyers/${slugify(`properties near ${item} ${city}`)}` }));
+    .map((item) => ({ label: `Properties near ${item} in ${city || "Gujarat"}`, href: localityLandingHref(city, locality) }));
+  const bhk = Number(property.bhk || property.beds || 0);
+  const priceLabel = property.price ? `Properties around ${property.price} in ${city || "Gujarat"}` : `Similar price properties in ${city || "Gujarat"}`;
+  const relatedBlogLinks = (related.relatedBlogs || []).map((blog) => ({ label: blog.title, href: `/blog/${blog.slug}` }));
 
   return {
     breadcrumbs: [
       { label: "Home", href: "/" },
       { label: "Properties", href: "/properties" },
-      city && { label: city, href: `/purchase/buyers/properties-for-sale-in-${citySlug}` },
-      locality && { label: locality, href: `/purchase/buyers/properties-for-sale-in-${localitySlug}` },
+      city && { label: city, href: cityLandingHref(city) },
+      locality && { label: locality, href: localityLandingHref(city, locality) },
       { label: property.title || propertyPageTitle(property), href: canonicalPath(property.slug) },
     ].filter(Boolean),
     core: [
-      city && { label: `Properties in ${city}`, href: `/purchase/buyers/properties-for-sale-in-${citySlug}` },
-      locality && { label: `Properties in ${locality}`, href: `/purchase/buyers/properties-for-sale-in-${localitySlug}` },
-      type && { label: `${type} properties`, href: `/purchase/buyers/${typeSlug}` },
+      city && { label: `Properties for sale in ${city}`, href: cityLandingHref(city) },
+      locality && { label: `Properties for sale in ${locality}`, href: localityLandingHref(city, locality) },
+      bhk && { label: `${bhk} BHK properties in ${locality || city}`, href: sameBhkHref(property, city, locality) },
+      type && { label: `${type} properties in ${locality || city}`, href: propertyTypeHref(property, city, locality) },
+      property.price && { label: priceLabel, href: cityLandingHref(city) },
       ...nearbyLinks,
     ].filter(Boolean),
     similar: (related.sameType || []).map((item) => ({ label: item.title || propertyPageTitle(item), href: propertyLink(item) })),
     sameLocation: (related.sameLocation || []).map((item) => ({ label: item.title || propertyPageTitle(item), href: propertyLink(item) })),
+    sameBhk: (related.sameBhk || []).map((item) => ({ label: item.title || propertyPageTitle(item), href: propertyLink(item) })),
+    similarPrice: (related.similarPrice || []).map((item) => ({ label: item.title || propertyPageTitle(item), href: propertyLink(item) })),
+    relatedBlogs: relatedBlogLinks,
   };
 }
 
@@ -337,6 +401,10 @@ function buildInitialPropertyPage(property, related = {}) {
         ${section("Contact This Property", `<p><a href="${escapeHtml(broker.phone ? `tel:${String(broker.phone).replace(/[^\d+]/g, "")}` : "/contact")}">Call button</a></p><p><a href="${escapeHtml(broker.whatsapp ? `https://wa.me/${String(broker.whatsapp).replace(/[^\d]/g, "")}` : "/contact")}">WhatsApp button</a></p>`)}
         ${section("Similar Properties", linkList(links.similar) || "<p>Similar active properties will appear here as inventory updates.</p>")}
         ${section("Properties in the Same Location", linkList(links.sameLocation) || "<p>More active properties in this location will appear here as inventory updates.</p>")}
+        ${section("Same BHK Properties", linkList(links.sameBhk) || "<p>Same BHK active properties will appear here as inventory updates.</p>")}
+        ${section("Same Property Type", linkList(links.similar) || "<p>Same property type listings will appear here as inventory updates.</p>")}
+        ${section("Similar Price Range", linkList(links.similarPrice) || "<p>Similar price range listings will appear here as inventory updates.</p>")}
+        ${section("Related Property Guides", linkList(links.relatedBlogs) || "<p>Related Akshar Estate property guides will appear here after editorial review.</p>")}
         ${section("Internal Links", linkList(links.core))}
         ${images.length > 1 ? section("Property Images", `<ul>${images.slice(1).map((image) => `<li><img ${imageAttributes(image, { width: 320, height: 220, widths: [160, 240, 320], sizes: "240px" })} style="max-width:240px;height:auto" /></li>`).join("")}</ul>`) : ""}
       </article>

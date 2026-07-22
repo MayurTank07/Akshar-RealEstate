@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import BrandLogo from '../components/BrandLogo';
+import Breadcrumbs from '../components/Breadcrumbs';
 import CertificationsSection from '../components/CertificationsSection';
 import StructuredData from '../components/StructuredData';
 import useSiteContent from '../hooks/useSiteContent';
@@ -28,6 +29,7 @@ const AboutUs = () => {
 
       {/* Back Arrow Section - Pushed down so it's visible below fixed Navbar */}
       <div className="pt-32 px-6 max-w-7xl mx-auto">
+        <Breadcrumbs items={[{ label: 'Home', href: '/' }, { label: 'About Us' }]} className="mb-5" />
         <button 
           onClick={() => navigate('/')} 
           className="flex items-center gap-3 text-slate-400 hover:text-blue-600 transition-all group"

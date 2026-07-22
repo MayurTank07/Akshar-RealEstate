@@ -23,6 +23,8 @@ const NewProjects = lazy(() => import("./pages/NewProjects"));
 const SavedProperties = lazy(() => import("./pages/SavedProperties"));
 const Profile = lazy(() => import("./pages/Profile"));
 const LocationLanding = lazy(() => import("./pages/LocationLanding"));
+const BlogList = lazy(() => import("./pages/BlogList"));
+const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const StaffLogin = lazy(() => import("./pages/StaffLogin"));
 const AdminWorkspace = lazy(() => import("./pages/AdminWorkspace"));
 
@@ -54,6 +56,8 @@ function App() {
               <Route path="/plots-for-sale/:typeLocation" element={<LocationLanding typePrefix="plots-for-sale" />} />
               <Route path="/commercial-property/:typeLocation" element={<LocationLanding typePrefix="commercial-property" />} />
               <Route path="/industrial-property/:typeLocation" element={<LocationLanding typePrefix="industrial-property" />} />
+              <Route path="/blog" element={<BlogList />} />
+              <Route path="/blog/:slug" element={<BlogDetails />} />
               <Route path="/purchase/:category/:slug" element={<Pricing />} />
               <Route path="/enquiry" element={<Enquiry />} />
               <Route path="/login" element={<Login />} />

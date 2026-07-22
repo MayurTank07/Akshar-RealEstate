@@ -3,6 +3,7 @@ import { useLocation, Link, useNavigate, useParams } from "react-router-dom";
 import Hero from "../componetswest/Hero";
 import Amenities from "../componetswest/Amenities";
 import MapForm from "../componetswest/MapForm";
+import Breadcrumbs from "../components/Breadcrumbs";
 import Footer from "../components/Footer";
 import { publicApi } from "../services/api";
 import useAuth from "../contexts/useAuth";
@@ -123,6 +124,15 @@ export default function PropertyDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-7xl px-4 pt-28 sm:px-6 lg:px-8">
+        <Breadcrumbs items={[
+          { label: "Home", href: "/" },
+          { label: "Properties", href: "/properties" },
+          property.city && { label: property.city, href: `/properties-for-sale/${String(property.city).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}` },
+          property.location && { label: property.location, href: `/properties-for-sale/${String(property.city || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}/${String(property.location).toLowerCase().replace(/\./g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")}` },
+          { label: property.title || "Property Details" },
+        ]} />
+      </div>
       {/* Hero Section from componetswest */}
       <Hero property={property} whatsappAvailable={whatsappAvailable} onWhatsAppEnquiry={requestWhatsAppEnquiry} />
 

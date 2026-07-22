@@ -57,6 +57,14 @@ async function fetchPublicProperties() {
   return Array.isArray(body?.data) ? body.data : [];
 }
 
+async function fetchPublicBlogs(page) {
+  const location = page.localityName || page.name || page.city || "";
+  const response = await fetch(`${API_BASE_URL}/public/blogs?location=${encodeURIComponent(location)}&limit=4`);
+  if (!response.ok) return [];
+  const body = await response.json();
+  return Array.isArray(body?.data) ? body.data : [];
+}
+
 function propertyLocationText(property = {}) {
   return [property.locationMaster?.name || property.location, property.city].filter(Boolean).join(" ");
 }
@@ -285,12 +293,21 @@ function buildNearbyLinks(page) {
   }));
 }
 
+function buildRelatedBlogLinks(blogs = []) {
+  return blogs.map((blog) => ({
+    label: blog.title,
+    href: `/blog/${blog.slug}`,
+  }));
+}
+
 function nearbyHref(page, name) {
   const slug = slugifyLocation(name);
   if (page.kind === "locality" && getSaleLandingPage(page.regionSlug, slug)) {
     return `/properties-for-sale/${page.regionSlug}/${slug}`;
   }
-  return `/purchase/buyers/properties-for-sale-in-${slug}`;
+  const regionSlug = page.regionSlug || slugifyLocation(page.city || page.name);
+  const clean = getSaleLandingPage(regionSlug, slug);
+  return clean?.path || `/properties-for-sale/${regionSlug}`;
 }
 
 function buildFaqs(page) {
@@ -321,7 +338,7 @@ function jsonLd(data, id) {
 }
 
 function injectHtml(shell, page, context) {
-  const { allListings, visibleListings, propertyTypes, bhkOptions, currentPage, totalPages, filtered, shouldIndex } = context;
+  const { allListings, visibleListings, propertyTypes, bhkOptions, currentPage, totalPages, filtered, shouldIndex, relatedBlogs = [] } = context;
   const title = page.title;
   const description = page.metaDescription || pageMetaDescription(page, allListings.length);
   const robots = shouldIndex ? "index,follow,max-image-preview:large" : "noindex,follow";
@@ -357,15 +374,17 @@ function injectHtml(shell, page, context) {
       </header>
       ${buildFilterLinks(page, propertyTypes, bhkOptions)}
       <section><h2>Local Property Listings</h2>${buildListings(visibleListings)}${buildPagination(page, currentPage, totalPages)}</section>
+      ${page.regionSlug ? `<section><h2>Parent Region</h2>${linkList([{ label: `Properties for sale in ${page.regionName || page.city || page.name}`, href: `/properties-for-sale/${page.regionSlug}` }])}</section>` : ""}
       <section><h2>Genuine Locality Introduction</h2><p>${escapeHtml(page.intro)}</p></section>
       <section><h2>Nearby Areas</h2>${linkList(buildNearbyLinks(page))}</section>
-      <section><h2>Important Landmarks</h2>${linkList((page.landmarks || []).map((name) => ({ label: name, href: `/purchase/buyers/properties-near-${slugifyLocation(`${name} ${page.city || page.name}`)}` })))}</section>
+      <section><h2>Important Landmarks</h2>${linkList((page.landmarks || []).map((name) => ({ label: `Properties near ${name}`, href: page.path })))}</section>
       <section><h2>Connectivity Information</h2><p>${escapeHtml(page.connectivity)}</p></section>
       <section><h2>Internal Links</h2>${linkList([
         { label: "All properties", href: "/properties" },
-        { label: `Properties in ${page.city || page.name}`, href: `/purchase/buyers/properties-for-sale-in-${slugifyLocation(page.city || page.name)}` },
+        { label: `Properties for sale in ${page.city || page.name}`, href: `/properties-for-sale/${page.regionSlug || slugifyLocation(page.city || page.name)}` },
         ...buildNearbyLinks(page),
       ])}</section>
+      <section><h2>Related Blog Posts</h2>${linkList(buildRelatedBlogLinks(relatedBlogs)) || "<p>Related Akshar Estate property guides will appear here after editorial review.</p>"}</section>
       ${buildFaqs(page)}
       <section><h2>Contact Akshar Estate</h2><p>Speak with Akshar Estate for verified property options, supervisor contact and fresh inventory in ${escapeHtml(page.name)}.</p><p><a href="/contact">Contact CTA</a></p></section>
     </main>`;
@@ -435,6 +454,7 @@ export default async function handler(req, res) {
     }
 
     const allProperties = await fetchPublicProperties();
+    const relatedBlogs = await fetchPublicBlogs(page);
     const pageListings = allProperties.filter((property) => propertyMatchesPage(property, page));
     const propertyTypes = uniqueValues(pageListings, propertyType);
     const bhkOptions = uniqueValues(pageListings, propertyBhk).filter((value) => Number(value) > 0);
@@ -458,6 +478,7 @@ export default async function handler(req, res) {
       totalPages,
       filtered,
       shouldIndex,
+      relatedBlogs,
     });
     res.statusCode = 200;
     res.setHeader("Content-Type", "text/html; charset=utf-8");

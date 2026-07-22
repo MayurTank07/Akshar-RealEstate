@@ -3,6 +3,7 @@ import { ArrowRight, Building2, CheckCircle2, Home, KeyRound, Landmark, ListChec
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Breadcrumbs from "../components/Breadcrumbs";
 import StructuredData from "../components/StructuredData";
 import useSiteContent from "../hooks/useSiteContent";
 import { buildBusinessSchemas } from "../utils/structuredData";
@@ -71,6 +72,7 @@ export default function ServicesPage() {
           />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950/80 to-slate-950/70" />
           <div className="wf-container relative z-10 pb-20">
+            <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Services" }]} className="mb-6 text-blue-100" />
             <p className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.22em] text-blue-100 backdrop-blur">
               Real Estate Services
             </p>

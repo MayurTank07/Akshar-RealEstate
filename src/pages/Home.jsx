@@ -12,6 +12,7 @@ import Testimonials from "../components/Testimonials";
 import Stats from "../components/Stats";
 import QuickPropertySearch from "../components/QuickPropertySearch";
 import Footer from "../components/Footer";
+import PriorityLocationLinks from "../components/PriorityLocationLinks";
 import StructuredData from "../components/StructuredData";
 import useSiteContent from "../hooks/useSiteContent";
 import { buildBusinessSchemas } from "../utils/structuredData";
@@ -38,6 +39,7 @@ export default function Home() {
         <Agents/>
         <Testimonials/>
         <Stats/>
+        <PriorityLocationLinks/>
         <QuickPropertySearch/>
       </main>
       <Footer />
