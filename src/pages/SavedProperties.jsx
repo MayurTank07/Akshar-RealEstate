@@ -96,7 +96,8 @@ export default function SavedProperties() {
 
 function SavedPropertyCard({ property, onUnsave }) {
   const navigate = useNavigate();
-  const detailsPath = property.source === "pricing" && !property.slug ? "/property-detail" : `/property/${property.slug || property._id || property.id}`;
+  const routeKey = property.slug || property._id || property.id;
+  const detailsPath = routeKey ? `/property/${routeKey}` : "/properties";
   const area = property.sqft ? `${property.sqft} sq.ft` : property.area;
   const price = formatINR(property.priceAmount || property.price);
   const openDetails = () => navigate(detailsPath, { state: { property } });

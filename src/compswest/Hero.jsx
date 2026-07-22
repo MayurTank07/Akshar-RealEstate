@@ -199,7 +199,7 @@ export default function PricingPage({ category, type, city: selectedCity, filter
   const handlePropertyClick = (item) => {
     const dbId = /^[a-f\d]{24}$/i.test(item?._id || "") ? item._id : null;
     const routeKey = item?.slug || dbId;
-    navigate(routeKey ? `/property/${routeKey}` : "/property-detail", { state: { property: item } });
+    navigate(routeKey ? `/property/${routeKey}` : "/properties", { state: { property: item } });
   };
 
   const handleSaveClick = (item) => {

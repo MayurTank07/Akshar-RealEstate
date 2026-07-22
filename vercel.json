@@ -6,6 +6,14 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/property/:key/",
+      "destination": "/api/property-route?key=:key&slash=1"
+    },
+    {
+      "source": "/property/:key",
+      "destination": "/api/property-route?key=:key"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

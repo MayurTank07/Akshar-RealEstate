@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { StaffAuthProvider } from "./contexts/StaffAuthContext";
 import Home from "./pages/Home";
@@ -33,7 +33,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/pricing" element={<Pricing />} />
-            <Route path="/property-detail" element={<PropertyDetails />} />
+            <Route path="/property-detail" element={<Navigate to="/properties" replace />} />
             <Route path="/home" element={<HomeWest />} />
             <Route path="/properties" element={<PropertiesPage />} />
             <Route path="/new-projects" element={<NewProjects />} />

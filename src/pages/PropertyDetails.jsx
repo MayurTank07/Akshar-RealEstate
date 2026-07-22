@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, Link, useParams } from "react-router-dom";
+import { useLocation, Link, useNavigate, useParams } from "react-router-dom";
 import Hero from "../componetswest/Hero";
 import Amenities from "../componetswest/Amenities";
 import MapForm from "../componetswest/MapForm";
@@ -21,6 +21,7 @@ import { syncPropertySeo } from "../utils/propertySeo";
 
 export default function PropertyDetails() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { id } = useParams();
   const { user } = useAuth();
   const autoWhatsAppHandled = useRef(false);
@@ -42,7 +43,12 @@ export default function PropertyDetails() {
     const loader = remoteId ? publicApi.property(remoteId) : publicApi.propertyBySlug(remoteSlug);
     loader
       .then((response) => {
-        if (active) setProperty(sanitizePublicProperty(response.data));
+        if (!active) return;
+        const nextProperty = sanitizePublicProperty(response.data);
+        setProperty(nextProperty);
+        if (nextProperty?.slug && (remoteId || (remoteSlug && nextProperty.slug !== remoteSlug))) {
+          navigate(`/property/${nextProperty.slug}`, { replace: true, state: { property: nextProperty } });
+        }
       })
       .catch(() => {
         if (active) setProperty((current) => current || null);
@@ -53,7 +59,7 @@ export default function PropertyDetails() {
     return () => {
       active = false;
     };
-  }, [remoteId, remoteSlug]);
+  }, [navigate, remoteId, remoteSlug]);
 
   useEffect(() => syncPropertySeo(property), [property]);
 
