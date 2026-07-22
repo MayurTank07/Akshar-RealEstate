@@ -4,6 +4,18 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "vite",
+  "redirects": [
+    {
+      "source": "/property-detail",
+      "destination": "/properties",
+      "permanent": true
+    },
+    {
+      "source": "/property-detail/",
+      "destination": "/properties",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",
@@ -36,6 +48,10 @@
     {
       "source": "/property/:key",
       "destination": "/api/property-route?key=:key"
+    },
+    {
+      "source": "/property",
+      "destination": "/api/property-route"
     },
     {
       "source": "/properties-for-sale/:region/:locality/:intent/",
@@ -94,8 +110,124 @@
       "destination": "/api/blog-route?slug=:slug"
     },
     {
+      "source": "/properties/",
+      "destination": "/api/page-route?path=properties"
+    },
+    {
+      "source": "/properties",
+      "destination": "/api/page-route?path=properties"
+    },
+    {
+      "source": "/new-projects/",
+      "destination": "/api/page-route?path=new-projects"
+    },
+    {
+      "source": "/new-projects",
+      "destination": "/api/page-route?path=new-projects"
+    },
+    {
+      "source": "/about/",
+      "destination": "/api/page-route?path=about"
+    },
+    {
+      "source": "/about",
+      "destination": "/api/page-route?path=about"
+    },
+    {
+      "source": "/services/",
+      "destination": "/api/page-route?path=services"
+    },
+    {
+      "source": "/services",
+      "destination": "/api/page-route?path=services"
+    },
+    {
+      "source": "/contact/",
+      "destination": "/api/page-route?path=contact"
+    },
+    {
+      "source": "/contact",
+      "destination": "/api/page-route?path=contact"
+    },
+    {
+      "source": "/blog/",
+      "destination": "/api/page-route?path=blog"
+    },
+    {
+      "source": "/blog",
+      "destination": "/api/page-route?path=blog"
+    },
+    {
+      "source": "/privacy-policy/",
+      "destination": "/api/page-route?path=privacy-policy"
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/api/page-route?path=privacy-policy"
+    },
+    {
+      "source": "/terms-of-service/",
+      "destination": "/api/page-route?path=terms-of-service"
+    },
+    {
+      "source": "/terms-of-service",
+      "destination": "/api/page-route?path=terms-of-service"
+    },
+    {
+      "source": "/login",
+      "destination": "/api/page-route?path=login"
+    },
+    {
+      "source": "/register",
+      "destination": "/api/page-route?path=register"
+    },
+    {
+      "source": "/stafflogin",
+      "destination": "/api/page-route?path=stafflogin"
+    },
+    {
+      "source": "/admin-dashboard",
+      "destination": "/api/page-route?path=admin-dashboard"
+    },
+    {
+      "source": "/supervisor-dashboard",
+      "destination": "/api/page-route?path=supervisor-dashboard"
+    },
+    {
+      "source": "/saved",
+      "destination": "/api/page-route?path=saved"
+    },
+    {
+      "source": "/profile",
+      "destination": "/api/page-route?path=profile"
+    },
+    {
+      "source": "/admin",
+      "destination": "/api/page-route?path=admin"
+    },
+    {
+      "source": "/supervisor",
+      "destination": "/api/page-route?path=supervisor"
+    },
+    {
+      "source": "/purchase/:category/:slug",
+      "destination": "/api/page-route?path=purchase"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/api/page-route?path=pricing"
+    },
+    {
+      "source": "/home",
+      "destination": "/api/page-route?path=home"
+    },
+    {
+      "source": "/enquiry",
+      "destination": "/api/page-route?path=enquiry"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "/api/page-route?path=$1"
     }
   ],
   "headers": [

@@ -58,6 +58,8 @@ Google documentation:
    - `https://www.aksharestate.in/sitemap-property-types.xml`
    - `https://www.aksharestate.in/sitemap-blog.xml`
 
+Important: do not use URL Inspection to request indexing for `https://www.aksharestate.in/sitemap.xml`. A sitemap is an XML discovery file, not a normal search-result page. Submit it in the Sitemaps report, then inspect and request indexing only for public HTML URLs such as the homepage, property pages and location pages after the live test passes.
+
 Google documentation:
 - Build and submit sitemap: `https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap`
 - Sitemaps report: `https://support.google.com/webmasters/answer/7451001`

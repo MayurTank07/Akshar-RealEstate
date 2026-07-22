@@ -465,7 +465,8 @@ export default async function handler(req, res) {
   try {
     const url = new URL(req.url || "", "https://www.aksharestate.in");
     const rawKeyFromPath = PROPERTY_PATH_RE.exec(url.pathname)?.[1];
-    const rawKey = firstQueryValue(req.query?.key) || rawKeyFromPath || "";
+    const oldIdParam = firstQueryValue(req.query?.id) || url.searchParams.get("id") || firstQueryValue(req.query?.property) || url.searchParams.get("property") || "";
+    const rawKey = firstQueryValue(req.query?.key) || rawKeyFromPath || oldIdParam || "";
     const decodedKey = decodeURIComponent(String(rawKey)).trim().replace(/^\/+|\/+$/g, "");
     if (!decodedKey) {
       notFound(res);
