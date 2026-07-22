@@ -126,6 +126,17 @@ function readIndexHtml() {
   return "<!doctype html><html lang=\"en-IN\"><head><meta charset=\"UTF-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" /><title>Akshar Estate: The Property Hub</title></head><body><div id=\"root\"></div><script type=\"module\" src=\"/src/main.jsx\"></script></body></html>";
 }
 
+function stripStaticSeo(html) {
+  return html
+    .replace(/<title>[\s\S]*?<\/title>/i, "")
+    .replace(/<meta\s+name=["']description["'][^>]*>\s*/gi, "")
+    .replace(/<meta\s+name=["']robots["'][^>]*>\s*/gi, "")
+    .replace(/<link\s+rel=["']canonical["'][^>]*>\s*/gi, "")
+    .replace(/<meta\s+property=["']og:[^"']+["'][^>]*>\s*/gi, "")
+    .replace(/<meta\s+name=["']twitter:[^"']+["'][^>]*>\s*/gi, "")
+    .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, "");
+}
+
 function buildPropertyMeta(property, slug) {
   const title = compact(property.seoTitle || propertyPageTitle(property), 70);
   const description = propertyMetaDescription(property);
@@ -158,9 +169,7 @@ function buildPropertyMeta(property, slug) {
 
 function injectPropertyMeta(html, property, slug, related = {}) {
   const meta = buildPropertyMeta(property, slug);
-  const withoutTitle = html
-    .replace(/<title>[\s\S]*?<\/title>/i, "")
-    .replace(/<html([^>]*)>/i, '<html lang="en-IN">');
+  const withoutTitle = stripStaticSeo(html).replace(/<html([^>]*)>/i, '<html lang="en-IN">');
   const withMeta = withoutTitle.includes("</head>")
     ? withoutTitle.replace("</head>", `    ${meta}\n  </head>`)
     : `${meta}\n${withoutTitle}`;

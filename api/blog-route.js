@@ -41,6 +41,17 @@ function readIndexHtml() {
   return "<!doctype html><html lang=\"en-IN\"><head><meta charset=\"UTF-8\" /><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" /><title>Akshar Estate: The Property Hub</title></head><body><div id=\"root\"></div><script type=\"module\" src=\"/src/main.jsx\"></script></body></html>";
 }
 
+function stripStaticSeo(html) {
+  return html
+    .replace(/<title>[\s\S]*?<\/title>/i, "")
+    .replace(/<meta\s+name=["']description["'][^>]*>\s*/gi, "")
+    .replace(/<meta\s+name=["']robots["'][^>]*>\s*/gi, "")
+    .replace(/<link\s+rel=["']canonical["'][^>]*>\s*/gi, "")
+    .replace(/<meta\s+property=["']og:[^"']+["'][^>]*>\s*/gi, "")
+    .replace(/<meta\s+name=["']twitter:[^"']+["'][^>]*>\s*/gi, "")
+    .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, "");
+}
+
 async function fetchBlog(slug) {
   const response = await fetch(`${API_BASE_URL}/public/blogs/${encodeURIComponent(slug)}`);
   if (!response.ok) return null;
@@ -125,8 +136,7 @@ function injectBlogHtml(shell, blog) {
     jsonLdScript(buildBreadcrumbSchema(breadcrumbs), "akshar-schema-blog-breadcrumb"),
     jsonLdScript(buildBlogPostingJsonLd(blog, { url }), "akshar-schema-blog-post"),
   ].join("\n    ");
-  return shell
-    .replace(/<title>[\s\S]*?<\/title>/i, "")
+  return stripStaticSeo(shell)
     .replace(/<html([^>]*)>/i, '<html lang="en-IN">')
     .replace("</head>", `    ${head}\n  </head>`)
     .replace('<div id="root"></div>', `<div id="root">${buildBlogPage(blog)}</div>`);

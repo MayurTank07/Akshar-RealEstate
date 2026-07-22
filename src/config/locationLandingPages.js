@@ -161,6 +161,21 @@ const localityPages = localityDefinitions.map(([regionSlug, name, city, intro, n
   verified: true,
 }));
 
+function locationMetaDescription(page) {
+  const place = page.kind === "locality" || page.regionSlug ? `${page.name}, ${page.city}` : page.name;
+  const nearby = (page.nearbyAreas || []).slice(0, 3).join(", ");
+  const text = `Explore properties for sale in ${place} with active listings${nearby ? `, nearby areas like ${nearby}` : ""}, FAQs and Akshar Estate contact.`;
+  return text.length > 160 ? `${text.slice(0, 157).replace(/\s+\S*$/, "")}...` : text;
+}
+
+primaryRegions.forEach((page) => {
+  page.metaDescription = page.metaDescription || locationMetaDescription(page);
+});
+
+localityPages.forEach((page) => {
+  page.metaDescription = page.metaDescription || locationMetaDescription({ ...page, kind: "locality" });
+});
+
 export const SALE_LANDING_PAGES = {
   regions: primaryRegions,
   localities: localityPages,
