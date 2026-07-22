@@ -14,6 +14,16 @@ function telHref(phoneNumber = "") {
   return normalized ? `tel:${normalized}` : "";
 }
 
+function propertyImageAlt(property, index = 0) {
+  const savedAlt = property?.imageAltTexts?.[index];
+  const repeatedAlt = savedAlt && property?.imageAltTexts?.filter((item) => item === savedAlt).length > 1;
+  if (savedAlt && !repeatedAlt) return savedAlt;
+  const location = [property?.location, property?.city].filter(Boolean).join(" ");
+  const type = property?.bhk ? `${property.bhk} BHK ${property?.type || property?.propertyType || "property"}` : property?.type || property?.propertyType || "property";
+  const views = ["Exterior view", "Living room", "Bedroom", "Kitchen", "Balcony", "Interior view"];
+  return `${views[index % views.length]} of ${type} in ${location || "Gujarat"}`;
+}
+
 const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const { isAuthenticated } = useAuth();
@@ -99,7 +109,7 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
 
         <div className="space-y-4 mb-10">
           <div className="relative h-[320px] w-full overflow-hidden rounded-2xl shadow-sm sm:h-[500px]">
-            <img src={activeImage} alt={title} className="w-full h-full object-cover" />
+            <img src={activeImage} alt={propertyImageAlt(property, selectedImage)} className="w-full h-full object-cover" />
             <div className="absolute bottom-6 right-6 bg-white/90 backdrop-blur px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2">
                 <ShieldCheck size={14} className="text-blue-600"/> Verified Listing
             </div>
@@ -111,7 +121,7 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
                 onClick={() => setSelectedImage(idx)}
                 className={`h-20 cursor-pointer overflow-hidden rounded-xl border-2 transition-all sm:h-24 ${selectedImage === idx ? 'scale-95 border-blue-500' : 'border-transparent'}`}
               >
-                <img src={img} alt={`${title} thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                <img src={img} alt={propertyImageAlt(property, idx)} className="w-full h-full object-cover" />
               </div>
             ))}
           </div>

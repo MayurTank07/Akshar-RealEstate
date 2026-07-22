@@ -7,6 +7,7 @@ export function getPropertyCity(property) {
 const PUBLIC_PRIVATE_FIELDS = [
   "ownerName",
   "ownerSellerName",
+  "sellerName",
   "contact",
   "dealCustomerName",
   "dealCustomerPhone",
@@ -23,6 +24,7 @@ const PUBLIC_PRIVATE_FIELDS = [
   "statusRemarks",
   "ownerUserId",
   "ownerRequestId",
+  "assignedSupervisor",
   "assignedTo",
   "createdBy",
   "updatedBy",

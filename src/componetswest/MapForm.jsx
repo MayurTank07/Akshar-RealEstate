@@ -80,7 +80,7 @@ export default function PropertyInformation({ property }) {
               <img 
                 src={videoThumb}
                 className="w-full h-[350px] object-cover" 
-                alt="Property Video Thumbnail"
+                alt={`${property?.title || "Property"} video tour in ${property?.location || property?.city || "Gujarat"}`}
               />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center transition-bg group-hover:bg-black/30">
                 <div className="w-16 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-xl">
