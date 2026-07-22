@@ -120,8 +120,12 @@ Commits verified on production: `7a530a3`, `1662cdf`, `453b639`, `7e18de1`
 - Search Console live-tested New C.G. Road and found `Page cannot be indexed: Soft 404`; indexing was not requested for that URL
 - Requested indexing after successful live tests for `/properties`, `/property/agriculture-land-for-sale-dhanap-gandhinagar-0027`, `/property/apartments-for-sale-memnagar-ahmedabad-0026` and `/property/plot-for-sale-palaj-gandhinagar-0025`
 - Confirmed Performance report currently has no data
+- Confirmed Page Indexing report is still processing data
+- Confirmed Core Web Vitals report has not enough usage data for mobile or desktop
+- Confirmed Product snippets: 5 valid items, 0 invalid critical issues
 - Confirmed Manual Actions: No issues detected
 - Confirmed Security Issues: No issues detected
+- Confirmed Settings: Mayur Tank is a verified owner for the selected URL-prefix property
 
 No indexing request was submitted for `sitemap.xml` because sitemap XML files are not normal indexable pages. Indexing requests should be used only for important public HTML URLs after a successful live test.
 
