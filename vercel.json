@@ -10,6 +10,26 @@
       "destination": "/api/sitemap"
     },
     {
+      "source": "/sitemap-pages.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/sitemap-properties.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/sitemap-locations.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/sitemap-property-types.xml",
+      "destination": "/api/sitemap"
+    },
+    {
+      "source": "/sitemap-blog.xml",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/property/:key/",
       "destination": "/api/property-route?key=:key&slash=1"
     },

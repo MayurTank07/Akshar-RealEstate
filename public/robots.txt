@@ -2,8 +2,15 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /supervisor
+Disallow: /admin-dashboard
+Disallow: /supervisor-dashboard
 Disallow: /login
 Disallow: /register
 Disallow: /stafflogin
+Disallow: /profile
+Disallow: /saved
+Disallow: /api/
+Disallow: /preview
+Disallow: /property-detail
 
 Sitemap: https://www.aksharestate.in/sitemap.xml
