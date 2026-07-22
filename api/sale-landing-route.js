@@ -8,6 +8,7 @@ import {
   SITE_ORIGIN,
   slugifyLocation,
 } from "../src/config/locationLandingPages.js";
+import { buildCollectionPageJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -156,8 +157,8 @@ function linkList(items) {
   return `<ul>${links.map((item) => `<li><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`;
 }
 
-function buildBreadcrumbs(page) {
-  const crumbs = [
+function breadcrumbItems(page) {
+  return [
     { label: "Home", href: "/" },
     { label: "Properties", href: "/properties" },
     ["locality", "bhk"].includes(page.kind) && { label: page.regionName || page.city, href: `/properties-for-sale/${page.regionSlug}` },
@@ -165,6 +166,10 @@ function buildBreadcrumbs(page) {
     page.kind === "property-type" && { label: page.city, href: `/properties-for-sale/${slugifyLocation(page.city)}` },
     { label: page.name, href: page.path },
   ].filter(Boolean);
+}
+
+function buildBreadcrumbs(page) {
+  const crumbs = breadcrumbItems(page);
   return `<nav aria-label="Breadcrumb">${crumbs.map((item, index) => `${index ? " / " : ""}<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join("")}</nav>`;
 }
 
@@ -294,29 +299,9 @@ function buildFaqSchema(page) {
   };
 }
 
-function buildBreadcrumbSchema(page) {
-  const items = [
-    { label: "Home", href: "/" },
-    { label: "Properties", href: "/properties" },
-    ["locality", "bhk"].includes(page.kind) && { label: page.regionName || page.city, href: `/properties-for-sale/${page.regionSlug}` },
-    page.kind === "bhk" && { label: page.localityName, href: `/properties-for-sale/${page.regionSlug}/${page.localitySlug}` },
-    page.kind === "property-type" && { label: page.city, href: `/properties-for-sale/${slugifyLocation(page.city)}` },
-    { label: page.name, href: page.path },
-  ].filter(Boolean);
-  return {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: items.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: item.label,
-      item: `${SITE_ORIGIN}${item.href}`,
-    })),
-  };
-}
-
-function jsonLd(data) {
-  return `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
+function jsonLd(data, id) {
+  const idAttribute = id ? ` id="${escapeHtml(id)}"` : "";
+  return `<script${idAttribute} type="application/ld+json">${schemaScriptContent(data)}</script>`;
 }
 
 function injectHtml(shell, page, context) {
@@ -340,8 +325,8 @@ function injectHtml(shell, page, context) {
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
-    jsonLd(buildBreadcrumbSchema(page)),
-    jsonLd(buildFaqSchema(page)),
+    jsonLd(buildCollectionPageJsonLd(page, allListings, { breadcrumbs: breadcrumbItems(page) }), "akshar-schema-location-page"),
+    jsonLd(buildFaqSchema(page), "akshar-schema-location-faq"),
   ].filter(Boolean).join("\n    ");
 
   const body = `

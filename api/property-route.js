@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { buildPropertyJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -119,8 +120,10 @@ function buildPropertyMeta(property, slug) {
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
     image ? `<meta name="twitter:image" content="${escapeHtml(image)}" />` : "",
-    jsonLdScript(buildPropertySchema(property, slug)),
-    jsonLdScript(buildBreadcrumbSchema(property, slug)),
+    jsonLdScript(buildPropertyJsonLd(property, {
+      url,
+      breadcrumbs: buildInternalLinks(property, {}).breadcrumbs,
+    }), "akshar-schema-property-page"),
   ].filter(Boolean).join("\n    ");
 }
 
@@ -138,8 +141,9 @@ function injectPropertyMeta(html, property, slug, related = {}) {
     : withMeta.replace("</body>", `<div id="root">${initialPage}</div></body>`);
 }
 
-function jsonLdScript(data) {
-  return `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
+function jsonLdScript(data, id) {
+  const idAttribute = id ? ` id="${escapeHtml(id)}"` : "";
+  return `<script${idAttribute} type="application/ld+json">${schemaScriptContent(data)}</script>`;
 }
 
 function slugify(value) {
@@ -312,50 +316,6 @@ function buildInitialPropertyPage(property, related = {}) {
         ${images.length > 1 ? section("Property Images", `<ul>${images.slice(1).map((image) => `<li><img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}" style="max-width:240px;height:auto" /></li>`).join("")}</ul>`) : ""}
       </article>
     </main>`;
-}
-
-function buildPropertySchema(property, slug) {
-  const url = canonicalUrl(slug, property);
-  return {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: propertyPageTitle(property),
-    description: propertyMetaDescription(property),
-    image: propertyImages(property).map((image) => image.url),
-    url,
-    brand: { "@type": "Organization", name: "Akshar Estate The Property Hub" },
-    offers: {
-      "@type": "Offer",
-      priceCurrency: "INR",
-      price: property.priceAmount || undefined,
-      availability: property.status === "active" ? "https://schema.org/InStock" : "https://schema.org/LimitedAvailability",
-      url,
-      seller: { "@type": "Organization", name: "Akshar Estate The Property Hub" },
-    },
-    additionalProperty: [
-      ["Location", propertyLocation(property)],
-      ["Property type", propertyKind(property)],
-      ["Carpet area", formatArea(property.carpetArea, "carpet area")],
-      ["Built-up area", formatArea(property.builtUpArea, "built-up area")],
-      ["Furnishing", property.furnishing],
-      ["Parking", property.parking],
-      ["Possession", property.possessionStatus],
-    ].filter(([, value]) => value).map(([name, value]) => ({ "@type": "PropertyValue", name, value })),
-  };
-}
-
-function buildBreadcrumbSchema(property, slug) {
-  const links = buildInternalLinks(property);
-  return {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: links.breadcrumbs.map((item, index) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      name: item.label,
-      item: `${SITE_ORIGIN}${index === links.breadcrumbs.length - 1 ? canonicalPath(slug) : item.href}`,
-    })),
-  };
 }
 
 function redirect(res, location) {

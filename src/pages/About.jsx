@@ -1,10 +1,13 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import BrandLogo from '../components/BrandLogo';
 import CertificationsSection from '../components/CertificationsSection';
+import StructuredData from '../components/StructuredData';
 import useSiteContent from '../hooks/useSiteContent';
 import { defaultAboutContent } from '../config/navigationContent';
+import { buildBusinessSchemas } from '../utils/structuredData';
 
 const AboutUs = () => {
   const navigate = useNavigate();
@@ -12,9 +15,14 @@ const AboutUs = () => {
   const about = { ...defaultAboutContent, ...(siteContent.aboutContent || {}) };
   const stats = Array.isArray(about.stats) && about.stats.length ? about.stats : defaultAboutContent.stats;
   const features = Array.isArray(about.features) && about.features.length ? about.features : defaultAboutContent.features;
+  const schema = useMemo(
+    () => buildBusinessSchemas({ path: '/about', pageName: 'About Akshar Estate', contact: siteContent.contactContent }),
+    [siteContent.contactContent]
+  );
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
+      <StructuredData id="about-business" schema={schema} />
       <Navbar />
 
       {/* Back Arrow Section - Pushed down so it's visible below fixed Navbar */}

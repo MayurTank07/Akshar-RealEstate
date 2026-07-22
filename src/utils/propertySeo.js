@@ -1,3 +1,5 @@
+import { buildPropertyJsonLd, schemaScriptContent } from "./structuredData";
+
 const SITE_NAME = "Akshar Estate The Property HUB";
 
 function compact(value, limit) {
@@ -46,6 +48,15 @@ function metaTag(attributes) {
   if (!element.isConnected) document.head.appendChild(element);
 }
 
+function schemaTag(id, schema) {
+  const element = document.getElementById(id) || document.createElement("script");
+  element.id = id;
+  element.type = "application/ld+json";
+  element.textContent = schemaScriptContent(schema);
+  element.dataset.aksharPropertySeo = "true";
+  if (!element.isConnected) document.head.appendChild(element);
+}
+
 function clearPropertySeo() {
   document.querySelectorAll("[data-akshar-property-seo='true']").forEach((element) => {
     if (element.dataset.aksharPropertySeoOriginal !== undefined) {
@@ -81,32 +92,16 @@ export function syncPropertySeo(property) {
   canonical.dataset.aksharPropertySeo = "true";
   document.head.appendChild(canonical);
 
-  const schema = document.createElement("script");
-  schema.type = "application/ld+json";
-  schema.dataset.aksharPropertySeo = "true";
-  schema.textContent = JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: property.title,
-    description: property.description || seo.description,
-    image: [property.image, ...(property.gallery || [])].filter(Boolean),
-    category: `${property.category || "Real Estate"} ${property.type || "Property"}`.trim(),
+  schemaTag("akshar-schema-property-page", buildPropertyJsonLd(property, {
     url: seo.canonical,
-    offers: {
-      "@type": "Offer",
-      priceCurrency: "INR",
-      price: property.priceAmount || property.price || undefined,
-      availability: property.status === "active" ? "https://schema.org/InStock" : "https://schema.org/LimitedAvailability",
-      url: seo.canonical,
-      seller: { "@type": "Organization", name: SITE_NAME },
-    },
-    additionalProperty: [
-      { "@type": "PropertyValue", name: "Location", value: propertyLocation(property) },
-      { "@type": "PropertyValue", name: "Deal Type", value: property.dealType || "" },
-      { "@type": "PropertyValue", name: "Area", value: property.area || property.sqft || "" },
-    ],
-  });
-  document.head.appendChild(schema);
+    breadcrumbs: [
+      { label: "Home", href: "/" },
+      { label: "Properties", href: "/properties" },
+      property.city && { label: property.city, href: "/properties" },
+      property.location && { label: property.location, href: "/properties" },
+      { label: property.title || "Property", href: seo.canonical },
+    ].filter(Boolean),
+  }));
 
   return () => {
     clearPropertySeo();

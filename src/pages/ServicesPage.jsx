@@ -1,7 +1,11 @@
+import { useMemo } from "react";
 import { ArrowRight, Building2, CheckCircle2, Home, KeyRound, Landmark, ListChecks, SearchCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import StructuredData from "../components/StructuredData";
+import useSiteContent from "../hooks/useSiteContent";
+import { buildBusinessSchemas } from "../utils/structuredData";
 
 const services = [
   {
@@ -40,9 +44,15 @@ const steps = ["Requirement discovery", "Verified shortlist", "Requirement coord
 
 export default function ServicesPage() {
   const navigate = useNavigate();
+  const siteContent = useSiteContent();
+  const schema = useMemo(
+    () => buildBusinessSchemas({ path: "/services", pageName: "Real Estate Services", contact: siteContent.contactContent }),
+    [siteContent.contactContent]
+  );
 
   return (
     <div className="min-h-screen bg-white">
+      <StructuredData id="services-business" schema={schema} />
       <Navbar />
       <main>
         <section className="relative overflow-hidden bg-slate-950 pt-32 text-white sm:pt-36">

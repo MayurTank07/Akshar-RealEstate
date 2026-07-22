@@ -1,16 +1,27 @@
+import { useMemo } from "react";
 import { Clock, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import StructuredData from "../components/StructuredData";
 import useSiteContent from "../hooks/useSiteContent";
 import { defaultContactContent } from "../config/navigationContent";
 import { DEFAULT_WHATSAPP_MESSAGE, generateWhatsAppLink } from "../utils/whatsapp";
+import { buildBusinessSchemas } from "../utils/structuredData";
 
 export default function Contact() {
   const siteContent = useSiteContent();
-  const contact = { ...defaultContactContent, ...(siteContent.contactContent || {}) };
+  const contact = useMemo(
+    () => ({ ...defaultContactContent, ...(siteContent.contactContent || {}) }),
+    [siteContent.contactContent]
+  );
   const whatsappLink = generateWhatsAppLink(contact.whatsapp || import.meta.env.VITE_WHATSAPP_NUMBER, DEFAULT_WHATSAPP_MESSAGE);
+  const schema = useMemo(
+    () => buildBusinessSchemas({ path: "/contact", pageName: "Contact Akshar Estate", contact }),
+    [contact]
+  );
   return (
     <div className="min-h-screen bg-slate-50">
+      <StructuredData id="contact-business" schema={schema} />
       <Navbar />
       <main className="wf-container grid min-h-[70vh] gap-8 pt-32 pb-16 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
         <section>
