@@ -85,7 +85,7 @@ Search Console verified state:
 
 ## Production Verification After Deployment
 
-Commit verified on production: `7a530a3`
+Commits verified on production: `7a530a3`, `1662cdf`
 
 | URL | Status | Robots | Canonical / Redirect |
 |---|---:|---|---|
@@ -101,7 +101,7 @@ Commit verified on production: `7a530a3`
 | `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` | 200 | `noindex,follow` | `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` |
 | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
 | `https://www.aksharestate.in/property?id=agriculture-land-for-sale-dhanap-gandhinagar-0027` | 301 | Not applicable | Redirects to `/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
-| `https://www.aksharestate.in/blog` | Pending redeploy verification | `noindex,follow` after fix | Removed from `sitemap-pages.xml` after fix |
+| `https://www.aksharestate.in/blog` | 200 | `noindex,follow` | Removed from `sitemap-pages.xml` |
 
 ## Google Search Console Actions Completed
 
