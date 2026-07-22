@@ -84,6 +84,32 @@ Admin lifecycle tested:
 | Performance basics | Passed build gate | Production bundle completed; large admin chunk remains expected for dashboard code |
 | Mobile/tablet/desktop | Limited pass | Responsive build generated successfully; full visual viewport screenshots require browser automation |
 
+## Production Smoke Test
+
+Production smoke was run after commit `2052df6` was pushed and the live frontend deployment updated.
+
+| URL | Result |
+|---|---|
+| `https://www.aksharestate.in/` | 200 |
+| `https://www.aksharestate.in/robots.txt` | 200 |
+| `https://www.aksharestate.in/sitemap.xml` | 200 |
+| `https://www.aksharestate.in/sitemap-locations.xml` | 200 |
+| `https://www.aksharestate.in/sitemap-properties.xml` | 200 |
+| `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap` | 200 |
+| `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` | 200 with `noindex,follow` |
+| `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` | 200 |
+| `https://www.aksharestate.in/property/apartments-for-sale-memnagar-ahmedabad-0026` | 200 |
+| `https://akshar-realestate-backend.onrender.com/health` | 200 |
+| `https://akshar-realestate-backend.onrender.com/api/public/properties?limit=3` | 200 |
+
+Live assertions passed:
+
+- Dhanap title, robots, canonical and one-H1 check passed.
+- Dhanap appears in `sitemap-locations.xml`.
+- Dholera remains excluded from `sitemap-locations.xml`.
+- Dhanap sample property appears in `sitemap-properties.xml`.
+- `robots.txt` includes the production sitemap URL and admin disallow rule.
+
 ## Sample URLs
 
 Sample property URLs from current inventory:
