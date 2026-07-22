@@ -21,8 +21,10 @@ import {
   Home,
   LogOut,
   Menu,
+  MessageCircle,
   MessageSquare,
   MapPin,
+  Phone,
   SlidersHorizontal,
   Plus,
   Save,
@@ -5206,13 +5208,57 @@ function AnalyticsSection() {
         <StatCard icon={Check} color="green" label="Sold / Rented" value={`${cards.soldCount ?? 0} / ${cards.rentedCount ?? 0}`} />
         <StatCard icon={MessageSquare} label="Pending Enquiries" value={cards.pendingEnquiries ?? 0} />
       </div>
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-7">
+        {(data?.seoHealth || []).map((item) => (
+          <div key={item.label} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_4px_16px_rgba(15,23,42,0.08)]">
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-400">{item.label}</p>
+            <p className="mt-3 text-2xl font-black text-slate-950">{item.value}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard icon={Phone} color="green" label="Call Clicks" value={cards.callClicks ?? 0} />
+        <StatCard icon={MessageCircle} color="teal" label="WhatsApp Clicks" value={cards.whatsappClicks ?? 0} />
+        <StatCard icon={ClipboardList} color="purple" label="Inquiry Submissions" value={cards.inquirySubmissions ?? 0} />
+      </div>
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <LineChartCard title="Weekly Enquiries & Conversions" points={data?.weekly || []} />
         <LineChartCard title="Monthly Enquiries & Conversions" points={data?.monthly || []} />
         <BarChartCard title="Lead Sources" points={data?.sources || []} />
         <BarChartCard title="Sold vs Rented" points={data?.conversionTypes || []} />
+        <BarChartCard title="Tracked Event Types" points={data?.eventTypes || []} />
+        <BarChartCard title="Campaign Sources" points={data?.campaignSources || []} />
         <BarChartCard title="City-wise Enquiries" points={data?.cityStats || []} />
         <BarChartCard title="Property-wise Enquiries" points={data?.propertyStats || []} />
+      </div>
+      <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <AnalyticsListCard
+          title="Most Viewed Properties"
+          items={(data?.mostViewedProperties || []).map((item) => ({
+            label: item.title,
+            detail: item.location,
+            value: item.value,
+          }))}
+          empty="Property views will appear after visitors open listing pages."
+        />
+        <AnalyticsListCard
+          title="Most Contacted Supervisors"
+          items={(data?.mostContactedSupervisors || []).map((item) => ({
+            label: item.name,
+            detail: item.companyName,
+            value: item.value,
+          }))}
+          empty="Supervisor contact activity will appear after call or WhatsApp clicks."
+        />
+        <AnalyticsListCard
+          title="Recently Updated Properties"
+          items={(data?.recentlyUpdatedProperties || []).map((item) => ({
+            label: item.title,
+            detail: [item.location, item.city, item.supervisor].filter(Boolean).join(" | "),
+            value: item.isIndexable ? "Indexable" : "Noindex",
+          }))}
+          empty="Recently updated active properties will appear here."
+        />
       </div>
       {(data?.supervisorPerformance || []).length > 0 && (
         <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-6">
@@ -5239,6 +5285,29 @@ function AnalyticsSection() {
         </>
       )}
     </>
+  );
+}
+
+function AnalyticsListCard({ title, items = [], empty }) {
+  return (
+    <section className="rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_16px_rgba(15,23,42,0.08)] sm:p-6">
+      <h3 className="text-lg font-bold text-slate-950 sm:text-xl">{title}</h3>
+      {items.length ? (
+        <div className="mt-5 space-y-3">
+          {items.slice(0, 8).map((item, index) => (
+            <div key={`${item.label}-${index}`} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-xl bg-slate-50 p-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-extrabold text-slate-900" title={item.label}>{item.label}</p>
+                {item.detail && <p className="mt-1 truncate text-xs font-semibold text-slate-500" title={item.detail}>{item.detail}</p>}
+              </div>
+              <span className="rounded-full bg-white px-2.5 py-1 text-xs font-black text-blue-700 shadow-sm">{item.value}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState title="No tracking data" description={empty} />
+      )}
+    </section>
   );
 }
 

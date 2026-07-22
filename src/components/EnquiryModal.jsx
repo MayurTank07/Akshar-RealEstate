@@ -1,10 +1,15 @@
 import { lazy, Suspense, useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { trackAnalyticsEvent } from '../utils/analytics';
 
 const EnquiryForm = lazy(() => import('../pages/Enquiry'));
 
 export default function EnquiryModal({ isOpen, onClose }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) trackAnalyticsEvent("inquiry_form_opened", { metadata: { formType: "modal-enquiry" } });
+  }, [isOpen]);
 
   useEffect(() => {
     if (isSubmitted) {

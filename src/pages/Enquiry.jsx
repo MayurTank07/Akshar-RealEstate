@@ -17,6 +17,7 @@ import {
   TreePine,
   User,
 } from "lucide-react";
+import { trackAnalyticsEvent } from "../utils/analytics";
 
 const gujaratLocations = [
   "Ahmedabad",
@@ -106,6 +107,11 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
 
     try {
       await publicApi.createEnquiry(enquiryPayload);
+      trackAnalyticsEvent("inquiry_form_submitted", {
+        location: form.location.trim(),
+        propertyType: form.type,
+        metadata: { formType: isModal ? "modal-enquiry" : "enquiry-page" },
+      });
       setIsSubmitted(true);
     } catch {
       setErrors({ submit: "We could not submit your enquiry. Please try again." });

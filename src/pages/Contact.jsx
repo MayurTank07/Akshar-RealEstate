@@ -8,6 +8,7 @@ import useSiteContent from "../hooks/useSiteContent";
 import { defaultContactContent } from "../config/navigationContent";
 import { DEFAULT_WHATSAPP_MESSAGE, generateWhatsAppLink } from "../utils/whatsapp";
 import { buildBusinessSchemas } from "../utils/structuredData";
+import { trackAnalyticsEvent } from "../utils/analytics";
 
 export default function Contact() {
   const siteContent = useSiteContent();
@@ -45,6 +46,10 @@ export default function Contact() {
               href={whatsappLink}
               target="_blank"
               rel="noreferrer"
+              onClick={() => {
+                trackAnalyticsEvent("whatsapp_button_clicked", { metadata: { formType: "contact-page" } });
+                trackAnalyticsEvent("supervisor_contacted", { metadata: { formType: "contact-page-whatsapp" } });
+              }}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-600"
             >
               <MessageCircle size={18} />
@@ -54,9 +59,9 @@ export default function Contact() {
           {(contact.mapEmbed || contact.mapLink) && (
             <div className="mt-5 overflow-hidden rounded-2xl border border-slate-100 bg-slate-50">
               {contact.mapEmbed ? (
-                <iframe title="Akshar Estate office map" src={contact.mapEmbed} className="h-72 w-full" loading="lazy" />
+                <iframe title="Akshar Estate office map" src={contact.mapEmbed} onLoad={() => trackAnalyticsEvent("map_opened", { metadata: { mapProvider: "google-maps-embed" } })} className="h-72 w-full" loading="lazy" />
               ) : (
-                <a className="block p-5 text-sm font-bold text-blue-600" href={contact.mapLink} target="_blank" rel="noreferrer">Open location in Google Maps</a>
+                <a className="block p-5 text-sm font-bold text-blue-600" href={contact.mapLink} target="_blank" rel="noreferrer" onClick={() => trackAnalyticsEvent("map_opened", { metadata: { mapProvider: "google-maps-link" } })}>Open location in Google Maps</a>
               )}
             </div>
           )}

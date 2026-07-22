@@ -5,6 +5,7 @@ import { formatINR } from '../utils/currency';
 import { displayPropertyCode } from '../utils/propertyCode';
 import { compactSpecs } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
+import { trackPropertyEvent } from '../utils/analytics';
 
 function telHref(phoneNumber = "") {
   const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
@@ -35,6 +36,7 @@ export default function PropertyAmenities({ property, whatsappAvailable, onWhats
   }, [isAuthenticated]);
 
   const handleCallClick = () => {
+    trackPropertyEvent("call_button_clicked", property);
     if (!isAuthenticated) {
       navigate("/register", {
         state: { redirectTo: `${location.pathname}${location.search}`, fromCall: true, property },
@@ -42,10 +44,12 @@ export default function PropertyAmenities({ property, whatsappAvailable, onWhats
       return;
     }
     if (!callLink) return;
+    trackPropertyEvent("supervisor_contacted", property, { formType: "call" });
     window.location.href = callLink;
   };
 
   const handleWhatsAppClick = () => {
+    trackPropertyEvent("whatsapp_button_clicked", property);
     onWhatsAppEnquiry?.();
   };
   const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "Price on request";
@@ -117,7 +121,7 @@ export default function PropertyAmenities({ property, whatsappAvailable, onWhats
 
         {/* Action Buttons */}
         <div className="space-y-3 mb-10">
-          <a href="#contact-form" className="w-full bg-[#2563eb] hover:bg-blue-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-50">
+          <a href="#contact-form" onClick={() => trackPropertyEvent("inquiry_form_opened", property, { formType: "property-detail-sidebar" })} className="w-full bg-[#2563eb] hover:bg-blue-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-50">
             <Mail className="w-5 h-5 fill-current" />
             Send Enquiry
           </a>

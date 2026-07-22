@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
-  MapPin, MessageCircle, Phone, ChevronRight, ShieldCheck
+  MapPin, MessageCircle, Phone, ChevronRight, ShieldCheck, Share2
 } from 'lucide-react';
 
 import Navbar from '../components/PricingNavbar';
@@ -9,6 +9,7 @@ import { formatINR } from '../utils/currency';
 import { supportsRooms } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
 import { PROPERTY_IMAGE_FALLBACK, propertyImageAlt, responsiveImageProps } from '../utils/imageSeo';
+import { trackPropertyEvent } from '../utils/analytics';
 
 function telHref(phoneNumber = "") {
   const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
@@ -26,6 +27,7 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
   const activeImage = galleryImages[selectedImage] || galleryImages[0];
 
   const handleCall = () => {
+    trackPropertyEvent("call_button_clicked", property);
     if (!isAuthenticated) {
       navigate("/register", {
         state: { redirectTo: `${location.pathname}${location.search}`, fromCall: true, property },
@@ -34,11 +36,28 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
     }
     const link = telHref(property?.broker?.phone);
     if (!link) return;
+    trackPropertyEvent("supervisor_contacted", property, { formType: "call" });
     window.location.href = link;
   };
 
   const handleWhatsApp = () => {
+    trackPropertyEvent("whatsapp_button_clicked", property);
     onWhatsAppEnquiry?.();
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/property/${property?.slug || property?._id || ""}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title, text: propertyLocation, url: shareUrl });
+        trackPropertyEvent("property_shared", property, { shareMethod: "native" });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+        trackPropertyEvent("property_shared", property, { shareMethod: "clipboard" });
+      }
+    } catch {
+      // Visitor cancelled or the browser blocked sharing.
+    }
   };
 
   const title = property?.title || "Property";
@@ -86,6 +105,13 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
               >
                 <MessageCircle size={18} /> WhatsApp
               </button>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="wf-btn w-full bg-slate-900 text-white hover:bg-slate-800 md:w-auto"
+              >
+                <Share2 size={18} /> Share
+              </button>
               <button 
                 onClick={handleCall}
                 disabled={!callAvailable}
@@ -120,7 +146,10 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
             {galleryImages.slice(0, 6).map((img, idx) => (
               <div 
                 key={idx} 
-                onClick={() => setSelectedImage(idx)}
+                onClick={() => {
+                  setSelectedImage(idx);
+                  trackPropertyEvent("property_image_opened", property, { imageIndex: idx });
+                }}
                 className={`h-20 cursor-pointer overflow-hidden rounded-xl border-2 transition-all sm:h-24 ${selectedImage === idx ? 'scale-95 border-blue-500' : 'border-transparent'}`}
               >
                 <img

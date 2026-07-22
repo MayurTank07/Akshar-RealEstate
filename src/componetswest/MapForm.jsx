@@ -4,6 +4,7 @@ import { publicApi } from '../services/api';
 import { buildInternationalPhone, countryCodeOptions, normalizePhoneDigits } from '../utils/countryCodes';
 import { publicGoogleMapsEmbedUrl, publicMapLabel } from '../utils/googleMaps';
 import { PROPERTY_IMAGE_FALLBACK, propertyImageAlt, responsiveImageProps } from '../utils/imageSeo';
+import { trackPropertyEvent } from '../utils/analytics';
 
 function telHref(phoneNumber = "") {
   const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
@@ -24,6 +25,7 @@ export default function PropertyInformation({ property }) {
   const mapLabel = publicMapLabel(property);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
+  const [formTracked, setFormTracked] = useState(false);
   const description = property?.description?.trim()
     || "Experience premium real estate designed for modern living, strong connectivity, practical layouts, and verified Akshar Estate assistance from enquiry to closure.";
 
@@ -44,6 +46,7 @@ export default function PropertyInformation({ property }) {
         message: `Broker callback requested${form.homeLoan ? " with home loan interest" : ""}.`,
         source: "property-detail",
       });
+      trackPropertyEvent("inquiry_form_submitted", property, { formType: "property-detail-sidebar" });
       setMessage("Thanks. Our team will contact you shortly.");
       setForm({ firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", homeLoan: false });
     } catch (error) {
@@ -128,7 +131,10 @@ export default function PropertyInformation({ property }) {
                     loading="lazy"
                     referrerPolicy="no-referrer-when-downgrade"
                     allowFullScreen
-                    onLoad={() => setMapLoaded(true)}
+                    onLoad={() => {
+                      if (!mapLoaded) trackPropertyEvent("map_opened", property, { mapProvider: "google-maps-embed" });
+                      setMapLoaded(true);
+                    }}
                     onError={() => {
                       setMapFailed(true);
                       setMapLoaded(false);
@@ -178,7 +184,7 @@ export default function PropertyInformation({ property }) {
                 <h4 className="font-bold text-gray-900 leading-none mb-1">{contactName}</h4>
                 {companyName && <p className="text-xs text-gray-400">{companyName}</p>}
                 {contactPhoneHref ? (
-                  <a href={contactPhoneHref} className="mt-1 inline-flex text-xs font-semibold text-blue-600 hover:text-blue-700">
+                  <a href={contactPhoneHref} onClick={() => { trackPropertyEvent("call_button_clicked", property); trackPropertyEvent("supervisor_contacted", property, { formType: "agent-phone-link" }); }} className="mt-1 inline-flex text-xs font-semibold text-blue-600 hover:text-blue-700">
                     {contactPhone}
                   </a>
                 ) : (
@@ -187,7 +193,16 @@ export default function PropertyInformation({ property }) {
               </div>
             </div>
 
-            <form id="contact-form" onSubmit={submit} className="space-y-4">
+            <form
+              id="contact-form"
+              onSubmit={submit}
+              onFocus={() => {
+                if (formTracked) return;
+                setFormTracked(true);
+                trackPropertyEvent("inquiry_form_opened", property, { formType: "property-detail-sidebar" });
+              }}
+              className="space-y-4"
+            >
               <h4 className="font-bold text-gray-900">Please share your Contact details</h4>
               
               <div className="flex gap-3">

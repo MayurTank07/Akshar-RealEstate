@@ -19,6 +19,7 @@ import {
 } from "../utils/whatsapp";
 import { sanitizePublicProperty } from "../utils/propertyData";
 import { syncPropertySeo } from "../utils/propertySeo";
+import { trackPropertyEvent } from "../utils/analytics";
 
 export default function PropertyDetails() {
   const location = useLocation();
@@ -26,6 +27,7 @@ export default function PropertyDetails() {
   const { id } = useParams();
   const { user } = useAuth();
   const autoWhatsAppHandled = useRef(false);
+  const pageViewTracked = useRef("");
   const initialProperty = useMemo(
     () => sanitizePublicProperty(location.state?.property),
     [location.state?.property]
@@ -63,6 +65,12 @@ export default function PropertyDetails() {
   }, [navigate, remoteId, remoteSlug]);
 
   useEffect(() => syncPropertySeo(property), [property]);
+  useEffect(() => {
+    const key = property?.slug || property?._id || "";
+    if (!key || pageViewTracked.current === key) return;
+    pageViewTracked.current = key;
+    trackPropertyEvent("property_page_view", property);
+  }, [property]);
 
   const whatsappNumber = propertyWhatsAppNumber(property);
   const whatsappAvailable = Boolean(generateWhatsAppLink(whatsappNumber, "Hello"));
@@ -77,6 +85,7 @@ export default function PropertyDetails() {
     }
     const link = generateWhatsAppLink(whatsappNumber, propertyWhatsAppMessage(property, { customerName: name }));
     if (!link) return;
+    trackPropertyEvent("supervisor_contacted", property, { formType: "whatsapp" });
     saveEnquirerName(name);
     setNamePrompt({ open: false, name, error: "" });
     window.open(link, "_blank", "noopener,noreferrer");

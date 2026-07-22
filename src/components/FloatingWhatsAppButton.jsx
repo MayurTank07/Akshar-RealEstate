@@ -3,6 +3,7 @@ import { FaWhatsapp } from "react-icons/fa";
 import useSiteContent from "../hooks/useSiteContent";
 import { defaultContactContent } from "../config/navigationContent";
 import { DEFAULT_WHATSAPP_MESSAGE, generateWhatsAppLink } from "../utils/whatsapp";
+import { trackAnalyticsEvent } from "../utils/analytics";
 
 const hiddenPrefixes = ["/admin", "/supervisor", "/stafflogin"];
 
@@ -30,6 +31,10 @@ export default function FloatingWhatsAppButton() {
       target="_blank"
       rel="noreferrer"
       aria-label="Chat with us on WhatsApp"
+      onClick={() => {
+        trackAnalyticsEvent("whatsapp_button_clicked", { metadata: { formType: "floating-whatsapp" } });
+        trackAnalyticsEvent("supervisor_contacted", { metadata: { formType: "floating-whatsapp" } });
+      }}
       className={`group fixed bottom-5 z-[70] grid h-14 w-14 place-items-center rounded-2xl bg-[#25D366] text-white shadow-[0_18px_45px_rgba(37,211,102,0.35)] ring-1 ring-white/60 transition duration-300 hover:-translate-y-1 hover:scale-105 hover:shadow-[0_24px_60px_rgba(37,211,102,0.45)] focus:outline-none focus:ring-4 focus:ring-emerald-200 sm:bottom-6 sm:h-16 sm:w-16 ${positionClass}`}
     >
       <FaWhatsapp className="h-7 w-7 sm:h-8 sm:w-8" />

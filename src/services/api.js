@@ -85,6 +85,7 @@ export const publicApi = {
   blogs: (params = {}) => request(`/public/blogs${typeof params === "string" ? params : toQueryString(params)}`, { token: null }),
   blog: (slug) => request(`/public/blogs/${encodeURIComponent(slug)}`, { token: null }),
   createEnquiry: (payload) => request("/public/enquiries", { method: "POST", body: JSON.stringify(payload), token: null }),
+  trackAnalyticsEvent: (payload) => request("/public/analytics/events", { method: "POST", body: JSON.stringify(payload), token: null }),
   content: () => request("/public/content", { token: null }),
   certifications: () => request("/public/certifications", { token: null }),
 };

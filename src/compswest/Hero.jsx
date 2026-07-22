@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, Bed, Bath, Maximize, Heart, Search, SlidersHorizontal, X } from 'lucide-react';
 import IndianMoneyInput from "../components/IndianMoneyInput";
@@ -11,6 +11,7 @@ import { parsePurchaseRoute } from "../utils/propertyRouting";
 import { normalizeProperty } from "../utils/propertyData";
 import { collectOptions, groupSearchResults, matchesAdvancedFilters, matchesPropertySearch, rankedPropertySearch, sortProperties } from "../utils/propertySearch";
 import { THUMBNAIL_IMAGE_FALLBACK, propertyImageAlt, propertyImageUrl, responsiveImageProps } from "../utils/imageSeo";
+import { trackAnalyticsEvent } from "../utils/analytics";
 
 const emptyFilters = {
   areaWise: "",
@@ -68,6 +69,15 @@ function matchesDealMode(property, mode, query) {
   return true;
 }
 
+function safeSearchQuery(value = "") {
+  return String(value || "")
+    .replace(/\S+@\S+\.\S+/g, "[email]")
+    .replace(/\+?\d[\d\s().-]{7,}\d/g, "[phone]")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 120);
+}
+
 export default function PricingPage({ category, type, city: selectedCity, filters }) {
   const { category: routeCategory, slug } = useParams();
   const navigate = useNavigate();
@@ -105,6 +115,10 @@ export default function PricingPage({ category, type, city: selectedCity, filter
     routeIntent.category ||
     (routeCategory === "rentals" ? "Rent" : "Buy")
   );
+  const trackingReady = useRef(false);
+  const lastTrackedSearch = useRef("");
+  const lastTrackedLocation = useRef(activeCity);
+  const lastTrackedFilter = useRef("");
   const filterTypes = ["All", ...availableTypes];
   const dynamicOptions = useMemo(() => ({
     areaWise: uniqueSorted(collectOptions(listings, "areaWise"), masterOptions.locations),
@@ -196,6 +210,62 @@ export default function PricingPage({ category, type, city: selectedCity, filter
 
   const filteredListings = useMemo(() => rankedItems.map((r) => r.property), [rankedItems]);
   const groupedResults = useMemo(() => (query.trim() ? groupSearchResults(rankedItems, query) : null), [rankedItems, query]);
+
+  useEffect(() => {
+    trackingReady.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!trackingReady.current || !query.trim()) return undefined;
+    const safeQuery = safeSearchQuery(query);
+    if (!safeQuery || safeQuery === lastTrackedSearch.current) return undefined;
+    const timer = window.setTimeout(() => {
+      lastTrackedSearch.current = safeQuery;
+      trackAnalyticsEvent("search_performed", {
+        location: activeCity === "All" ? "" : activeCity,
+        propertyType: activeType === "All" ? "" : activeType,
+        listingType: searchType,
+        metadata: { query: safeQuery, searchType, resultCount: filteredListings.length },
+      });
+    }, 800);
+    return () => window.clearTimeout(timer);
+  }, [activeCity, activeType, filteredListings.length, query, searchType]);
+
+  useEffect(() => {
+    if (!trackingReady.current || activeCity === lastTrackedLocation.current) return;
+    lastTrackedLocation.current = activeCity;
+    if (activeCity && activeCity !== "All") {
+      trackAnalyticsEvent("location_selected", {
+        location: activeCity,
+        listingType: searchType,
+        metadata: { resultCount: filteredListings.length },
+      });
+    }
+  }, [activeCity, filteredListings.length, searchType]);
+
+  useEffect(() => {
+    if (!trackingReady.current) return;
+    const activeFilters = {
+      activeType,
+      priceRange,
+      areaWise: advancedFilters.areaWise,
+      propertyType: advancedFilters.propertyType,
+      propertyCategory: advancedFilters.propertyCategory,
+      minPrice: advancedFilters.minPrice ? "set" : "",
+      maxPrice: advancedFilters.maxPrice ? "set" : "",
+    };
+    const signature = JSON.stringify(activeFilters);
+    if (signature === lastTrackedFilter.current) return;
+    lastTrackedFilter.current = signature;
+    const changed = Object.entries(activeFilters).find(([, value]) => value && value !== "All" && value !== "Any");
+    if (!changed) return;
+    trackAnalyticsEvent("filter_applied", {
+      location: activeCity === "All" ? "" : activeCity,
+      propertyType: activeType === "All" ? advancedFilters.propertyType : activeType,
+      listingType: searchType,
+      metadata: { filterName: changed[0], filterValue: changed[1], resultCount: filteredListings.length },
+    });
+  }, [activeCity, activeType, advancedFilters, filteredListings.length, priceRange, searchType]);
 
   const handlePropertyClick = (item) => {
     const dbId = /^[a-f\d]{24}$/i.test(item?._id || "") ? item._id : null;

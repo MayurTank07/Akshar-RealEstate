@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { StaffAuthProvider } from "./contexts/StaffAuthContext";
@@ -7,6 +7,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import SplashScreen from "./components/SplashScreen";
 import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton";
 import ProtectedStaffRoute from "./components/staff/ProtectedStaffRoute";
+import { captureCampaignFromUrl } from "./utils/analytics";
 
 const PropertyDetails = lazy(() => import("./pages/PropertyDetails"));
 const Pricing = lazy(() => import("./pages/Pricing"));
@@ -33,6 +34,9 @@ function RouteFallback() {
 }
 
 function App() {
+  useEffect(() => {
+    captureCampaignFromUrl();
+  }, []);
   return (
     <AuthProvider>
       <StaffAuthProvider>
