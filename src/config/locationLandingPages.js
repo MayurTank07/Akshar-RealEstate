@@ -18,7 +18,7 @@ const primaryRegions = [
     title: "Properties for Sale in Gandhinagar | Akshar Estate",
     h1: "Properties for Sale in Gandhinagar",
     intro: "Gandhinagar is a planned capital city with strong demand around civic offices, education hubs, GIFT City connectivity and emerging residential corridors.",
-    nearbyAreas: ["Kudasan", "Sargasan", "Vavol", "Pethapur", "Palaj", "Adalaj"],
+    nearbyAreas: ["Kudasan", "Sargasan", "Vavol", "Pethapur", "Palaj", "Dhanap", "Adalaj"],
     landmarks: ["GIFT City", "IIT Gandhinagar", "Akshardham", "Mahatma Mandir", "Sargasan Cross Road"],
     connectivity: "The city connects to Ahmedabad through SG Highway, Gift City Road, Airport Road and the expanding metro-led urban corridor.",
     verified: true,
@@ -131,7 +131,21 @@ const localityDefinitions = [
   ["gandhinagar", "Sargasan", "Gandhinagar", "A fast-growing Gandhinagar locality with apartment projects, retail activity and strong access to Kudasan, Raysan and GIFT City.", ["Kudasan", "Vavol", "Raysan", "Palaj"], ["Sargasan Cross Road", "GIFT City Road", "PDPU Road"], "Sargasan benefits from arterial roads toward GIFT City, Infocity, Gandhinagar city centre and Ahmedabad."],
   ["gandhinagar", "Vavol", "Gandhinagar", "A practical residential locality in Gandhinagar with family housing, plotted pockets and access to Sargasan and Pethapur.", ["Sargasan", "Pethapur", "Kudasan", "Randheja"], ["Vavol Road", "Pethapur Road", "Gandhinagar Sector Access"], "Vavol links with central Gandhinagar, Pethapur and the Sargasan-Kudasan corridor."],
   ["gandhinagar", "Pethapur", "Gandhinagar", "A traditional Gandhinagar-side locality with residential plots, independent homes and access toward Vavol and Randheja.", ["Vavol", "Randheja", "Mahudi Road", "Gandhinagar"], ["Pethapur Road", "Randheja Road", "Gandhinagar Sector Area"], "Pethapur connects with Gandhinagar city roads and north-side routes toward Randheja and Mahudi."],
+  ["gandhinagar", "Dhanap", "Gandhinagar", "A Gandhinagar-side land and residential pocket for buyers comparing quieter property options near the capital city and nearby north-side areas.", ["Gandhinagar", "Pundrasan", "Pethapur", "Lavarpur"], ["Dhanap", "Gandhinagar side", "North Gandhinagar approach"], "Dhanap connects with Gandhinagar city access roads and nearby north-side localities such as Pundrasan, Pethapur and Lavarpur.", [], { rolloutPhase: 17 }],
   ["gandhinagar", "GIFT City", "Gandhinagar", "A premium business district and investment corridor for buyers looking near offices, finance-sector growth and modern infrastructure.", ["Kudasan", "Raysan", "Sargasan", "PDPU Road"], ["GIFT City", "GIFT City Club", "PDPU", "Sabarmati Riverfront GIFT Link"], "GIFT City connects to Gandhinagar, Ahmedabad airport, SG Highway and the expanding metro corridor."],
+  ["north-gujarat", "Dehgam", "Gujarat", "A north Gujarat market to prepare for future land, residential and plotted inventory once listings and local verification are available.", ["Gandhinagar", "Mahudi", "Vijapur", "Prantij"], ["Dehgam", "North Gujarat corridor", "Gandhinagar-side routes"], "Dehgam connects with Gandhinagar-side routes and north Gujarat road movement.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["north-gujarat", "Mahudi", "Gujarat", "A north Gujarat location prepared for future land and residential inventory after manual locality verification and active listings are available.", ["Dehgam", "Vijapur", "Gandhinagar", "Prantij"], ["Mahudi", "North Gujarat", "Pilgrimage-side locality"], "Mahudi connects with nearby north Gujarat towns and Gandhinagar-side routes.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["north-gujarat", "Vijapur", "Gujarat", "A north Gujarat town page held for future property inventory and manual verification before SEO indexing.", ["Mahudi", "Dehgam", "Prantij", "Gandhinagar"], ["Vijapur", "North Gujarat", "Town centre"], "Vijapur connects with nearby north Gujarat towns and broader regional roads.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["north-gujarat", "Chhatral", "Gujarat", "An industrial-side north Gujarat location prepared for future property inventory once verified listings are available.", ["Kalol", "Kadi", "Gandhinagar", "Sanand"], ["Chhatral", "Industrial corridor", "North Gujarat"], "Chhatral connects with Kalol, Kadi, Gandhinagar and industrial corridor routes.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["north-gujarat", "Prantij", "Gujarat", "A north Gujarat location held for future residential, land and highway-side property inventory after verification.", ["Gandhinagar", "Dehgam", "Vijapur", "Mahudi"], ["Prantij", "North Gujarat", "Highway-side routes"], "Prantij connects with Gandhinagar-side and north Gujarat route networks.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["central-gujarat", "Nadiad", "Gujarat", "A central Gujarat city page prepared for future property inventory and local content expansion after active listings are available.", ["Anand", "Mahemdavad", "Ahmedabad", "Bareja"], ["Nadiad", "Central Gujarat", "Ahmedabad-Vadodara corridor"], "Nadiad connects with Ahmedabad, Anand and central Gujarat corridor routes.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["central-gujarat", "Anand", "Gujarat", "A central Gujarat city page held for future residential and investment inventory once Akshar Estate has active listings.", ["Nadiad", "Mahemdavad", "Ahmedabad", "Vadodara corridor"], ["Anand", "Central Gujarat", "Ahmedabad-Vadodara corridor"], "Anand connects with Nadiad, Ahmedabad, Vadodara-side movement and central Gujarat routes.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["central-gujarat", "Mahemdavad", "Gujarat", "A central Gujarat location prepared for future land and residential inventory after manual verification and active listings.", ["Nadiad", "Bareja", "Ahmedabad", "Anand"], ["Mahemdavad", "Central Gujarat", "Ahmedabad-Nadiad side"], "Mahemdavad connects with Ahmedabad, Nadiad and central Gujarat route networks.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["ahmedabad", "Viramgam", "Ahmedabad", "A wider Ahmedabad-side market prepared for future land and residential inventory once listings are verified.", ["Sanand", "Bavla", "Bagodara", "Kadi"], ["Viramgam", "Ahmedabad-side corridor", "Regional road network"], "Viramgam connects with Sanand, Bavla, Kadi-side routes and wider regional roads.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["ahmedabad", "Dholera", "Ahmedabad", "A planned investment corridor page held noindex until Akshar Estate has active verified Dholera inventory and useful listing depth.", ["Bavla", "Bagodara", "Bareja", "Lothal"], ["Dholera", "Dholera SIR corridor", "Ahmedabad-side route"], "Dholera connects with Ahmedabad-side and coastal corridor routes through Bavla and Bagodara-side movement.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["ahmedabad", "Bavla", "Ahmedabad", "An Ahmedabad-side land and industrial corridor page prepared for active inventory before indexing.", ["Changodar", "Bagodara", "Dholera", "Sanand"], ["Bavla", "Ahmedabad outskirts", "Industrial-side corridor"], "Bavla connects with Changodar, Bagodara, Dholera-side routes and Ahmedabad outskirts roads.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["ahmedabad", "Bareja", "Ahmedabad", "An Ahmedabad-side locality page held noindex until useful local inventory and manually verified content are available.", ["Mahemdavad", "Vatva", "Lambha", "Ahmedabad"], ["Bareja", "Ahmedabad-side route", "South Ahmedabad approach"], "Bareja connects with Ahmedabad-side, Vatva/Lambha-side and central Gujarat approach routes.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
+  ["ahmedabad", "Bagodara", "Ahmedabad", "A highway-side Ahmedabad outskirts location prepared for future land and industrial inventory after verification.", ["Bavla", "Dholera", "Changodar", "Viramgam"], ["Bagodara", "Highway-side locality", "Ahmedabad outskirts"], "Bagodara connects with Bavla, Dholera-side movement, Changodar and wider highway routes.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
   ["ahmedabad", "Bopal", "Ahmedabad", "A mature west Ahmedabad residential market with apartments, shops and family-friendly access to schools and daily services.", ["South Bopal", "Ghuma", "Shela", "Ambli"], ["Bopal Circle", "SP Ring Road", "Ambli Road"], "Bopal connects to South Bopal, Ambli, SG Highway and SP Ring Road."],
   ["ahmedabad", "South Bopal", "Ahmedabad", "A premium residential belt known for gated communities, modern apartments and strong ring-road connectivity.", ["Bopal", "Shela", "Ghuma", "Shantipura"], ["South Bopal Extension", "SP Ring Road", "Club 07 Road"], "South Bopal has quick access to SP Ring Road, Shela, Shantipura, Bopal and SG Highway."],
   ["ahmedabad", "Shela", "Ahmedabad", "A high-growth south-west Ahmedabad location with new apartments, plotted schemes and good access to education and clubs.", ["South Bopal", "Ghuma", "Shantipura", "Sanathal"], ["Shela Road", "Club 07", "SP Ring Road"], "Shela connects with South Bopal, Sanathal, SP Ring Road and SG Highway via Ambli and Bopal routes."],
@@ -171,20 +185,26 @@ const localityDefinitions = [
   ["gandhinagar", "Kadi", "Gandhinagar", "A north Gujarat market for buyers comparing land, residential and industrial-side opportunities near Kalol and Gandhinagar routes.", ["Kalol", "Chhatral", "Gandhinagar", "Sanand"], ["Kadi", "North Gujarat corridor", "Kalol side"], "Kadi connects with Kalol, Chhatral, Gandhinagar and wider north Gujarat routes."],
 ];
 
-const localityPages = localityDefinitions.map(([regionSlug, name, city, intro, nearbyAreas, landmarks, connectivity, matchSlugs = []]) => ({
-  regionSlug,
-  slug: slugifyLocation(name),
-  name,
-  city,
-  title: `Properties for Sale in ${name}, ${city} | Akshar Estate`,
-  h1: `Properties for Sale in ${name}, ${city}`,
-  intro,
-  nearbyAreas,
-  landmarks,
-  connectivity,
-  matchSlugs,
-  verified: true,
-}));
+const localityPages = localityDefinitions.map(([regionSlug, name, city, intro, nearbyAreas, landmarks, connectivity, matchSlugsOrOptions = [], options = {}]) => {
+  const matchSlugs = Array.isArray(matchSlugsOrOptions) ? matchSlugsOrOptions : [];
+  const pageOptions = Array.isArray(matchSlugsOrOptions) ? options : matchSlugsOrOptions || {};
+  return {
+    regionSlug,
+    slug: slugifyLocation(name),
+    name,
+    city,
+    title: `Properties for Sale in ${name}, ${city} | Akshar Estate`,
+    h1: `Properties for Sale in ${name}, ${city}`,
+    intro,
+    nearbyAreas,
+    landmarks,
+    connectivity,
+    matchSlugs,
+    verified: pageOptions.verified ?? true,
+    rolloutPhase: pageOptions.rolloutPhase || null,
+    verificationNote: pageOptions.verificationNote || "",
+  };
+});
 
 function locationMetaDescription(page) {
   const place = page.kind === "locality" || page.regionSlug ? `${page.name}, ${page.city}` : page.name;
