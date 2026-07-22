@@ -47,16 +47,18 @@ function canonicalUrl(slug, property = {}) {
 
 async function fetchPropertyById(id) {
   const response = await fetch(`${API_BASE_URL}/public/properties/${encodeURIComponent(id)}`);
-  if (!response.ok) return null;
+  if (response.status === 410) return { removed: true, status: 410 };
+  if (!response.ok) return { property: null, status: response.status };
   const body = await response.json();
-  return body?.data || null;
+  return { property: body?.data || null, status: response.status };
 }
 
 async function fetchPropertyBySlug(slug) {
   const response = await fetch(`${API_BASE_URL}/public/properties/slug/${encodeURIComponent(slug)}`);
-  if (!response.ok) return null;
+  if (response.status === 410) return { removed: true, status: 410 };
+  if (!response.ok) return { property: null, status: response.status };
   const body = await response.json();
-  return body?.data || null;
+  return { property: body?.data || null, status: response.status };
 }
 
 async function fetchPublicProperties(params = {}) {
@@ -129,7 +131,7 @@ function buildPropertyMeta(property, slug) {
   const description = propertyMetaDescription(property);
   const url = canonicalUrl(slug, property);
   const image = propertyImages(property)[0]?.url || "";
-  const robots = property.isIndexable === false ? "noindex,follow" : "index,follow,max-image-preview:large";
+  const robots = property.isIndexable === false || isNoindexLifecycleStatus(property.status) ? "noindex,follow" : "index,follow,max-image-preview:large";
 
   return [
     `<title>${escapeHtml(title)}</title>`,
@@ -173,15 +175,6 @@ function jsonLdScript(data, id) {
   return `<script${idAttribute} type="application/ld+json">${schemaScriptContent(data)}</script>`;
 }
 
-function slugify(value) {
-  return String(value || "")
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 function propertyLocation(property) {
   return [property.locationMaster?.name || property.location, property.city].filter(Boolean).join(", ");
 }
@@ -194,6 +187,24 @@ function propertyKind(property) {
 function listingAction(property) {
   const listingType = property.listingType || property.dealType || "";
   return /rent|lease/i.test(listingType) ? "Rent" : "Sale";
+}
+
+function lifecycleStatus(property) {
+  return String(property?.status || "available").trim().toLowerCase();
+}
+
+function lifecycleLabel(property) {
+  const status = lifecycleStatus(property);
+  if (status === "active") return "Available";
+  return status.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function isClosedLifecycleStatus(status) {
+  return ["sold", "rented"].includes(String(status || "").trim().toLowerCase());
+}
+
+function isNoindexLifecycleStatus(status) {
+  return ["draft", "inactive", "deleted", "pending"].includes(String(status || "").trim().toLowerCase());
 }
 
 function propertyPageTitle(property) {
@@ -359,7 +370,13 @@ function buildInitialPropertyPage(property, related = {}) {
   const images = propertyImages(property);
   const broker = property.broker || {};
   const links = buildInternalLinks(property, related);
-  const status = property.propertyStatus || property.status || "Available";
+  const status = property.propertyStatus || lifecycleLabel(property);
+  const lifecycle = lifecycleStatus(property);
+  const lifecycleNotice = isClosedLifecycleStatus(lifecycle)
+    ? `<aside style="border:1px solid #fecdd3;background:#fff1f2;color:#9f1239;padding:16px;border-radius:10px;margin:20px 0"><strong>This property is ${escapeHtml(lifecycleLabel(property))}.</strong><p style="margin:8px 0 0">The previous listing details are retained for reference. Contact Akshar Estate for similar available properties in ${escapeHtml(propertyLocation(property) || "this area")}.</p></aside>`
+    : lifecycle === "inactive"
+      ? `<aside style="border:1px solid #e2e8f0;background:#f8fafc;color:#475569;padding:16px;border-radius:10px;margin:20px 0"><strong>This property is currently inactive.</strong><p style="margin:8px 0 0">It is not shown in public listing results while the Akshar Estate team reviews availability.</p></aside>`
+      : "";
   const lastUpdated = formatDate(property.lastModifiedAt || property.updatedAt);
 
   return `
@@ -373,6 +390,7 @@ function buildInitialPropertyPage(property, related = {}) {
           <h1 style="font-size:32px;line-height:1.2;margin:0 0 12px">${escapeHtml(title)}</h1>
           <p>${escapeHtml(propertyLocation(property))}</p>
         </header>
+        ${lifecycleNotice}
         ${images.length ? `<figure><img ${imageAttributes(images[0], { width: 1600, height: 1000, widths: [640, 960, 1280, 1600], sizes: "(max-width: 768px) 100vw, 1120px", loading: "eager", fetchPriority: "high" })} style="width:100%;height:auto;border-radius:12px" /><figcaption>${escapeHtml(images[0].alt)}</figcaption></figure>` : ""}
         ${section("Property Overview", `<p>${escapeHtml(description)}</p>${detailList([
           ["Property status", status],
@@ -384,7 +402,7 @@ function buildInitialPropertyPage(property, related = {}) {
         ${section("Carpet Area", `<p>${escapeHtml(formatArea(property.carpetArea, "carpet area") || property.area || "Available on request")}</p>`)}
         ${section("Built-up Area", `<p>${escapeHtml(formatArea(property.builtUpArea, "built-up area") || (property.sqft ? `${property.sqft} sq.ft` : "Available on request"))}</p>`)}
         ${section("Property Description", `<p>${escapeHtml(description)}</p>`)}
-        ${section("Amenities", property.amenities?.length ? linkList(property.amenities.map((item) => ({ label: item, href: `/purchase/buyers/${slugify(`${item} ${property.type || "properties"} in ${property.city || ""}`)}` }))) : "<p>Amenities available on request.</p>")}
+        ${section("Amenities", property.amenities?.length ? linkList(property.amenities.map((item) => ({ label: `${item} properties in ${property.location || property.city || "Gujarat"}`, href: localityLandingHref(property.city, property.location) }))) : "<p>Amenities available on request.</p>")}
         ${section("Furnishing", `<p>${escapeHtml(property.furnishing || "Available on request")}</p>`)}
         ${section("Floor Details", `<p>${escapeHtml([property.floor || property.floorNumber, property.totalFloors ? `Total floors: ${property.totalFloors}` : ""].filter(Boolean).join(", ") || "Available on request")}</p>`)}
         ${section("Parking", `<p>${escapeHtml(property.parking || "Available on request")}</p>`)}
@@ -426,6 +444,13 @@ function notFound(res) {
   res.end("<!doctype html><html><head><title>Property Not Found | Akshar Estate</title><meta name=\"robots\" content=\"noindex\" /></head><body><h1>Property Not Found</h1><p>The property you are looking for is unavailable.</p></body></html>");
 }
 
+function gone(res) {
+  res.statusCode = 410;
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+  res.end("<!doctype html><html><head><title>Property Removed | Akshar Estate</title><meta name=\"robots\" content=\"noindex,follow\" /></head><body><h1>Property Removed</h1><p>This property has been deleted or permanently removed from public inventory.</p><p><a href=\"/properties\">Browse available properties</a></p></body></html>");
+}
+
 export default async function handler(req, res) {
   try {
     const url = new URL(req.url || "", "https://www.aksharestate.in");
@@ -442,7 +467,12 @@ export default async function handler(req, res) {
     const hasQueryNoise = extraQueryKeys.length > 0;
 
     if (OBJECT_ID_RE.test(decodedKey)) {
-      const property = await fetchPropertyById(decodedKey);
+      const result = await fetchPropertyById(decodedKey);
+      if (result?.removed) {
+        gone(res);
+        return;
+      }
+      const property = result?.property;
       if (!property?.slug) {
         notFound(res);
         return;
@@ -452,7 +482,12 @@ export default async function handler(req, res) {
     }
 
     const normalizedSlug = decodedKey.toLowerCase();
-    const property = await fetchPropertyBySlug(normalizedSlug);
+    const result = await fetchPropertyBySlug(normalizedSlug);
+    if (result?.removed) {
+      gone(res);
+      return;
+    }
+    const property = result?.property;
     if (!property?.slug) {
       notFound(res);
       return;

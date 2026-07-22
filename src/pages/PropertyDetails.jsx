@@ -38,6 +38,7 @@ export default function PropertyDetails() {
   const remoteSlug = id && !remoteId ? id : null;
   const [property, setProperty] = useState(initialProperty);
   const [loading, setLoading] = useState(Boolean(remoteId || remoteSlug));
+  const [removed, setRemoved] = useState(false);
   const [namePrompt, setNamePrompt] = useState({ open: false, name: storedEnquirerName(), error: "" });
 
   useEffect(() => {
@@ -48,13 +49,20 @@ export default function PropertyDetails() {
       .then((response) => {
         if (!active) return;
         const nextProperty = sanitizePublicProperty(response.data);
+        setRemoved(false);
         setProperty(nextProperty);
         if (nextProperty?.slug && (remoteId || (remoteSlug && nextProperty.slug !== remoteSlug))) {
           navigate(`/property/${nextProperty.slug}`, { replace: true, state: { property: nextProperty } });
         }
       })
-      .catch(() => {
-        if (active) setProperty((current) => current || null);
+      .catch((error) => {
+        if (!active) return;
+        if (error.status === 410) {
+          setRemoved(true);
+          setProperty(null);
+          return;
+        }
+        setProperty((current) => current || null);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -112,6 +120,23 @@ export default function PropertyDetails() {
   // Handle property not found
   if (loading) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-slate-500 font-bold">Loading property...</div>;
+  }
+
+  if (removed) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="mb-4 text-4xl font-bold text-gray-900">Property Removed</h1>
+          <p className="mb-8 text-gray-600">This property has been deleted or permanently removed from public inventory.</p>
+          <Link
+            to="/properties"
+            className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700"
+          >
+            Browse Available Properties
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   if (!property) {

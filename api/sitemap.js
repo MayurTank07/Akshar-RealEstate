@@ -29,6 +29,7 @@ const SITEMAP_FILES = [
   "sitemap-property-types.xml",
   "sitemap-blog.xml",
 ];
+const SITEMAP_PROPERTY_STATUSES = ["active", "published", "available", "reserved", "sold", "rented"];
 
 function escapeXml(value) {
   return String(value || "")
@@ -146,7 +147,7 @@ function propertyEntries(properties) {
   return properties
     .filter((property) =>
       property.slug &&
-      property.status === "active" &&
+      SITEMAP_PROPERTY_STATUSES.includes(String(property.status || "").toLowerCase()) &&
       property.isIndexable !== false &&
       !property.deletedAt &&
       property.visibility !== "private"

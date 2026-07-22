@@ -16,6 +16,15 @@ function telHref(phoneNumber = "") {
   return normalized ? `tel:${normalized}` : "";
 }
 
+function lifecycleLabel(property) {
+  const status = String(property?.status || "").trim().toLowerCase();
+  if (status === "active") return "Available";
+  if (["sold", "rented", "reserved", "inactive", "draft", "deleted", "published", "available"].includes(status)) {
+    return status.replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+  return property?.propertyStatus || (status ? status.charAt(0).toUpperCase() + status.slice(1) : "Ready");
+}
+
 const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const { isAuthenticated } = useAuth();
@@ -67,7 +76,8 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
   const unit = measurement?.unit;
   const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "");
   const propertyType = supportsRooms(property) && property?.beds ? `${property.beds} BHK` : property?.type || property?.category || "Property";
-  const propertyStatus = property?.propertyStatus || (property?.status ? property.status.charAt(0).toUpperCase() + property.status.slice(1) : "Ready");
+  const propertyStatus = lifecycleLabel(property);
+  const lifecycleStatus = String(property?.status || "").trim().toLowerCase();
   const investmentMetric = property?.roi || (property?.isPreLeased ? "Pre-Leased" : "Verified");
   const callAvailable = Boolean(telHref(property?.broker?.phone));
 
@@ -169,6 +179,16 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
 
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-12">
+            {["sold", "rented"].includes(lifecycleStatus) && (
+              <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm font-semibold leading-6 text-rose-700">
+                This property is {propertyStatus}. The previous listing details are retained for reference. Contact Akshar Estate for similar available properties in this area.
+              </div>
+            )}
+            {lifecycleStatus === "inactive" && (
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold leading-6 text-slate-600">
+                This property is currently inactive and is not shown in public listing results while availability is reviewed.
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-y-6 border-y border-gray-100 py-8 text-center sm:grid-cols-4">
               <div className="sm:border-r">
                 <p className="text-lg font-bold">{propertyType}</p>

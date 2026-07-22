@@ -7,6 +7,8 @@ import { formatINR } from "../utils/currency";
 import { normalizeProperty } from "../utils/propertyData";
 import { THUMBNAIL_IMAGE_FALLBACK, propertyImageAlt, propertyImageUrl, responsiveImageProps } from "../utils/imageSeo";
 
+const PUBLIC_LISTING_STATUSES = ["active", "published", "available", "reserved"];
+
 export default function Properties() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ export default function Properties() {
   }, []);
 
   const recentlyAdded = [...properties]
-    .filter((property) => String(property.status || "active").toLowerCase() === "active")
+    .filter((property) => PUBLIC_LISTING_STATUSES.includes(String(property.status || "active").toLowerCase()))
     .sort((a, b) => {
       const aTime = new Date(a.createdAt || a.updatedAt || 0).getTime();
       const bTime = new Date(b.createdAt || b.updatedAt || 0).getTime();
