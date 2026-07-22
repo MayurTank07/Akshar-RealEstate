@@ -58,7 +58,8 @@ function stripStaticSeo(html) {
     .replace(/<link\s+rel=["']canonical["'][^>]*>\s*/gi, "")
     .replace(/<meta\s+property=["']og:[^"']+["'][^>]*>\s*/gi, "")
     .replace(/<meta\s+name=["']twitter:[^"']+["'][^>]*>\s*/gi, "")
-    .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, "");
+    .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, "")
+    .replace(/<noscript>[\s\S]*?<\/noscript>\s*/gi, "");
 }
 
 async function fetchPublicProperties() {
@@ -88,12 +89,16 @@ function slugContainsLocation(haystackSlug = "", needleSlug = "") {
     haystackSlug.includes(`-${needleSlug}-`);
 }
 
+function pageLocationSlugs(page, fallbackSlug = "") {
+  return [fallbackSlug, ...(page.matchSlugs || [])].filter(Boolean);
+}
+
 function propertyMatchesPage(property, page) {
   const locationSlug = slugifyLocation(property.locationMaster?.name || property.location || property.map?.area || "");
   const citySlug = slugifyLocation(property.city || property.map?.city || "");
-  if (page.kind === "bhk") return slugContainsLocation(locationSlug, page.localitySlug) && propertyBhk(property) === Number(page.bhk);
-  if (page.kind === "property-type") return slugContainsLocation(locationSlug, page.locationSlug) && typeMatchesIntent(property, page);
-  if (page.kind === "locality") return slugContainsLocation(locationSlug, page.slug);
+  if (page.kind === "bhk") return pageLocationSlugs(page, page.localitySlug).some((slug) => slugContainsLocation(locationSlug, slug)) && propertyBhk(property) === Number(page.bhk);
+  if (page.kind === "property-type") return pageLocationSlugs(page, page.locationSlug).some((slug) => slugContainsLocation(locationSlug, slug)) && typeMatchesIntent(property, page);
+  if (page.kind === "locality") return pageLocationSlugs(page, page.slug).some((slug) => slugContainsLocation(locationSlug, slug));
   if (page.locations?.length) {
     const allowed = page.locations.map(slugifyLocation);
     return allowed.some((slug) => slugContainsLocation(locationSlug, slug) || citySlug === slug);

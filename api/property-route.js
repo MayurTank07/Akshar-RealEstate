@@ -134,7 +134,8 @@ function stripStaticSeo(html) {
     .replace(/<link\s+rel=["']canonical["'][^>]*>\s*/gi, "")
     .replace(/<meta\s+property=["']og:[^"']+["'][^>]*>\s*/gi, "")
     .replace(/<meta\s+name=["']twitter:[^"']+["'][^>]*>\s*/gi, "")
-    .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, "");
+    .replace(/<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>\s*/gi, "")
+    .replace(/<noscript>[\s\S]*?<\/noscript>\s*/gi, "");
 }
 
 function buildPropertyMeta(property, slug) {

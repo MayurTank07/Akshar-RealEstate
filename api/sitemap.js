@@ -87,6 +87,10 @@ function slugContainsLocation(haystackSlug = "", needleSlug = "") {
     haystackSlug.includes(`-${needleSlug}-`);
 }
 
+function pageLocationSlugs(page, fallbackSlug = "") {
+  return [fallbackSlug, ...(page.matchSlugs || [])].filter(Boolean);
+}
+
 function propertyLocationSlug(property = {}) {
   return slugifyLocation(property.locationMaster?.name || property.location || property.map?.area || "");
 }
@@ -94,14 +98,14 @@ function propertyLocationSlug(property = {}) {
 function propertyMatchesPage(property, page) {
   const locationSlug = propertyLocationSlug(property);
   const citySlug = slugifyLocation(property.city || property.map?.city || "");
-  if (page.kind === "locality") return slugContainsLocation(locationSlug, page.slug);
+  if (page.kind === "locality") return pageLocationSlugs(page, page.slug).some((slug) => slugContainsLocation(locationSlug, slug));
   if (page.kind === "region" && page.locations?.length) {
     return page.locations.map(slugifyLocation).some((slug) => slugContainsLocation(locationSlug, slug) || citySlug === slug);
   }
   if (page.kind === "region") return citySlug === slugifyLocation(page.city || page.name);
-  if (page.kind === "bhk") return slugContainsLocation(locationSlug, page.localitySlug) && propertyBhk(property) === Number(page.bhk);
+  if (page.kind === "bhk") return pageLocationSlugs(page, page.localitySlug).some((slug) => slugContainsLocation(locationSlug, slug)) && propertyBhk(property) === Number(page.bhk);
   if (page.kind === "property-type") {
-    return slugContainsLocation(locationSlug, page.locationSlug) &&
+    return pageLocationSlugs(page, page.locationSlug).some((slug) => slugContainsLocation(locationSlug, slug)) &&
       (page.typeMatchers || []).some((matcher) => propertyText(property).includes(String(matcher).toLowerCase()));
   }
   return false;
