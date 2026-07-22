@@ -90,7 +90,7 @@ Search Console verified state:
 
 ## Production Verification After Deployment
 
-Commits verified on production: `7a530a3`, `1662cdf`, `453b639`
+Commits verified on production: `7a530a3`, `1662cdf`, `453b639`, `7e18de1`
 
 | URL | Status | Robots | Canonical / Redirect |
 |---|---:|---|---|
@@ -104,6 +104,7 @@ Commits verified on production: `7a530a3`, `1662cdf`, `453b639`
 | `https://www.aksharestate.in/sitemap.xml` | 200 | XML sitemap index | No page canonical needed |
 | `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap` |
 | `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` | 200 | `noindex,follow` | `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` |
+| `https://www.aksharestate.in/properties-for-sale/ahmedabad/new-cg-road` | 200 | `noindex,follow` | Removed from `sitemap-locations.xml`; Chandkheda remains in sitemap |
 | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
 | `https://www.aksharestate.in/property?id=agriculture-land-for-sale-dhanap-gandhinagar-0027` | 301 | Not applicable | Redirects to `/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
 | `https://www.aksharestate.in/blog` | 200 | `noindex,follow` | Removed from `sitemap-pages.xml` |
