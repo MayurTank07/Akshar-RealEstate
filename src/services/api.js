@@ -2,6 +2,9 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   (import.meta.env.DEV ? "http://127.0.0.1:5001/api" : "https://akshar-realestate-backend.onrender.com/api");
 
+const publicGetCache = new Map();
+const PUBLIC_GET_TTL_MS = 60_000;
+
 function toQueryString(params = {}) {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
@@ -23,6 +26,11 @@ function getUserToken() {
 
 async function request(path, options = {}) {
   const { authRequired = false, token: explicitToken, ...fetchOptions } = options;
+  const method = String(fetchOptions.method || "GET").toUpperCase();
+  const isPublicGet = method === "GET" && explicitToken === null && path.startsWith("/public/");
+  const cached = isPublicGet ? publicGetCache.get(path) : null;
+  if (cached && cached.expiresAt > Date.now()) return cached.promise;
+
   const headers = new Headers(fetchOptions.headers || {});
   const isFormData = fetchOptions.body instanceof FormData;
   if (!isFormData) headers.set("Content-Type", "application/json");
@@ -38,26 +46,34 @@ async function request(path, options = {}) {
   }
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const promise = fetch(`${API_BASE_URL}${path}`, {
     ...fetchOptions,
     headers,
-  });
+  })
+    .then(async (response) => {
+      const contentType = response.headers.get("content-type") || "";
+      const isJson = contentType.includes("application/json");
+      const data = isJson ? await response.json() : await response.text();
 
-  const contentType = response.headers.get("content-type") || "";
-  const isJson = contentType.includes("application/json");
-  const data = isJson ? await response.json() : await response.text();
+      if (!response.ok) {
+        const error = new Error(data?.message || "Request failed");
+        error.status = response.status;
+        error.details = data?.details;
+        if (response.status === 401 && token && typeof window !== "undefined" && path !== "/auth/staff/login") {
+          window.dispatchEvent(new CustomEvent("staff-auth:unauthorized"));
+        }
+        throw error;
+      }
 
-  if (!response.ok) {
-    const error = new Error(data?.message || "Request failed");
-    error.status = response.status;
-    error.details = data?.details;
-    if (response.status === 401 && token && typeof window !== "undefined" && path !== "/auth/staff/login") {
-      window.dispatchEvent(new CustomEvent("staff-auth:unauthorized"));
-    }
-    throw error;
-  }
+      return data;
+    })
+    .catch((error) => {
+      if (isPublicGet) publicGetCache.delete(path);
+      throw error;
+    });
 
-  return data;
+  if (isPublicGet) publicGetCache.set(path, { promise, expiresAt: Date.now() + PUBLIC_GET_TTL_MS });
+  return promise;
 }
 
 export const publicApi = {
@@ -134,9 +150,12 @@ export const staffApi = {
   createProperty: (payload) => request("/admin/properties", { method: "POST", body: JSON.stringify(payload), authRequired: true }),
   updateProperty: (id, payload) => request(`/admin/properties/${id}`, { method: "PUT", body: JSON.stringify(payload), authRequired: true }),
   deleteProperty: (id) => request(`/admin/properties/${id}`, { method: "DELETE", authRequired: true }),
-  uploadPropertyImages: (files) => {
+  uploadPropertyImages: (files, meta = {}) => {
     const formData = new FormData();
     files.forEach((file) => formData.append("images", file));
+    Object.entries(meta).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") formData.append(key, value);
+    });
     return request("/admin/uploads/property-images", { method: "POST", body: formData, authRequired: true });
   },
   enquiries: (query = "") => request(`/admin/enquiries${query}`, { authRequired: true }),

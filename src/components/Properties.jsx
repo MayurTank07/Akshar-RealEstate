@@ -5,6 +5,7 @@ import useAuth from "../contexts/useAuth";
 import { publicApi } from "../services/api";
 import { formatINR } from "../utils/currency";
 import { normalizeProperty } from "../utils/propertyData";
+import { THUMBNAIL_IMAGE_FALLBACK, propertyImageAlt, propertyImageUrl, responsiveImageProps } from "../utils/imageSeo";
 
 export default function Properties() {
   const [properties, setProperties] = useState([]);
@@ -193,9 +194,14 @@ function PropertyCard({ property }) {
     >
       <div className="relative h-56 overflow-hidden bg-slate-100 sm:h-60">
         <img
-          src={property.image || property.gallery?.[0] || "https://placehold.co/900x650/f8fafc/475569?text=No+Property+Image"}
-          alt={property.title}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          {...responsiveImageProps(propertyImageUrl(property, 0, THUMBNAIL_IMAGE_FALLBACK), {
+            alt: propertyImageAlt(property, 0),
+            width: 780,
+            height: 480,
+            widths: [360, 520, 780],
+            sizes: "(max-width: 640px) 84vw, 390px",
+            className: "h-full w-full object-cover transition duration-500 group-hover:scale-105",
+          })}
         />
 
         <span

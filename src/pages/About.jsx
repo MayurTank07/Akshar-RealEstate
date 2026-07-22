@@ -8,6 +8,7 @@ import StructuredData from '../components/StructuredData';
 import useSiteContent from '../hooks/useSiteContent';
 import { defaultAboutContent } from '../config/navigationContent';
 import { buildBusinessSchemas } from '../utils/structuredData';
+import { responsiveImageProps } from '../utils/imageSeo';
 
 const AboutUs = () => {
   const navigate = useNavigate();
@@ -65,9 +66,16 @@ const AboutUs = () => {
       <section className="px-6 max-w-7xl mx-auto">
         <div className="h-[500px] w-full bg-slate-200 rounded-2xl overflow-hidden relative group">
           <img 
-            src={about.heroImage} 
-            alt="Akshar Estate The Property HUB office" 
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            {...responsiveImageProps(about.heroImage, {
+              alt: "Akshar Estate The Property HUB office",
+              width: 1600,
+              height: 900,
+              widths: [640, 960, 1280, 1600],
+              sizes: "(max-width: 768px) 100vw, 1120px",
+              loading: "eager",
+              fetchPriority: "high",
+              className: "h-full w-full object-cover transition-transform duration-1000 group-hover:scale-105",
+            })}
           />
           <div className="absolute bottom-10 left-10 bg-white p-8 rounded-xl shadow-2xl hidden md:block">
             <div className="flex gap-12 text-center">
@@ -121,9 +129,14 @@ const AboutUs = () => {
           <div className="md:w-1/2">
             <div className="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden shadow-2xl">
                <img 
-                src={about.ownerPhoto} 
-                alt={`${about.ownerName}, ${about.ownerDesignation}`} 
-                className="w-full h-full object-cover"
+                {...responsiveImageProps(about.ownerPhoto, {
+                  alt: `${about.ownerName}, ${about.ownerDesignation}`,
+                  width: 900,
+                  height: 1125,
+                  widths: [420, 640, 900],
+                  sizes: "(max-width: 768px) 100vw, 50vw",
+                  className: "h-full w-full object-cover",
+                })}
               />
             </div>
           </div>

@@ -4,6 +4,7 @@ import useAuth from "../contexts/useAuth";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { formatINR } from "../utils/currency";
+import { THUMBNAIL_IMAGE_FALLBACK, propertyImageAlt, propertyImageUrl, responsiveImageProps } from "../utils/imageSeo";
 
 export default function SavedProperties() {
   const navigate = useNavigate();
@@ -122,7 +123,16 @@ function SavedPropertyCard({ property, onUnsave }) {
       className="wf-card wf-card-hover group cursor-pointer overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
     >
       <div className="relative h-56 overflow-hidden bg-slate-100">
-        <img src={property.image} alt={property.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+        <img
+          {...responsiveImageProps(propertyImageUrl(property, 0, THUMBNAIL_IMAGE_FALLBACK), {
+            alt: propertyImageAlt(property, 0),
+            width: 720,
+            height: 460,
+            widths: [360, 520, 720],
+            sizes: "(max-width: 768px) 100vw, 33vw",
+            className: "h-full w-full object-cover transition duration-500 group-hover:scale-105",
+          })}
+        />
         <span className="absolute left-3 top-3 rounded-full bg-blue-600 px-3 py-1 text-xs font-extrabold text-white">
           {property.badge || property.tag || "Saved"}
         </span>

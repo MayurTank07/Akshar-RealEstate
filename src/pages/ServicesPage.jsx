@@ -6,6 +6,7 @@ import Footer from "../components/Footer";
 import StructuredData from "../components/StructuredData";
 import useSiteContent from "../hooks/useSiteContent";
 import { buildBusinessSchemas } from "../utils/structuredData";
+import { responsiveImageProps } from "../utils/imageSeo";
 
 const services = [
   {
@@ -57,9 +58,16 @@ export default function ServicesPage() {
       <main>
         <section className="relative overflow-hidden bg-slate-950 pt-32 text-white sm:pt-36">
           <img
-            src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1800"
-            alt="Premium real estate advisory"
-            className="absolute inset-0 h-full w-full object-cover opacity-35"
+            {...responsiveImageProps("https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&q=80&w=1800", {
+              alt: "Premium real estate advisory",
+              width: 1800,
+              height: 1000,
+              widths: [768, 1280, 1800],
+              sizes: "100vw",
+              loading: "eager",
+              fetchPriority: "high",
+              className: "absolute inset-0 h-full w-full object-cover opacity-35",
+            })}
           />
           <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950/80 to-slate-950/70" />
           <div className="wf-container relative z-10 pb-20">

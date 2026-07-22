@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { PROPERTY_IMAGE_FALLBACK, imageSrcSet, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildPropertyJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
 
 const API_BASE_URL =
@@ -183,7 +184,8 @@ function propertyMetaDescription(property) {
 
 function propertyImages(property) {
   const urls = Array.from(new Set([property.image, ...(property.gallery || []), ...(property.images || [])].filter(Boolean)));
-  return urls.map((url, index) => ({ url, alt: propertyImageAlt(property, index) }));
+  const safeUrls = urls.length ? urls : [PROPERTY_IMAGE_FALLBACK];
+  return safeUrls.map((url, index) => ({ url, alt: propertyImageAlt(property, index) }));
 }
 
 function propertyImageAlt(property, index = 0) {
@@ -225,6 +227,29 @@ function linkList(items) {
   const links = items.filter(Boolean);
   if (!links.length) return "";
   return `<ul>${links.map((item) => `<li><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`;
+}
+
+function imageAttributes(image, {
+  width = 1200,
+  height = 800,
+  widths = [480, 768, 1024, 1200],
+  sizes = "100vw",
+  loading = "lazy",
+  fetchPriority = "",
+} = {}) {
+  const src = optimizedImageUrl(image.url, { width, height });
+  const srcset = imageSrcSet(image.url, { widths, aspectRatio: width / height });
+  return [
+    `src="${escapeHtml(src)}"`,
+    `srcset="${escapeHtml(srcset)}"`,
+    `sizes="${escapeHtml(sizes)}"`,
+    `width="${width}"`,
+    `height="${height}"`,
+    `loading="${escapeHtml(loading)}"`,
+    `decoding="async"`,
+    fetchPriority ? `fetchpriority="${escapeHtml(fetchPriority)}"` : "",
+    `alt="${escapeHtml(image.alt)}"`,
+  ].filter(Boolean).join(" ");
 }
 
 function propertyLink(property) {
@@ -284,7 +309,7 @@ function buildInitialPropertyPage(property, related = {}) {
           <h1 style="font-size:32px;line-height:1.2;margin:0 0 12px">${escapeHtml(title)}</h1>
           <p>${escapeHtml(propertyLocation(property))}</p>
         </header>
-        ${images.length ? `<figure><img src="${escapeHtml(images[0].url)}" alt="${escapeHtml(images[0].alt)}" style="width:100%;height:auto;border-radius:12px" /><figcaption>${escapeHtml(images[0].alt)}</figcaption></figure>` : ""}
+        ${images.length ? `<figure><img ${imageAttributes(images[0], { width: 1600, height: 1000, widths: [640, 960, 1280, 1600], sizes: "(max-width: 768px) 100vw, 1120px", loading: "eager", fetchPriority: "high" })} style="width:100%;height:auto;border-radius:12px" /><figcaption>${escapeHtml(images[0].alt)}</figcaption></figure>` : ""}
         ${section("Property Overview", `<p>${escapeHtml(description)}</p>${detailList([
           ["Property status", status],
           ["Last updated", lastUpdated],
@@ -313,7 +338,7 @@ function buildInitialPropertyPage(property, related = {}) {
         ${section("Similar Properties", linkList(links.similar) || "<p>Similar active properties will appear here as inventory updates.</p>")}
         ${section("Properties in the Same Location", linkList(links.sameLocation) || "<p>More active properties in this location will appear here as inventory updates.</p>")}
         ${section("Internal Links", linkList(links.core))}
-        ${images.length > 1 ? section("Property Images", `<ul>${images.slice(1).map((image) => `<li><img src="${escapeHtml(image.url)}" alt="${escapeHtml(image.alt)}" style="max-width:240px;height:auto" /></li>`).join("")}</ul>`) : ""}
+        ${images.length > 1 ? section("Property Images", `<ul>${images.slice(1).map((image) => `<li><img ${imageAttributes(image, { width: 320, height: 220, widths: [160, 240, 320], sizes: "240px" })} style="max-width:240px;height:auto" /></li>`).join("")}</ul>`) : ""}
       </article>
     </main>`;
 }

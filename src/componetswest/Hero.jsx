@@ -8,20 +8,11 @@ import Navbar from '../components/PricingNavbar';
 import { formatINR } from '../utils/currency';
 import { supportsRooms } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
+import { PROPERTY_IMAGE_FALLBACK, propertyImageAlt, responsiveImageProps } from '../utils/imageSeo';
 
 function telHref(phoneNumber = "") {
   const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
   return normalized ? `tel:${normalized}` : "";
-}
-
-function propertyImageAlt(property, index = 0) {
-  const savedAlt = property?.imageAltTexts?.[index];
-  const repeatedAlt = savedAlt && property?.imageAltTexts?.filter((item) => item === savedAlt).length > 1;
-  if (savedAlt && !repeatedAlt) return savedAlt;
-  const location = [property?.location, property?.city].filter(Boolean).join(" ");
-  const type = property?.bhk ? `${property.bhk} BHK ${property?.type || property?.propertyType || "property"}` : property?.type || property?.propertyType || "property";
-  const views = ["Exterior view", "Living room", "Bedroom", "Kitchen", "Balcony", "Interior view"];
-  return `${views[index % views.length]} of ${type} in ${location || "Gujarat"}`;
 }
 
 const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => {
@@ -31,7 +22,7 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
   const location = useLocation();
 
   const images = Array.from(new Set([property?.image, ...(property?.gallery || [])].filter(Boolean)));
-  const galleryImages = images.length ? images : ["https://placehold.co/1200x800/f8fafc/475569?text=No+Property+Image"];
+  const galleryImages = images.length ? images : [PROPERTY_IMAGE_FALLBACK];
   const activeImage = galleryImages[selectedImage] || galleryImages[0];
 
   const handleCall = () => {
@@ -109,7 +100,18 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
 
         <div className="space-y-4 mb-10">
           <div className="relative h-[320px] w-full overflow-hidden rounded-2xl shadow-sm sm:h-[500px]">
-            <img src={activeImage} alt={propertyImageAlt(property, selectedImage)} className="w-full h-full object-cover" />
+            <img
+              {...responsiveImageProps(activeImage, {
+                alt: propertyImageAlt(property, selectedImage),
+                width: 1600,
+                height: 1000,
+                widths: [640, 960, 1280, 1600],
+                sizes: "(max-width: 768px) 100vw, 1184px",
+                loading: selectedImage === 0 ? "eager" : "lazy",
+                fetchPriority: selectedImage === 0 ? "high" : "auto",
+                className: "h-full w-full object-cover",
+              })}
+            />
             <div className="absolute bottom-6 right-6 bg-white/90 backdrop-blur px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2">
                 <ShieldCheck size={14} className="text-blue-600"/> Verified Listing
             </div>
@@ -121,7 +123,16 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
                 onClick={() => setSelectedImage(idx)}
                 className={`h-20 cursor-pointer overflow-hidden rounded-xl border-2 transition-all sm:h-24 ${selectedImage === idx ? 'scale-95 border-blue-500' : 'border-transparent'}`}
               >
-                <img src={img} alt={propertyImageAlt(property, idx)} className="w-full h-full object-cover" />
+                <img
+                  {...responsiveImageProps(img, {
+                    alt: propertyImageAlt(property, idx),
+                    width: 240,
+                    height: 160,
+                    widths: [160, 240, 320],
+                    sizes: "(max-width: 640px) 33vw, 160px",
+                    className: "h-full w-full object-cover",
+                  })}
+                />
               </div>
             ))}
           </div>

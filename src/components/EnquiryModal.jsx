@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import EnquiryForm from '../pages/Enquiry';
+
+const EnquiryForm = lazy(() => import('../pages/Enquiry'));
 
 export default function EnquiryModal({ isOpen, onClose }) {
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -34,10 +35,12 @@ export default function EnquiryModal({ isOpen, onClose }) {
         </button>
         
         <div className="h-full overflow-hidden">
-          <EnquiryForm 
-            isModal={true}
-            onSubmitted={() => setIsSubmitted(true)}
-          />
+          <Suspense fallback={<div className="flex h-full items-center justify-center text-sm font-bold text-slate-500">Loading enquiry form...</div>}>
+            <EnquiryForm
+              isModal={true}
+              onSubmitted={() => setIsSubmitted(true)}
+            />
+          </Suspense>
         </div>
       </div>
     </div>

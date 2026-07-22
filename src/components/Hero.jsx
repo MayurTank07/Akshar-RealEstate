@@ -4,6 +4,7 @@ import { ArrowRight, Clock, Search, TrendingUp, X } from "lucide-react";
 import useSiteContent from "../hooks/useSiteContent";
 import { publicApi } from "../services/api";
 import { generateSearchSuggestions } from "../utils/propertySearch";
+import { responsiveImageProps } from "../utils/imageSeo";
 
 const RECENT_KEY = "akshar_recent_searches";
 const MAX_RECENT = 5;
@@ -41,7 +42,7 @@ export default function Hero() {
   const highlights = ["Verified homes", "Gujarat focused", "Expert guidance"];
 
   useEffect(() => {
-    publicApi.properties().then((r) => { if (r.data?.length) setProperties(r.data); }).catch(() => {});
+    publicApi.properties({ limit: 100, sort: "createdAt", order: "desc" }).then((r) => { if (r.data?.length) setProperties(r.data); }).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -94,9 +95,16 @@ export default function Hero() {
   return (
     <section className="relative min-h-[760px] w-full overflow-hidden bg-slate-950 sm:min-h-[720px] lg:min-h-[760px]">
       <img
-        src={heroImage || "/house.jpg"}
-        alt="Modern Akshar Estate The Property HUB home exterior"
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        {...responsiveImageProps(heroImage || "/house.jpg", {
+          alt: "Modern Akshar Estate The Property HUB home exterior",
+          width: 1920,
+          height: 1080,
+          widths: [768, 1280, 1600, 1920],
+          sizes: "100vw",
+          loading: "eager",
+          fetchPriority: "high",
+          className: "absolute inset-0 h-full w-full object-cover object-center",
+        })}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-blue-950/80 via-blue-800/45 to-blue-950/85 sm:bg-gradient-to-r sm:from-blue-950/85 sm:via-blue-900/55 sm:to-blue-500/30" />
       <div className="absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-slate-950/60 to-transparent" />

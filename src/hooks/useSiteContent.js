@@ -15,19 +15,35 @@ const defaults = {
   heroCtaText: "Search",
 };
 
+let cachedContent = null;
+let contentPromise = null;
+
 export default function useSiteContent() {
-  const [content, setContent] = useState(defaults);
+  const [content, setContent] = useState(cachedContent || defaults);
 
   useEffect(() => {
     let active = true;
-    publicApi
+
+    if (cachedContent) {
+      return () => {
+        active = false;
+      };
+    }
+
+    contentPromise ||= publicApi
       .content()
       .then((response) => {
-        if (!active) return;
-        const next = response.data.reduce((acc, item) => ({ ...acc, [item.key]: item.value }), defaults);
-        setContent(next);
+        cachedContent = response.data.reduce((acc, item) => ({ ...acc, [item.key]: item.value }), defaults);
+        return cachedContent;
       })
-      .catch(() => {});
+      .catch(() => defaults)
+      .finally(() => {
+        contentPromise = null;
+      });
+
+    contentPromise.then((next) => {
+      if (active) setContent(next);
+    });
 
     return () => {
       active = false;

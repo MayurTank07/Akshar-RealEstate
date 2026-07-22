@@ -2114,7 +2114,11 @@ function PropertyModal({ property, onClose, onSaved }) {
       let uploadedUrls = [];
       let uploadedFiles = [];
       if (pendingFiles.length) {
-        const response = await staffApi.uploadPropertyImages(pendingFiles.map((item) => item.file));
+        const response = await staffApi.uploadPropertyImages(pendingFiles.map((item) => item.file), {
+          propertyTitle: nextForm.title,
+          location: nextForm.location,
+          city: nextForm.city,
+        });
         uploadedUrls = response.data.urls || [];
         uploadedFiles = response.data.files || uploadedUrls.map((url) => ({ url }));
       }

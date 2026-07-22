@@ -3,6 +3,7 @@ import { Play, MapPin, Bookmark, ChevronDown } from 'lucide-react';
 import { publicApi } from '../services/api';
 import { buildInternationalPhone, countryCodeOptions, normalizePhoneDigits } from '../utils/countryCodes';
 import { publicGoogleMapsEmbedUrl, publicMapLabel } from '../utils/googleMaps';
+import { PROPERTY_IMAGE_FALLBACK, propertyImageAlt, responsiveImageProps } from '../utils/imageSeo';
 
 function telHref(phoneNumber = "") {
   const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
@@ -18,7 +19,7 @@ export default function PropertyInformation({ property }) {
   const contactPhoneHref = telHref(contactPhone);
   const companyName = broker.companyName || "";
   const initials = contactName.split(" ").map((item) => item[0]).join("").slice(0, 2).toUpperCase() || "AE";
-  const videoThumb = property?.image || property?.gallery?.[0] || "https://placehold.co/1200x700/f8fafc/475569?text=No+Property+Image";
+  const videoThumb = property?.image || property?.gallery?.[0] || PROPERTY_IMAGE_FALLBACK;
   const mapEmbedUrl = publicGoogleMapsEmbedUrl(property);
   const mapLabel = publicMapLabel(property);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -77,10 +78,15 @@ export default function PropertyInformation({ property }) {
               onClick={() => property?.videoUrl && window.open(property.videoUrl, "_blank", "noopener,noreferrer")}
               className="relative block w-full overflow-hidden rounded-2xl text-left shadow-lg group"
             >
-              <img 
-                src={videoThumb}
-                className="w-full h-[350px] object-cover" 
-                alt={`${property?.title || "Property"} video tour in ${property?.location || property?.city || "Gujarat"}`}
+              <img
+                {...responsiveImageProps(videoThumb, {
+                  alt: propertyImageAlt(property, 0).replace(/^Exterior view/, "Video tour preview"),
+                  width: 1200,
+                  height: 700,
+                  widths: [480, 768, 1024, 1200],
+                  sizes: "(max-width: 1024px) 100vw, 720px",
+                  className: "h-[350px] w-full object-cover",
+                })}
               />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center transition-bg group-hover:bg-black/30">
                 <div className="w-16 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-xl">
@@ -155,7 +161,18 @@ export default function PropertyInformation({ property }) {
             {/* Agent Profile */}
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 overflow-hidden bg-gray-50 border border-gray-100 rounded-lg flex items-center justify-center font-bold text-gray-700 text-lg">
-                {broker.avatar ? <img src={broker.avatar} alt={contactName} className="h-full w-full object-cover" /> : initials}
+                {broker.avatar ? (
+                  <img
+                    {...responsiveImageProps(broker.avatar, {
+                      alt: contactName,
+                      width: 96,
+                      height: 96,
+                      widths: [64, 96, 128],
+                      sizes: "48px",
+                      className: "h-full w-full object-cover",
+                    })}
+                  />
+                ) : initials}
               </div>
               <div>
                 <h4 className="font-bold text-gray-900 leading-none mb-1">{contactName}</h4>

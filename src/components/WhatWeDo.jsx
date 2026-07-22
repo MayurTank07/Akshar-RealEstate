@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { responsiveImageProps } from "../utils/imageSeo";
 
 export default function WhatWeDo() {
   useEffect(() => {
@@ -56,9 +57,14 @@ export default function WhatWeDo() {
               className={`group relative min-h-0 overflow-hidden rounded-2xl shadow-sm ${card.className || ""}`}
             >
               <img
-                src={card.image}
-                alt={card.title}
-                className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                {...responsiveImageProps(card.image, {
+                  alt: card.title,
+                  width: 900,
+                  height: 650,
+                  widths: [360, 640, 900],
+                  sizes: "(max-width: 768px) 66vw, 33vw",
+                  className: "h-full w-full object-cover transition duration-500 group-hover:scale-105",
+                })}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/20 to-transparent" />
               {card.video && (

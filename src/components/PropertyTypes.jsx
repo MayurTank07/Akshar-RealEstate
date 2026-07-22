@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { responsiveImageProps } from "../utils/imageSeo";
 
 const types = [
   {
@@ -68,9 +69,14 @@ export default function PropertyTypes() {
                     {/* Mobile Property Card */}
                     <div className="relative h-64 sm:h-80 rounded-2xl overflow-hidden">
                       <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-full object-cover"
+                        {...responsiveImageProps(item.image, {
+                          alt: item.title,
+                          width: 720,
+                          height: 480,
+                          widths: [360, 520, 720],
+                          sizes: "100vw",
+                          className: "h-full w-full object-cover",
+                        })}
                       />
                       
                       {/* Gradient Overlay */}
@@ -137,10 +143,14 @@ export default function PropertyTypes() {
               >
                 {/* Background Image with Zoom */}
                 <img
-                  src={item.image}
-                  alt={item.title}
-                  className={`absolute inset-0 w-full h-full object-cover transition-transform duration-1000 
-                    ${isActive ? "scale-110" : "scale-100"}`}
+                  {...responsiveImageProps(item.image, {
+                    alt: item.title,
+                    width: 800,
+                    height: 600,
+                    widths: [360, 520, 800],
+                    sizes: isActive ? "45vw" : "15vw",
+                    className: `absolute inset-0 h-full w-full object-cover transition-transform duration-1000 ${isActive ? "scale-110" : "scale-100"}`,
+                  })}
                 />
 
                 {/* Gradient Overlay */}

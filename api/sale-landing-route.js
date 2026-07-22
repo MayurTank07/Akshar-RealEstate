@@ -8,6 +8,7 @@ import {
   SITE_ORIGIN,
   slugifyLocation,
 } from "../src/config/locationLandingPages.js";
+import { THUMBNAIL_IMAGE_FALLBACK, imageSrcSet, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildCollectionPageJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
 
 const API_BASE_URL =
@@ -106,12 +107,27 @@ function propertyLink(property = {}) {
 }
 
 function propertyImage(property = {}) {
-  return property.image || property.gallery?.[0] || property.images?.[0] || "";
+  return property.image || property.gallery?.[0] || property.images?.[0] || THUMBNAIL_IMAGE_FALLBACK;
 }
 
 function propertyImageAlt(property = {}) {
   const location = [property.location, property.city].filter(Boolean).join(" ");
   return `Exterior view of ${propertyType(property).toLowerCase()} in ${location || "Gujarat"}`;
+}
+
+function propertyImageAttributes(property = {}) {
+  const src = propertyImage(property);
+  const alt = propertyImageAlt(property);
+  return [
+    `src="${escapeHtml(optimizedImageUrl(src, { width: 360, height: 260 }))}"`,
+    `srcset="${escapeHtml(imageSrcSet(src, { widths: [240, 360, 520], aspectRatio: 360 / 260 }))}"`,
+    `sizes="(max-width: 768px) 100vw, 280px"`,
+    `width="360"`,
+    `height="260"`,
+    `loading="lazy"`,
+    `decoding="async"`,
+    `alt="${escapeHtml(alt)}"`,
+  ].join(" ");
 }
 
 function formatPrice(property = {}) {
@@ -245,7 +261,7 @@ function buildListings(listings) {
   return `<ol>${listings.map((property) => `
     <li>
       <article>
-        ${propertyImage(property) ? `<img src="${escapeHtml(propertyImage(property))}" alt="${escapeHtml(propertyImageAlt(property))}" loading="lazy" style="max-width:280px;height:auto" />` : ""}
+        <img ${propertyImageAttributes(property)} style="max-width:280px;height:auto" />
         <h3><a href="${escapeHtml(propertyLink(property))}">${escapeHtml(property.title || `${propertyType(property)} in ${property.location || property.city}`)}</a></h3>
         <p>${escapeHtml([formatPrice(property), propertyArea(property), property.location, property.city].filter(Boolean).join(" | "))}</p>
       </article>
