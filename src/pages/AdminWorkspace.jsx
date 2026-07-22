@@ -138,6 +138,7 @@ function hasStaffPermission(user, permission) {
 
 const emptyProperty = {
   title: "",
+  locationRef: "",
   location: "",
   city: "",
   type: "",
@@ -340,6 +341,32 @@ function labelize(value) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function locationDisplayName(location = {}) {
+  return [location.name, location.gujaratiName].filter(Boolean).join(" / ");
+}
+
+function locationOption(location = {}) {
+  return {
+    label: locationDisplayName(location),
+    value: location._id || location.id || "",
+    description: [
+      location.city && location.city !== location.name ? location.city : "",
+      location.locationType ? labelize(location.locationType) : "",
+      location.verificationStatus === "needsVerification" ? "Needs verification" : "",
+    ].filter(Boolean).join(" · "),
+  };
+}
+
+function masterLocationId(value) {
+  if (!value) return "";
+  if (typeof value === "object") return value._id || value.id || "";
+  return value;
+}
+
+function findMasterLocation(locations = [], id = "") {
+  return locations.find((location) => String(location._id || location.id) === String(id));
 }
 
 function measurementUnitLabel(value = "") {
@@ -1687,9 +1714,11 @@ function PropertyModal({ property, onClose, onSaved }) {
   const [supervisors, setSupervisors] = useState([]);
   const [cmsOptions, setCmsOptions] = useState({ navbarAreas: defaultNavbarAreas, navbarTopLists: defaultTopLists });
   const [masterOptions, setMasterOptions] = useState(propertyOptionGroups);
+  const [masterLocations, setMasterLocations] = useState([]);
   const [form, setForm] = useState(() => ({
     ...emptyProperty,
     ...property,
+    locationRef: masterLocationId(property.locationRef || property.locationMaster),
     ownerSellerName: property.ownerSellerName || (property.ownerName && property.ownerName !== "Akshar Estate" ? property.ownerName : ""),
     propertyCode: initialPropertyCode,
     measurement: { ...emptyProperty.measurement, ...(property.measurement || {}) },
@@ -1732,6 +1761,18 @@ function PropertyModal({ property, onClose, onSaved }) {
   }, []);
 
   useEffect(() => {
+    let active = true;
+    staffApi.locations({ active: "true", refreshCounts: "true" })
+      .then((response) => {
+        if (active) setMasterLocations(response.data || []);
+      })
+      .catch(() => setError("Unable to load the master location list. Property location selection is required before saving."));
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (staffUser.role !== "admin") return;
     let active = true;
     staffApi.staff().then((response) => {
@@ -1759,12 +1800,18 @@ function PropertyModal({ property, onClose, onSaved }) {
     };
   }, []);
 
-  const areaOptions = useMemo(() => [...new Set([...(masterOptions.locations || []), ...cmsOptions.navbarAreas.map(normalizeAreaName).filter(Boolean)])], [cmsOptions.navbarAreas, masterOptions.locations]);
+  const areaOptions = useMemo(() => masterLocations.map(locationOption).filter((item) => item.value), [masterLocations]);
   const topProjectOptions = useMemo(() => enabledSorted(cmsOptions.navbarTopLists, "project").map((item) => item.title).filter(Boolean), [cmsOptions.navbarTopLists]);
   const topDeveloperOptions = useMemo(() => enabledSorted(cmsOptions.navbarTopLists, "developer").map((item) => item.title).filter(Boolean), [cmsOptions.navbarTopLists]);
   const developerOptions = useMemo(() => [...new Set([...(masterOptions.developers || []), ...topDeveloperOptions])], [masterOptions.developers, topDeveloperOptions]);
   const projectOptions = useMemo(() => [...new Set([...(masterOptions.projects || []), ...topProjectOptions])], [masterOptions.projects, topProjectOptions]);
-  const cityOptions = useMemo(() => [...new Set([...(masterOptions.cities || []), ...cmsOptions.navbarAreas.map((item) => (typeof item === "object" ? item.city : "Ahmedabad")).filter(Boolean)])], [cmsOptions.navbarAreas, masterOptions.cities]);
+  const cityOptions = useMemo(() => {
+    const masterCities = masterLocations
+      .filter((item) => item.locationType === "city" || (item.city && item.city === item.name))
+      .map((item) => item.name)
+      .filter(Boolean);
+    return [...new Set([...masterCities, ...(masterOptions.cities || []), ...cmsOptions.navbarAreas.map((item) => (typeof item === "object" ? item.city : "Ahmedabad")).filter(Boolean)])].sort((a, b) => a.localeCompare(b));
+  }, [cmsOptions.navbarAreas, masterLocations, masterOptions.cities]);
   const measurementUnitOptions = useMemo(() => buildMeasurementUnitOptions(masterOptions.measurementUnits || []), [masterOptions.measurementUnits]);
   const activeSections = useMemo(() => enabledSectionSet(enabledSections), [enabledSections]);
   const sectionEnabled = useCallback((sectionKey) => activeSections.has(sectionKey), [activeSections]);
@@ -1829,6 +1876,32 @@ function PropertyModal({ property, onClose, onSaved }) {
       cursor[keys.at(-1)] = value;
       return next;
     });
+  };
+
+  const selectMasterLocation = (event) => {
+    const locationRef = event.target.value;
+    const selectedLocation = findMasterLocation(masterLocations, locationRef);
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.locationRef;
+      delete next.location;
+      return next;
+    });
+    if (!selectedLocation) {
+      updatePath("locationRef", "");
+      updatePath("location", "");
+      return;
+    }
+    const nextCity = selectedLocation.city || form.city || "";
+    updatePath("locationRef", selectedLocation._id);
+    updatePath("location", selectedLocation.name);
+    if (nextCity) updatePath("city", nextCity);
+    updatePath("map.area", selectedLocation.name);
+    if (nextCity) updatePath("map.city", nextCity);
+    updatePath("map.state", selectedLocation.state || form.map?.state || "Gujarat");
+    updatePath("map.pincode", selectedLocation.pinCode || form.map?.pincode || "");
+    updatePath("map.latitude", selectedLocation.latitude ?? form.map?.latitude ?? null);
+    updatePath("map.longitude", selectedLocation.longitude ?? form.map?.longitude ?? null);
   };
 
   const update = (event) => {
@@ -1914,6 +1987,7 @@ function PropertyModal({ property, onClose, onSaved }) {
     setNotice("");
     const requiredFields = [
       ["title", "Property title"],
+      ["locationRef", "Master location"],
       ["location", "Area / location"],
       ["city", "City"],
       ["type", "Property type"],
@@ -2088,33 +2162,30 @@ function PropertyModal({ property, onClose, onSaved }) {
           )}
 
           {sectionEnabled("location") && (
-          <FormSection title="Location" subtitle="Choose an existing area or add one once and reuse it for future listings.">
+          <FormSection title="Location" subtitle="Choose from the master location database. New or uncertain spellings must be verified before they become reusable.">
             <div className="grid gap-4 md:grid-cols-2">
-              <LocationAutocompleteField
+              <SearchableDropdown
                 label="Area / Location"
-                name="location"
-                value={form.location}
+                name="locationRef"
+                value={form.locationRef}
                 options={areaOptions}
+                onChange={selectMasterLocation}
+                required
+                error={fieldErrors.locationRef || fieldErrors.location}
+                placeholder="Search master location"
+                helperText={form.location ? `Selected: ${form.location}` : "Supervisors cannot create arbitrary location spellings."}
+              />
+              <SearchableDropdown
+                label="City"
+                name="city"
+                value={form.city}
+                options={cityOptions.map((city) => ({ label: city, value: city }))}
                 onChange={update}
                 required
-                error={fieldErrors.location}
-                placeholder="Search or select property location"
-                masterGroup="locations"
-                onAddOption={addMasterOption}
-                onPlaceSelect={(place) => {
-                  updatePath("location", place.area || place.address || "");
-                  updatePath("city", place.city || form.city || "");
-                  updatePath("map.address", place.address || "");
-                  updatePath("map.area", place.area || "");
-                  updatePath("map.city", place.city || "");
-                  updatePath("map.state", place.state || "");
-                  updatePath("map.pincode", place.pincode || "");
-                  updatePath("map.latitude", place.lat ?? null);
-                  updatePath("map.longitude", place.lng ?? null);
-                  updatePath("map.placeId", place.placeId || "");
-                }}
+                error={fieldErrors.city}
+                placeholder="Select City"
+                helperText="Use the approved city spelling from the master list."
               />
-              <ComboField label="City" name="city" value={form.city} options={cityOptions} onChange={update} required error={fieldErrors.city} placeholder="Select City" masterGroup="cities" onAddOption={addMasterOption} />
               <Field label="Map Address" name="map.address" value={form.map.address} onChange={update} placeholder="Full address for map and client coordination" />
               <Field label="Pincode" name="map.pincode" value={form.map.pincode} onChange={update} />
               <Field label="State" name="map.state" value={form.map.state} onChange={update} />
