@@ -137,7 +137,7 @@ function dedupe(entries) {
 function activeInventoryPageEntries(properties, pages) {
   return pages.flatMap((page) => {
     const matches = properties.filter((property) => propertyMatchesPage(property, page));
-    if (!page.verified || !page.intro || !matches.length) return [];
+    if (!page.verified || !page.intro || page.duplicateOf || !matches.length) return [];
     return [{ path: page.path, lastmod: newestLastmod(matches) }];
   });
 }

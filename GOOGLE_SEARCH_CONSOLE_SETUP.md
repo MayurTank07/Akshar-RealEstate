@@ -81,9 +81,9 @@ Priority location pages with current active inventory:
 - `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap`
 - `https://www.aksharestate.in/properties-for-sale/ahmedabad/memnagar`
 - `https://www.aksharestate.in/properties-for-sale/ahmedabad/ognaj`
-- `https://www.aksharestate.in/properties-for-sale/ahmedabad/new-cg-road`
+- `https://www.aksharestate.in/properties-for-sale/ahmedabad/chandkheda`
 
-Do not request indexing for noinventory or intentionally noindex pages such as Kudasan, Sargasan, Bopal, South Bopal, Shela, GIFT City or Dholera until active verified inventory exists and the live URL test shows indexing is allowed.
+Do not request indexing for noinventory, duplicate, soft-404 or intentionally noindex pages such as Kudasan, Sargasan, Bopal, South Bopal, Shela, GIFT City, Dholera or New C.G. Road until active verified inventory exists, unique content is strong enough and the live URL test shows indexing is allowed.
 
 Important property pages:
 - Use the latest URLs from `https://www.aksharestate.in/sitemap-properties.xml`.

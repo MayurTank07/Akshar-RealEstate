@@ -38,6 +38,7 @@ Search Console verified state:
 | Old query-style property URL returned homepage canonical | Medium | `/property?id=...` returned a generic SPA page instead of redirecting | Added query-param handling and a Vercel rewrite for `/property` |
 | Empty blog index was in static sitemap | Medium | `/blog` had no published blog entries, making it a thin indexable page | Removed `/blog` from static sitemap and set it `noindex,follow` until published guides exist |
 | Empty blog child sitemap was submitted in GSC | Medium | `/sitemap-blog.xml` had 0 URLs and Search Console reported `1 error` | Removed the child sitemap submission in GSC and excluded empty child sitemaps from `/sitemap.xml` |
+| New C.G. Road live test returned Soft 404 | High | Search Console live test said `Page cannot be indexed: Soft 404` even though the page had one matching listing | Marked New C.G. Road as duplicate/noindex and removed duplicate/soft-404 pages from location sitemap generation |
 
 ## URL Inventory
 
@@ -51,6 +52,7 @@ Search Console verified state:
 | `https://www.aksharestate.in/sitemap.xml` | Sitemap index | Yes | Not applicable | Submitted sitemap | Not applicable | Sitemap report: Success | Do not request indexing for this XML URL |
 | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` | Property page | Yes | Yes | Yes | Self | Not individually inspected | Already valid |
 | `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap` | Location page | Yes | Yes | Yes | Self | Not individually inspected | Already valid |
+| `https://www.aksharestate.in/properties-for-sale/ahmedabad/new-cg-road` | Duplicate/thin location page | Yes | No after fix | No after fix | Self | Live test: Soft 404 | Kept crawlable but noindex and removed from sitemap |
 | `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` | Prepared noinventory page | Yes | No | No | Self | Not individually inspected | Kept noindex until inventory exists |
 | `https://www.aksharestate.in/login` | Auth page | Blocked by robots and noindex | No | No | Self after fix | Not individually inspected | Added noindex/nofollow initial HTML |
 | `https://www.aksharestate.in/admin` | Private admin page | Blocked by robots and noindex | No | No | Self after fix | Not individually inspected | Added noindex/nofollow initial HTML |
@@ -84,6 +86,7 @@ Search Console verified state:
 - Sitemap handler check: passed
 - Empty `/blog` noindex and sitemap-exclusion check: passed locally
 - Empty child sitemap exclusion check: passed locally
+- Duplicate/Soft-404 landing page sitemap exclusion check: passed locally
 
 ## Production Verification After Deployment
 
@@ -113,6 +116,8 @@ Commits verified on production: `7a530a3`, `1662cdf`, `453b639`
 - Confirmed sitemap status: Success
 - Confirmed sitemap discovered pages: 23
 - Removed separate `/sitemap-blog.xml` submission because it was empty and Search Console reported `1 error`
+- Search Console live-tested New C.G. Road and found `Page cannot be indexed: Soft 404`; indexing was not requested for that URL
+- Requested indexing after successful live tests for `/properties`, `/property/agriculture-land-for-sale-dhanap-gandhinagar-0027`, `/property/apartments-for-sale-memnagar-ahmedabad-0026` and `/property/plot-for-sale-palaj-gandhinagar-0025`
 - Confirmed Performance report currently has no data
 - Confirmed Manual Actions: No issues detected
 - Confirmed Security Issues: No issues detected
