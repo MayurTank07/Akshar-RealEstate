@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /supervisor
+Disallow: /login
+Disallow: /register
+Disallow: /stafflogin
+
+Sitemap: https://www.aksharestate.in/sitemap.xml

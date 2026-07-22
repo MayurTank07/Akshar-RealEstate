@@ -166,6 +166,140 @@ export const SALE_LANDING_PAGES = {
   localities: localityPages,
 };
 
+const bhkIntentPages = [
+  {
+    regionSlug: "ahmedabad",
+    localitySlug: "chandkheda",
+    localityName: "Chandkheda",
+    city: "Ahmedabad",
+    bhk: 4,
+    title: "4 BHK Properties for Sale in Chandkheda, Ahmedabad | Akshar Estate",
+    h1: "4 BHK Properties for Sale in Chandkheda, Ahmedabad",
+    intro: "Compare active 4 BHK homes and bungalow-style properties in Chandkheda with verified Akshar Estate listing details, supervisor contact and locality guidance.",
+    demand: true,
+    verified: true,
+  },
+  {
+    regionSlug: "ahmedabad",
+    localitySlug: "shela",
+    localityName: "Shela",
+    city: "Ahmedabad",
+    bhk: 3,
+    title: "3 BHK Properties for Sale in Shela, Ahmedabad | Akshar Estate",
+    h1: "3 BHK Properties for Sale in Shela, Ahmedabad",
+    intro: "Track 3 BHK property options in Shela with clean inventory signals, nearby-area context and Akshar Estate contact support.",
+    demand: true,
+    verified: true,
+  },
+  {
+    regionSlug: "gandhinagar",
+    localitySlug: "kudasan",
+    localityName: "Kudasan",
+    city: "Gandhinagar",
+    bhk: 2,
+    title: "2 BHK Properties for Sale in Kudasan, Gandhinagar | Akshar Estate",
+    h1: "2 BHK Properties for Sale in Kudasan, Gandhinagar",
+    intro: "Track 2 BHK property options in Kudasan with inventory-backed listings, GIFT City-side connectivity and verified supervisor contact when stock is available.",
+    demand: true,
+    verified: true,
+  },
+  {
+    regionSlug: "gandhinagar",
+    localitySlug: "kudasan",
+    localityName: "Kudasan",
+    city: "Gandhinagar",
+    bhk: 3,
+    title: "3 BHK Properties for Sale in Kudasan, Gandhinagar | Akshar Estate",
+    h1: "3 BHK Properties for Sale in Kudasan, Gandhinagar",
+    intro: "Track 3 BHK property options in Kudasan with locality context, nearby areas and clean canonical handling until active inventory is available.",
+    demand: true,
+    verified: true,
+  },
+  {
+    regionSlug: "ahmedabad",
+    localitySlug: "south-bopal",
+    localityName: "South Bopal",
+    city: "Ahmedabad",
+    bhk: 2,
+    title: "2 BHK Properties for Sale in South Bopal, Ahmedabad | Akshar Estate",
+    h1: "2 BHK Properties for Sale in South Bopal, Ahmedabad",
+    intro: "Track 2 BHK property options in South Bopal with SP Ring Road connectivity, nearby-area links and noindex protection until matching inventory exists.",
+    demand: true,
+    verified: true,
+  },
+].map((page) => ({
+  ...page,
+  kind: "bhk",
+  intentSlug: `${page.bhk}-bhk`,
+  path: `/properties-for-sale/${page.regionSlug}/${page.localitySlug}/${page.bhk}-bhk`,
+  name: `${page.bhk} BHK in ${page.localityName}`,
+}));
+
+const propertyTypeIntentPages = [
+  {
+    kind: "property-type",
+    prefix: "plots-for-sale",
+    locationSlug: "palaj",
+    locationName: "Palaj",
+    city: "Gandhinagar",
+    typeMatchers: ["plot"],
+    title: "Plots for Sale in Palaj, Gandhinagar | Akshar Estate",
+    h1: "Plots for Sale in Palaj, Gandhinagar",
+    intro: "Explore active plots for sale in Palaj with verified location context, nearby landmarks and Akshar Estate supervisor contact.",
+    demand: true,
+    verified: true,
+  },
+  {
+    kind: "property-type",
+    prefix: "plots-for-sale",
+    locationSlug: "dholera",
+    locationName: "Dholera",
+    city: "Ahmedabad",
+    typeMatchers: ["plot"],
+    title: "Plots for Sale in Dholera | Akshar Estate",
+    h1: "Plots for Sale in Dholera",
+    intro: "Track plot inventory in Dholera with clean canonical signals. This page remains noindex until active verified listings are available.",
+    demand: true,
+    verified: true,
+  },
+  {
+    kind: "property-type",
+    prefix: "commercial-property",
+    locationSlug: "sg-highway",
+    locationName: "S.G. Highway",
+    city: "Ahmedabad",
+    typeMatchers: ["commercial", "office", "shop", "retail"],
+    title: "Commercial Property on S.G. Highway, Ahmedabad | Akshar Estate",
+    h1: "Commercial Property on S.G. Highway, Ahmedabad",
+    intro: "Track commercial property options on S.G. Highway with clean canonical signals and noindex protection until active listings exist.",
+    demand: true,
+    verified: true,
+  },
+  {
+    kind: "property-type",
+    prefix: "industrial-property",
+    locationSlug: "changodar",
+    locationName: "Changodar",
+    city: "Ahmedabad",
+    typeMatchers: ["industrial", "warehouse", "factory", "commercial"],
+    title: "Industrial Property in Changodar, Ahmedabad | Akshar Estate",
+    h1: "Industrial Property in Changodar, Ahmedabad",
+    intro: "Track industrial property inventory in Changodar with clean canonical signals and noindex protection until active listings exist.",
+    demand: true,
+    verified: true,
+  },
+].map((page) => ({
+  ...page,
+  name: page.locationName,
+  path: `/${page.prefix}/${page.locationSlug}`,
+}));
+
+export const INTENT_LANDING_PAGES = {
+  bhk: bhkIntentPages,
+  propertyTypes: propertyTypeIntentPages,
+  all: [...bhkIntentPages, ...propertyTypeIntentPages],
+};
+
 export function getSaleLandingPage(regionSlug = "", localitySlug = "") {
   const region = primaryRegions.find((page) => page.slug === regionSlug);
   if (!region) return null;
@@ -175,19 +309,39 @@ export function getSaleLandingPage(regionSlug = "", localitySlug = "") {
   return { ...locality, regionName: region.name, kind: "locality", path: `/properties-for-sale/${region.slug}/${locality.slug}` };
 }
 
+export function getBhkIntentPage(regionSlug = "", localitySlug = "", intentSlug = "") {
+  const page = bhkIntentPages.find((item) => item.regionSlug === regionSlug && item.localitySlug === localitySlug && item.intentSlug === intentSlug);
+  if (!page) return null;
+  const region = primaryRegions.find((item) => item.slug === regionSlug);
+  return { ...page, regionName: region?.name || page.city };
+}
+
+export function getPropertyTypeIntentPage(prefix = "", locationSlug = "") {
+  return propertyTypeIntentPages.find((page) => page.prefix === prefix && page.locationSlug === locationSlug) || null;
+}
+
 export function landingStateForPage(page) {
   if (!page) return {};
   const activeCity = page.kind === "locality" ? page.name : page.city || page.name;
+  const isTypeIntent = page.kind === "property-type";
+  const isBhkIntent = page.kind === "bhk";
   return {
     category: "Buy",
-    type: "All",
+    type: isTypeIntent ? page.typeMatchers?.[0] || "All" : "All",
     city: activeCity,
     filters: {
       activeCity,
-      activeType: "All",
+      activeType: isTypeIntent ? page.typeMatchers?.[0] || "All" : "All",
       query: "",
       searchType: "Buy",
-      advancedFilters: { areaWise: "", propertyType: "", propertyCategory: "", minPrice: "", maxPrice: "" },
+      advancedFilters: {
+        areaWise: "",
+        propertyType: isTypeIntent ? page.typeMatchers?.[0] || "" : "",
+        propertyCategory: "",
+        minPrice: "",
+        maxPrice: "",
+        bhk: isBhkIntent ? String(page.bhk) : "",
+      },
     },
   };
 }

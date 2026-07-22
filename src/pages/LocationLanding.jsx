@@ -1,11 +1,15 @@
 import { Navigate, useParams } from "react-router-dom";
 import Hero from "../compswest/Hero";
 import Footer from "../components/Footer";
-import { getSaleLandingPage, landingStateForPage } from "../config/locationLandingPages";
+import { getBhkIntentPage, getPropertyTypeIntentPage, getSaleLandingPage, landingStateForPage } from "../config/locationLandingPages";
 
-export default function LocationLanding() {
-  const { region, locality } = useParams();
-  const page = getSaleLandingPage(region, locality);
+export default function LocationLanding({ typePrefix = "" }) {
+  const { region, locality, intent, typeLocation } = useParams();
+  const page = typePrefix
+    ? getPropertyTypeIntentPage(typePrefix, typeLocation)
+    : intent
+      ? getBhkIntentPage(region, locality, intent)
+      : getSaleLandingPage(region, locality);
   if (!page) return <Navigate to="/properties" replace />;
   const state = landingStateForPage(page);
 

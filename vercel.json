@@ -6,12 +6,24 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/sitemap"
+    },
+    {
       "source": "/property/:key/",
       "destination": "/api/property-route?key=:key&slash=1"
     },
     {
       "source": "/property/:key",
       "destination": "/api/property-route?key=:key"
+    },
+    {
+      "source": "/properties-for-sale/:region/:locality/:intent/",
+      "destination": "/api/sale-landing-route?region=:region&locality=:locality&intent=:intent&slash=1"
+    },
+    {
+      "source": "/properties-for-sale/:region/:locality/:intent",
+      "destination": "/api/sale-landing-route?region=:region&locality=:locality&intent=:intent"
     },
     {
       "source": "/properties-for-sale/:region/:locality/",
@@ -28,6 +40,30 @@
     {
       "source": "/properties-for-sale/:region",
       "destination": "/api/sale-landing-route?region=:region"
+    },
+    {
+      "source": "/plots-for-sale/:typeLocation/",
+      "destination": "/api/sale-landing-route?prefix=plots-for-sale&typeLocation=:typeLocation&slash=1"
+    },
+    {
+      "source": "/plots-for-sale/:typeLocation",
+      "destination": "/api/sale-landing-route?prefix=plots-for-sale&typeLocation=:typeLocation"
+    },
+    {
+      "source": "/commercial-property/:typeLocation/",
+      "destination": "/api/sale-landing-route?prefix=commercial-property&typeLocation=:typeLocation&slash=1"
+    },
+    {
+      "source": "/commercial-property/:typeLocation",
+      "destination": "/api/sale-landing-route?prefix=commercial-property&typeLocation=:typeLocation"
+    },
+    {
+      "source": "/industrial-property/:typeLocation/",
+      "destination": "/api/sale-landing-route?prefix=industrial-property&typeLocation=:typeLocation&slash=1"
+    },
+    {
+      "source": "/industrial-property/:typeLocation",
+      "destination": "/api/sale-landing-route?prefix=industrial-property&typeLocation=:typeLocation"
     },
     {
       "source": "/(.*)",

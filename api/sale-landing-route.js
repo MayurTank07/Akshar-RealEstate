@@ -1,13 +1,21 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getSaleLandingPage, SITE_ORIGIN, slugifyLocation } from "../src/config/locationLandingPages.js";
+import {
+  INTENT_LANDING_PAGES,
+  getBhkIntentPage,
+  getPropertyTypeIntentPage,
+  getSaleLandingPage,
+  SITE_ORIGIN,
+  slugifyLocation,
+} from "../src/config/locationLandingPages.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
   process.env.API_BASE_URL ||
   "https://akshar-realestate-backend.onrender.com/api";
 const PAGE_SIZE = 9;
-const SALE_PATH_RE = /^\/properties-for-sale\/([^/?#]+)(?:\/([^/?#]+))?\/?/i;
+const SALE_PATH_RE = /^\/properties-for-sale\/([^/?#]+)(?:\/([^/?#]+))?(?:\/([^/?#]+))?\/?/i;
+const TYPE_PATH_RE = /^\/(plots-for-sale|commercial-property|industrial-property)\/([^/?#]+)\/?/i;
 
 function firstQueryValue(value) {
   return Array.isArray(value) ? value[0] : value;
@@ -51,13 +59,23 @@ function propertyLocationText(property = {}) {
   return [property.locationMaster?.name || property.location, property.city].filter(Boolean).join(" ");
 }
 
+function slugContainsLocation(haystackSlug = "", needleSlug = "") {
+  if (!haystackSlug || !needleSlug) return false;
+  return haystackSlug === needleSlug ||
+    haystackSlug.startsWith(`${needleSlug}-`) ||
+    haystackSlug.endsWith(`-${needleSlug}`) ||
+    haystackSlug.includes(`-${needleSlug}-`);
+}
+
 function propertyMatchesPage(property, page) {
   const locationSlug = slugifyLocation(property.locationMaster?.name || property.location || property.map?.area || "");
   const citySlug = slugifyLocation(property.city || property.map?.city || "");
-  if (page.kind === "locality") return locationSlug === page.slug || propertyLocationText(property).toLowerCase().includes(page.name.toLowerCase());
+  if (page.kind === "bhk") return slugContainsLocation(locationSlug, page.localitySlug) && propertyBhk(property) === Number(page.bhk);
+  if (page.kind === "property-type") return slugContainsLocation(locationSlug, page.locationSlug) && typeMatchesIntent(property, page);
+  if (page.kind === "locality") return slugContainsLocation(locationSlug, page.slug);
   if (page.locations?.length) {
     const allowed = page.locations.map(slugifyLocation);
-    return allowed.includes(locationSlug) || allowed.includes(citySlug);
+    return allowed.some((slug) => slugContainsLocation(locationSlug, slug) || citySlug === slug);
   }
   return citySlug === slugifyLocation(page.city || page.name) || propertyLocationText(property).toLowerCase().includes(page.name.toLowerCase());
 }
@@ -68,6 +86,18 @@ function propertyBhk(property = {}) {
 
 function propertyType(property = {}) {
   return property.type || property.propertyType || "Property";
+}
+
+function typeMatchesIntent(property = {}, page = {}) {
+  const haystack = [
+    property.type,
+    property.propertyType,
+    property.category,
+    property.title,
+    property.description,
+    ...(property.propertyTags || []),
+  ].join(" ").toLowerCase();
+  return (page.typeMatchers || []).some((matcher) => haystack.includes(String(matcher).toLowerCase()));
 }
 
 function propertyLink(property = {}) {
@@ -130,24 +160,77 @@ function buildBreadcrumbs(page) {
   const crumbs = [
     { label: "Home", href: "/" },
     { label: "Properties", href: "/properties" },
-    page.kind === "locality" && { label: page.regionName, href: `/properties-for-sale/${page.regionSlug}` },
+    ["locality", "bhk"].includes(page.kind) && { label: page.regionName || page.city, href: `/properties-for-sale/${page.regionSlug}` },
+    page.kind === "bhk" && { label: page.localityName, href: `/properties-for-sale/${page.regionSlug}/${page.localitySlug}` },
+    page.kind === "property-type" && { label: page.city, href: `/properties-for-sale/${slugifyLocation(page.city)}` },
     { label: page.name, href: page.path },
   ].filter(Boolean);
   return `<nav aria-label="Breadcrumb">${crumbs.map((item, index) => `${index ? " / " : ""}<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join("")}</nav>`;
 }
 
 function buildFilterLinks(page, propertyTypes, bhkOptions) {
-  const typeLinks = propertyTypes.map((type) => ({ label: type, href: `${page.path}?type=${encodeURIComponent(type)}` }));
-  const bhkLinks = bhkOptions.map((bhk) => ({ label: `${bhk} BHK`, href: `${page.path}?bhk=${encodeURIComponent(bhk)}` }));
+  const typeLinks = propertyTypes.map((type) => cleanTypeFilterLink(page, type)).filter(Boolean);
+  const bhkLinks = bhkOptions.map((bhk) => cleanBhkFilterLink(page, bhk)).filter(Boolean);
   return `
     <section>
       <h2>Property Type Filters</h2>
-      ${linkList(typeLinks) || "<p>Property type filters will appear as matching inventory grows.</p>"}
+      ${linkList(typeLinks) || "<p>Clean property type landing pages will appear here only when the combination has active inventory and unique SEO value.</p>"}
     </section>
     <section>
       <h2>Available BHK Options</h2>
-      ${linkList(bhkLinks) || "<p>BHK filters will appear when residential inventory is available.</p>"}
+      ${linkList(bhkLinks) || "<p>Clean BHK landing pages will appear here only when the combination has active inventory and search demand.</p>"}
     </section>`;
+}
+
+function cleanBhkFilterLink(page, bhk) {
+  const label = `${bhk} BHK`;
+  const baseRegion = page.regionSlug || slugifyLocation(page.city || "");
+  const baseLocality = page.localitySlug || slugifyLocation(page.name || page.locationName || "");
+  const clean = getBhkIntentPage(baseRegion, baseLocality, `${bhk}-bhk`);
+  return clean ? { label, href: clean.path } : null;
+}
+
+function cleanTypeFilterLink(page, type) {
+  const label = type;
+  const locationSlug = page.localitySlug || page.locationSlug || slugifyLocation(page.name || page.locationName || "");
+  const normalizedType = slugifyLocation(type);
+  if (/plot|land/.test(normalizedType)) {
+    const clean = getPropertyTypeIntentPage("plots-for-sale", locationSlug);
+    if (clean) return { label, href: clean.path };
+  }
+  if (/commercial|office|shop|retail/.test(normalizedType)) {
+    const clean = getPropertyTypeIntentPage("commercial-property", locationSlug);
+    if (clean) return { label, href: clean.path };
+  }
+  if (/industrial|warehouse|factory/.test(normalizedType)) {
+    const clean = getPropertyTypeIntentPage("industrial-property", locationSlug);
+    if (clean) return { label, href: clean.path };
+  }
+  return null;
+}
+
+function cleanIntentFromQuery({ locationParam = "", bhkParam = "", typeParam = "" }) {
+  const locationSlug = slugifyLocation(locationParam);
+  if (locationSlug && bhkParam) {
+    const bhk = String(bhkParam).replace(/[^0-9]/g, "");
+    const page = INTENT_LANDING_PAGES.bhk.find((item) => item.localitySlug === locationSlug && String(item.bhk) === bhk);
+    if (page) return page;
+  }
+  if (locationSlug && typeParam) {
+    const normalizedType = slugifyLocation(typeParam);
+    const prefix = /plot|land/.test(normalizedType)
+      ? "plots-for-sale"
+      : /commercial|office|shop|retail/.test(normalizedType)
+        ? "commercial-property"
+        : /industrial|warehouse|factory/.test(normalizedType)
+          ? "industrial-property"
+          : "";
+    if (prefix) {
+      const page = getPropertyTypeIntentPage(prefix, locationSlug);
+      if (page) return page;
+    }
+  }
+  return null;
 }
 
 function buildListings(listings) {
@@ -215,7 +298,9 @@ function buildBreadcrumbSchema(page) {
   const items = [
     { label: "Home", href: "/" },
     { label: "Properties", href: "/properties" },
-    page.kind === "locality" && { label: page.regionName, href: `/properties-for-sale/${page.regionSlug}` },
+    ["locality", "bhk"].includes(page.kind) && { label: page.regionName || page.city, href: `/properties-for-sale/${page.regionSlug}` },
+    page.kind === "bhk" && { label: page.localityName, href: `/properties-for-sale/${page.regionSlug}/${page.localitySlug}` },
+    page.kind === "property-type" && { label: page.city, href: `/properties-for-sale/${slugifyLocation(page.city)}` },
     { label: page.name, href: page.path },
   ].filter(Boolean);
   return {
@@ -295,26 +380,54 @@ export default async function handler(req, res) {
   try {
     const url = new URL(req.url || "", "https://www.aksharestate.in");
     const pathMatch = SALE_PATH_RE.exec(url.pathname);
+    const typePathMatch = TYPE_PATH_RE.exec(url.pathname);
+    const rawPrefix = firstQueryValue(req.query?.prefix) || typePathMatch?.[1] || "";
+    const rawTypeLocation = firstQueryValue(req.query?.typeLocation) || typePathMatch?.[2] || "";
     const rawRegion = firstQueryValue(req.query?.region) || pathMatch?.[1] || "";
     const rawLocality = firstQueryValue(req.query?.locality) || pathMatch?.[2] || "";
+    const rawIntent = firstQueryValue(req.query?.intent) || pathMatch?.[3] || "";
+    const decodedPrefix = decodeURIComponent(String(rawPrefix));
+    const decodedTypeLocation = rawTypeLocation ? decodeURIComponent(String(rawTypeLocation)) : "";
     const decodedRegion = decodeURIComponent(String(rawRegion));
     const decodedLocality = rawLocality ? decodeURIComponent(String(rawLocality)) : "";
+    const decodedIntent = rawIntent ? decodeURIComponent(String(rawIntent)) : "";
+    const prefix = slugifyLocation(decodedPrefix);
+    const typeLocation = decodedTypeLocation ? slugifyLocation(decodedTypeLocation) : "";
     const region = slugifyLocation(decodedRegion);
     const locality = decodedLocality ? slugifyLocation(decodedLocality) : "";
-    const page = getSaleLandingPage(region, locality);
+    const intent = decodedIntent ? slugifyLocation(decodedIntent) : "";
+    const page = prefix
+      ? getPropertyTypeIntentPage(prefix, typeLocation)
+      : intent
+        ? getBhkIntentPage(region, locality, intent)
+        : getSaleLandingPage(region, locality);
     if (!page) {
       notFound(res);
       return;
     }
 
     const expectedPath = page.path;
-    const requestPath = `/properties-for-sale/${region}${locality ? `/${locality}` : ""}`;
+    const requestPath = prefix
+      ? `/${prefix}/${typeLocation}`
+      : `/properties-for-sale/${region}${locality ? `/${locality}` : ""}${intent ? `/${intent}` : ""}`;
     const pageParam = Math.max(1, Number(firstQueryValue(req.query?.page) || url.searchParams.get("page") || 1));
     const typeParam = firstQueryValue(req.query?.type) || url.searchParams.get("type") || "";
     const bhkParam = firstQueryValue(req.query?.bhk) || url.searchParams.get("bhk") || "";
-    const allowedQueryKeys = new Set(["region", "locality", "page", "type", "bhk"]);
+    const locationParam = firstQueryValue(req.query?.location) || url.searchParams.get("location") || "";
+    const allowedQueryKeys = new Set(["region", "locality", "intent", "prefix", "typeLocation", "page", "type", "bhk", "location"]);
     const hasNoise = [...url.searchParams.keys()].some((key) => !allowedQueryKeys.has(key));
-    const hasCaseOrSlugVariant = decodedRegion !== region || Boolean(decodedLocality && decodedLocality !== locality);
+    const cleanFromQuery = cleanIntentFromQuery({ locationParam, bhkParam, typeParam });
+    if (cleanFromQuery && cleanFromQuery.path !== expectedPath) {
+      redirect(res, cleanFromQuery.path);
+      return;
+    }
+    if (cleanFromQuery && cleanFromQuery.path === expectedPath && (url.searchParams.has("location") || url.searchParams.has("bhk") || url.searchParams.has("type"))) {
+      redirect(res, expectedPath);
+      return;
+    }
+    const hasCaseOrSlugVariant =
+      Boolean(prefix && (decodedPrefix !== prefix || decodedTypeLocation !== typeLocation)) ||
+      Boolean(!prefix && (decodedRegion !== region || (decodedLocality && decodedLocality !== locality) || (decodedIntent && decodedIntent !== intent)));
     if (requestPath !== expectedPath || hasCaseOrSlugVariant || url.pathname.endsWith("/") || hasNoise || String(firstQueryValue(req.query?.slash) || "") === "1" || pageParam === 1 && url.searchParams.has("page")) {
       redirect(res, expectedPath);
       return;
