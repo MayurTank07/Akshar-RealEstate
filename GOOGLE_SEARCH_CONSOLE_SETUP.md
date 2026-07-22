@@ -75,12 +75,13 @@ Priority city pages:
 - `https://www.aksharestate.in/properties-for-sale/gandhinagar`
 - `https://www.aksharestate.in/properties-for-sale/ahmedabad`
 
-Priority location pages:
-- `https://www.aksharestate.in/properties-for-sale/gandhinagar/kudasan`
-- `https://www.aksharestate.in/properties-for-sale/gandhinagar/sargasan`
-- `https://www.aksharestate.in/properties-for-sale/ahmedabad/bopal`
-- `https://www.aksharestate.in/properties-for-sale/ahmedabad/south-bopal`
-- `https://www.aksharestate.in/properties-for-sale/ahmedabad/shela`
+Priority location pages with current active inventory:
+- `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap`
+- `https://www.aksharestate.in/properties-for-sale/ahmedabad/memnagar`
+- `https://www.aksharestate.in/properties-for-sale/ahmedabad/ognaj`
+- `https://www.aksharestate.in/properties-for-sale/ahmedabad/new-cg-road`
+
+Do not request indexing for noinventory or intentionally noindex pages such as Kudasan, Sargasan, Bopal, South Bopal, Shela, GIFT City or Dholera until active verified inventory exists and the live URL test shows indexing is allowed.
 
 Important property pages:
 - Use the latest URLs from `https://www.aksharestate.in/sitemap-properties.xml`.
@@ -169,7 +170,7 @@ Meaning: `robots.txt` prevents Google from crawling the URL or required resource
 Actions:
 - Check `https://www.aksharestate.in/robots.txt`.
 - Keep admin, supervisor, auth, API, preview and private routes blocked.
-- Do not block `/property/`, `/properties-for-sale/`, `/blog/`, `/assets/`, CSS, JS, or images.
+- Do not block `/property/`, `/properties-for-sale/`, `/blog/`, `/assets/`, CSS, JS, or images. Empty blog listing pages can use `noindex`, but crawl should remain allowed so Google can follow future published blog links.
 - After editing robots, retest the live URL in Search Console.
 
 ### Excluded By Noindex

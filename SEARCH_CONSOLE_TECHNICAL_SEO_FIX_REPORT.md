@@ -36,6 +36,7 @@ Search Console verified state:
 | Private routes were indexable in initial HTML | High | `/admin`, `/login`, `/register`, `/profile` and similar pages inherited `index,follow` | Added noindex/nofollow serverless shells for private/low-value routes |
 | Unknown URLs returned homepage-like 200 | High | Unknown paths could appear as soft 404s because the SPA catch-all returned `index.html` | Changed catch-all to return a true 404 noindex response |
 | Old query-style property URL returned homepage canonical | Medium | `/property?id=...` returned a generic SPA page instead of redirecting | Added query-param handling and a Vercel rewrite for `/property` |
+| Empty blog index was in static sitemap | Medium | `/blog` had no published blog entries, making it a thin indexable page | Removed `/blog` from static sitemap and set it `noindex,follow` until published guides exist |
 
 ## URL Inventory
 
@@ -45,6 +46,7 @@ Search Console verified state:
 | `https://www.aksharestate.in/properties` | Public listing page | Yes | Yes | Yes | Self after fix | Not individually inspected | Added route-specific metadata |
 | `https://www.aksharestate.in/about` | Static page | Yes | Yes | Yes | Self after fix | Not individually inspected | Added route-specific metadata |
 | `https://www.aksharestate.in/contact` | Static page | Yes | Yes | Yes | Self after fix | Not individually inspected | Added route-specific metadata |
+| `https://www.aksharestate.in/blog` | Empty blog index | Yes | No | No | Self | Not individually inspected | Set noindex until published blog inventory exists |
 | `https://www.aksharestate.in/sitemap.xml` | Sitemap index | Yes | Not applicable | Submitted sitemap | Not applicable | Sitemap report: Success | Do not request indexing for this XML URL |
 | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` | Property page | Yes | Yes | Yes | Self | Not individually inspected | Already valid |
 | `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap` | Location page | Yes | Yes | Yes | Self | Not individually inspected | Already valid |
@@ -79,6 +81,7 @@ Search Console verified state:
 - Unknown 404 route handler check: passed
 - Old `/property?id=` redirect check: passed
 - Sitemap handler check: passed
+- Empty `/blog` noindex and sitemap-exclusion check: passed locally
 
 ## Production Verification After Deployment
 
@@ -98,6 +101,7 @@ Commit verified on production: `7a530a3`
 | `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` | 200 | `noindex,follow` | `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` |
 | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
 | `https://www.aksharestate.in/property?id=agriculture-land-for-sale-dhanap-gandhinagar-0027` | 301 | Not applicable | Redirects to `/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
+| `https://www.aksharestate.in/blog` | Pending redeploy verification | `noindex,follow` after fix | Removed from `sitemap-pages.xml` after fix |
 
 ## Google Search Console Actions Completed
 
@@ -122,6 +126,7 @@ No indexing request was submitted for `sitemap.xml` because sitemap XML files ar
 3. Do not request indexing for `sitemap.xml`.
 4. Wait for Google to process the successful sitemap submission; this can take days or weeks.
 5. Add active verified 2 BHK, 3 BHK, Kudasan, Sargasan and GIFT City inventory before indexing those long-tail pages.
+6. Publish real editorial blog posts before making `/blog` indexable or adding it back to `sitemap-pages.xml`.
 
 ## Monitoring Plan
 

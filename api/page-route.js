@@ -56,13 +56,6 @@ const PUBLIC_PAGES = {
     body: `${BUSINESS_INFO.name} can help with property enquiries across Gandhinagar, Ahmedabad and nearby Gujarat locations.`,
     links: [["/properties", "Browse properties"], ["/properties-for-sale/gandhinagar", "Gandhinagar properties"]],
   },
-  "/blog": {
-    title: "Property Guides and Real Estate Articles | Akshar Estate",
-    description: "Read Akshar Estate property guides for Gandhinagar, Ahmedabad, localities, BHK choices and real estate planning.",
-    h1: "Property Guides",
-    body: "Akshar Estate property guides will appear here after editorial review.",
-    links: [["/properties", "Browse properties"], ["/properties-for-sale/gandhinagar", "Properties in Gandhinagar"]],
-  },
   "/privacy-policy": {
     title: "Privacy Policy | Akshar Estate",
     description: "Read the Akshar Estate privacy policy for website users, property enquiries and communication handling.",
@@ -93,6 +86,10 @@ const PRIVATE_PAGES = {
   "/home": ["Akshar Estate Home Preview", "This duplicate home route is noindex."],
   "/pricing": ["Property Search | Akshar Estate", "This filtered search surface is noindex unless represented by a clean SEO landing page."],
   "/enquiry": ["Property Enquiry | Akshar Estate", "Enquiry form pages are noindex and available to users."],
+};
+
+const NOINDEX_FOLLOW_PAGES = {
+  "/blog": ["Property Guides | Akshar Estate", "The blog index is noindex until published editorial guides are available."],
 };
 
 function readIndexHtml() {
@@ -209,6 +206,11 @@ function privatePage(shell, pathname, [title, description]) {
   return injectShell({ shell, pathname, title, description, robots: "noindex,nofollow", statusCode: 200, pageBody: body });
 }
 
+function noindexFollowPage(shell, pathname, [title, description]) {
+  const body = `<main style="max-width:760px;margin:0 auto;padding:32px 20px;font-family:Arial,sans-serif"><h1>${escapeHtml(title.replace(" | Akshar Estate", ""))}</h1><p>${escapeHtml(description)}</p><p><a href="/properties">Browse active properties</a></p></main>`;
+  return injectShell({ shell, pathname, title, description, robots: "noindex,follow", statusCode: 200, pageBody: body });
+}
+
 function notFoundPage(shell, pathname) {
   const title = "Page Not Found | Akshar Estate";
   const description = "This Akshar Estate page could not be found. Browse active properties or contact the team for property assistance.";
@@ -226,6 +228,8 @@ export default function handler(req, res) {
   const pathname = normalizedPath(req);
   const result = PUBLIC_PAGES[pathname]
     ? publicPage(shell, pathname, PUBLIC_PAGES[pathname])
+    : NOINDEX_FOLLOW_PAGES[pathname]
+      ? noindexFollowPage(shell, pathname, NOINDEX_FOLLOW_PAGES[pathname])
     : privateMatch(pathname)
       ? privatePage(shell, pathname, privateMatch(pathname))
       : notFoundPage(shell, pathname);

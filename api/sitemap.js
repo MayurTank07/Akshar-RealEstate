@@ -17,7 +17,6 @@ const STATIC_PAGES = [
   { path: "/about", lastmod: "2026-07-22" },
   { path: "/services", lastmod: "2026-07-22" },
   { path: "/contact", lastmod: "2026-07-22" },
-  { path: "/blog", lastmod: "2026-07-22" },
   { path: "/privacy-policy", lastmod: "2026-07-22" },
   { path: "/terms-of-service", lastmod: "2026-07-22" },
 ];
