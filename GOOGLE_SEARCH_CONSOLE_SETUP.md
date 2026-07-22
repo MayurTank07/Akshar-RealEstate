@@ -56,7 +56,9 @@ Google documentation:
    - `https://www.aksharestate.in/sitemap-properties.xml`
    - `https://www.aksharestate.in/sitemap-locations.xml`
    - `https://www.aksharestate.in/sitemap-property-types.xml`
-   - `https://www.aksharestate.in/sitemap-blog.xml`
+   - `https://www.aksharestate.in/sitemap-blog.xml` only after at least one public, published, indexable blog post exists.
+
+Empty child sitemaps should not be submitted separately or listed in the sitemap index. On July 22, 2026, `/sitemap-blog.xml` was removed from Search Console submissions and is excluded from `/sitemap.xml` until real blog URLs exist.
 
 Important: do not use URL Inspection to request indexing for `https://www.aksharestate.in/sitemap.xml`. A sitemap is an XML discovery file, not a normal search-result page. Submit it in the Sitemaps report, then inspect and request indexing only for public HTML URLs such as the homepage, property pages and location pages after the live test passes.
 

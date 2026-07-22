@@ -37,6 +37,7 @@ Search Console verified state:
 | Unknown URLs returned homepage-like 200 | High | Unknown paths could appear as soft 404s because the SPA catch-all returned `index.html` | Changed catch-all to return a true 404 noindex response |
 | Old query-style property URL returned homepage canonical | Medium | `/property?id=...` returned a generic SPA page instead of redirecting | Added query-param handling and a Vercel rewrite for `/property` |
 | Empty blog index was in static sitemap | Medium | `/blog` had no published blog entries, making it a thin indexable page | Removed `/blog` from static sitemap and set it `noindex,follow` until published guides exist |
+| Empty blog child sitemap was submitted in GSC | Medium | `/sitemap-blog.xml` had 0 URLs and Search Console reported `1 error` | Removed the child sitemap submission in GSC and excluded empty child sitemaps from `/sitemap.xml` |
 
 ## URL Inventory
 
@@ -82,10 +83,11 @@ Search Console verified state:
 - Old `/property?id=` redirect check: passed
 - Sitemap handler check: passed
 - Empty `/blog` noindex and sitemap-exclusion check: passed locally
+- Empty child sitemap exclusion check: passed locally
 
 ## Production Verification After Deployment
 
-Commits verified on production: `7a530a3`, `1662cdf`
+Commits verified on production before final sitemap-index cleanup: `7a530a3`, `1662cdf`
 
 | URL | Status | Robots | Canonical / Redirect |
 |---|---:|---|---|
@@ -102,13 +104,15 @@ Commits verified on production: `7a530a3`, `1662cdf`
 | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
 | `https://www.aksharestate.in/property?id=agriculture-land-for-sale-dhanap-gandhinagar-0027` | 301 | Not applicable | Redirects to `/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
 | `https://www.aksharestate.in/blog` | 200 | `noindex,follow` | Removed from `sitemap-pages.xml` |
+| `https://www.aksharestate.in/sitemap.xml` | Pending redeploy verification | XML sitemap index | Excludes empty child sitemaps after final fix |
 
 ## Google Search Console Actions Completed
 
 - Confirmed visible property: `https://www.aksharestate.in/`
 - Confirmed submitted sitemap: `/sitemap.xml`
 - Confirmed sitemap status: Success
-- Confirmed sitemap discovered pages: 20
+- Confirmed sitemap discovered pages: 23
+- Removed separate `/sitemap-blog.xml` submission because it was empty and Search Console reported `1 error`
 - Confirmed Performance report currently has no data
 - Confirmed Manual Actions: No issues detected
 - Confirmed Security Issues: No issues detected
@@ -117,16 +121,15 @@ No indexing request was submitted for `sitemap.xml` because sitemap XML files ar
 
 ## Pending External Actions
 
-1. In Search Console, inspect the homepage `https://www.aksharestate.in/`, click Test Live URL, then request indexing if live test passes.
-2. Inspect representative public HTML pages:
+1. In Search Console, inspect representative public HTML pages:
    - `https://www.aksharestate.in/properties`
    - `https://www.aksharestate.in/properties-for-sale/gandhinagar`
    - `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap`
    - `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027`
-3. Do not request indexing for `sitemap.xml`.
-4. Wait for Google to process the successful sitemap submission; this can take days or weeks.
-5. Add active verified 2 BHK, 3 BHK, Kudasan, Sargasan and GIFT City inventory before indexing those long-tail pages.
-6. Publish real editorial blog posts before making `/blog` indexable or adding it back to `sitemap-pages.xml`.
+2. Do not request indexing for `sitemap.xml`.
+3. Wait for Google to process the successful sitemap submission; this can take days or weeks.
+4. Add active verified 2 BHK, 3 BHK, Kudasan, Sargasan and GIFT City inventory before indexing those long-tail pages.
+5. Publish real editorial blog posts before making `/blog` indexable or adding it back to `sitemap-pages.xml`.
 
 ## Monitoring Plan
 

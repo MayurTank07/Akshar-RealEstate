@@ -196,11 +196,11 @@ function urlset(entries) {
   ].join("\n");
 }
 
-function sitemapIndex(lastmod) {
+function sitemapIndex(files, lastmod) {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...SITEMAP_FILES.map((file) => [
+    ...files.map((file) => [
       "  <sitemap>",
       `    <loc>${escapeXml(absoluteUrl(`/${file}`))}</loc>`,
       cleanDate(lastmod) ? `    <lastmod>${escapeXml(cleanDate(lastmod))}</lastmod>` : "",
@@ -227,9 +227,10 @@ export default async function handler(req, res) {
     "sitemap-property-types.xml": propertyTypeEntries(properties),
     "sitemap-blog.xml": blogEntries(blogs),
   };
+  const indexFiles = SITEMAP_FILES.filter((item) => (feeds[item] || []).length > 0);
 
   const xml = file === "sitemap.xml"
-    ? sitemapIndex(lastmod)
+    ? sitemapIndex(indexFiles, lastmod)
     : urlset(feeds[file] || []);
 
   res.statusCode = SITEMAP_FILES.includes(file) || file === "sitemap.xml" ? 200 : 404;
