@@ -187,7 +187,7 @@ function PropertyCard({ property }) {
 
   return (
     <Link
-      to={`/property/${property._id || property.id}`}
+      to={`/property/${property.slug || property._id || property.id}`}
       state={{ property }}
       className="wf-card wf-card-hover group min-w-[84vw] snap-start overflow-hidden sm:min-w-[360px] lg:min-w-[390px]"
     >

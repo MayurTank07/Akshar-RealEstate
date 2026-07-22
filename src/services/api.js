@@ -63,6 +63,7 @@ async function request(path, options = {}) {
 export const publicApi = {
   properties: (params = {}) => request(`/public/properties${typeof params === "string" ? params : toQueryString(params)}`, { token: null }),
   property: (id) => request(`/public/properties/${id}`, { token: null }),
+  propertyBySlug: (slug) => request(`/public/properties/slug/${encodeURIComponent(slug)}`, { token: null }),
   propertyOptions: () => request("/public/property-options", { token: null }),
   locations: (params = {}) => request(`/public/locations${typeof params === "string" ? params : toQueryString(params)}`, { token: null }),
   createEnquiry: (payload) => request("/public/enquiries", { method: "POST", body: JSON.stringify(payload), token: null }),

@@ -138,19 +138,33 @@ function hasStaffPermission(user, permission) {
 
 const emptyProperty = {
   title: "",
+  slug: "",
+  seoTitle: "",
+  metaDescription: "",
+  canonicalUrl: "",
   locationRef: "",
+  locationId: "",
   location: "",
   city: "",
+  district: "",
   type: "",
+  propertyType: "",
   dealType: "",
+  listingType: "",
   developerName: "",
   topProject: "",
+  projectName: "",
+  societyName: "",
   topDeveloper: "",
   price: "",
   priceUnit: "",
+  bhk: 0,
   beds: "",
   baths: 0,
   sqft: 0,
+  carpetArea: 0,
+  builtUpArea: 0,
+  plotArea: 0,
   measurement: { value: 0, unit: "" },
   area: "",
   tag: "",
@@ -167,10 +181,15 @@ const emptyProperty = {
   ownership: "",
   visibility: "",
   featured: false,
+  isFeatured: false,
+  isIndexable: true,
   ownerName: "",
   ownerSellerName: "",
+  sellerName: "",
   image: "",
   gallery: [],
+  images: [],
+  imageAltTexts: [],
   media: [],
   description: "",
   nearbyLandmarks: "",
@@ -180,6 +199,7 @@ const emptyProperty = {
   facilities: [],
   highlights: [],
   parking: "",
+  floor: "",
   floorNumber: "",
   totalFloors: "",
   furnishing: "",
@@ -197,6 +217,7 @@ const emptyProperty = {
   pantry: "",
   loadingAccess: "",
   legalNotes: "",
+  propertyAge: "",
   propertyTags: [],
   isNewProject: false,
   isPreLeased: false,
@@ -219,6 +240,12 @@ const emptyProperty = {
   yearBuilt: null,
   propertyCode: "",
   assignedTo: "",
+  assignedSupervisor: "",
+  address: "",
+  latitude: null,
+  longitude: null,
+  publishedAt: null,
+  lastModifiedAt: null,
   source: "",
 };
 
@@ -312,7 +339,6 @@ function clearFieldsForDisabledSections(property, sections) {
   if (!active.has("nearby")) next.nearbyLandmarks = "";
   if (!active.has("legal")) next.legalNotes = "";
   if (!active.has("seo")) {
-    next.seo = { metaTitle: "", metaDescription: "", slug: "" };
     next.topDeveloper = "";
     next.visibility = next.visibility || "public";
     next.source = next.source || "pricing";
@@ -367,6 +393,13 @@ function masterLocationId(value) {
 
 function findMasterLocation(locations = [], id = "") {
   return locations.find((location) => String(location._id || location.id) === String(id));
+}
+
+function seoLengthTone(value = "", min = 0, max = 999) {
+  const length = String(value || "").length;
+  if (!length) return "text-slate-400";
+  if (length < min || length > max) return "text-amber-600";
+  return "text-emerald-600";
 }
 
 function measurementUnitLabel(value = "") {
@@ -1719,6 +1752,27 @@ function PropertyModal({ property, onClose, onSaved }) {
     ...emptyProperty,
     ...property,
     locationRef: masterLocationId(property.locationRef || property.locationMaster),
+    locationId: masterLocationId(property.locationId || property.locationRef || property.locationMaster),
+    slug: property.slug || property.seo?.slug || "",
+    seoTitle: property.seoTitle || property.seo?.metaTitle || "",
+    metaDescription: property.metaDescription || property.seo?.metaDescription || "",
+    canonicalUrl: property.canonicalUrl || "",
+    propertyType: property.propertyType || property.type || "",
+    listingType: property.listingType || "",
+    bhk: property.bhk ?? property.beds ?? 0,
+    projectName: property.projectName || property.topProject || "",
+    societyName: property.societyName || "",
+    sellerName: property.sellerName || property.ownerSellerName || "",
+    isFeatured: property.isFeatured ?? property.featured ?? false,
+    isIndexable: property.isIndexable ?? true,
+    images: property.images || property.gallery || [],
+    imageAltTexts: property.imageAltTexts || [],
+    floor: property.floor || property.floorNumber || "",
+    propertyAge: property.propertyAge || property.ageOfProperty || "",
+    assignedSupervisor: property.assignedSupervisor || property.assignedTo || "",
+    address: property.address || property.map?.address || "",
+    latitude: property.latitude ?? property.map?.latitude ?? null,
+    longitude: property.longitude ?? property.map?.longitude ?? null,
     ownerSellerName: property.ownerSellerName || (property.ownerName && property.ownerName !== "Akshar Estate" ? property.ownerName : ""),
     propertyCode: initialPropertyCode,
     measurement: { ...emptyProperty.measurement, ...(property.measurement || {}) },
@@ -1889,11 +1943,13 @@ function PropertyModal({ property, onClose, onSaved }) {
     });
     if (!selectedLocation) {
       updatePath("locationRef", "");
+      updatePath("locationId", "");
       updatePath("location", "");
       return;
     }
     const nextCity = selectedLocation.city || form.city || "";
     updatePath("locationRef", selectedLocation._id);
+    updatePath("locationId", selectedLocation._id);
     updatePath("location", selectedLocation.name);
     if (nextCity) updatePath("city", nextCity);
     updatePath("map.area", selectedLocation.name);
@@ -1913,10 +1969,17 @@ function PropertyModal({ property, onClose, onSaved }) {
       return next;
     });
     if (name === "propertyCode") setPropertyCodeTouched(true);
-    const numberFields = ["beds", "baths", "sqft", "yearBuilt", "measurement.value", "map.latitude", "map.longitude"];
+    const numberFields = ["beds", "bhk", "baths", "sqft", "yearBuilt", "measurement.value", "map.latitude", "map.longitude", "carpetArea", "builtUpArea", "plotArea", "latitude", "longitude"];
     const rawValue = name === "propertyCode" ? value.toUpperCase() : value;
     const nextValue = type === "checkbox" ? checked : numberFields.includes(name) ? (rawValue === "" ? null : Number(rawValue)) : rawValue;
     updatePath(name, nextValue);
+    if (name === "beds") updatePath("bhk", nextValue || 0);
+    if (name === "type") updatePath("propertyType", rawValue);
+    if (name === "dealType") updatePath("listingType", /rent|lease/i.test(rawValue) ? "rent" : "sale");
+    if (name === "topProject") updatePath("projectName", rawValue);
+    if (name === "ownerSellerName") updatePath("sellerName", rawValue);
+    if (name === "floorNumber") updatePath("floor", rawValue);
+    if (name === "ageOfProperty") updatePath("propertyAge", rawValue);
     if (name === "type" || name === "category") {
       setEnabledSections(defaultSectionsForProperty({ ...form, [name]: rawValue }));
     }
@@ -1943,10 +2006,19 @@ function PropertyModal({ property, onClose, onSaved }) {
     });
   };
 
+  const updateImageAlt = (index, value) => {
+    setForm((current) => {
+      const imageAltTexts = [...(current.imageAltTexts || [])];
+      imageAltTexts[index] = value;
+      return { ...current, imageAltTexts };
+    });
+  };
+
   const removeGallery = (index) => {
     setForm((current) => {
       const gallery = current.gallery.filter((_, itemIndex) => itemIndex !== index);
-      return { ...current, gallery, image: current.image === current.gallery[index] ? gallery[0] || "" : current.image };
+      const imageAltTexts = (current.imageAltTexts || []).filter((_, itemIndex) => itemIndex !== index);
+      return { ...current, gallery, imageAltTexts, image: current.image === current.gallery[index] ? gallery[0] || "" : current.image };
     });
   };
 
@@ -1955,8 +2027,10 @@ function PropertyModal({ property, onClose, onSaved }) {
       const nextIndex = index + direction;
       if (nextIndex < 0 || nextIndex >= current.gallery.length) return current;
       const gallery = [...current.gallery];
+      const imageAltTexts = [...(current.imageAltTexts || [])];
       [gallery[index], gallery[nextIndex]] = [gallery[nextIndex], gallery[index]];
-      return { ...current, gallery };
+      [imageAltTexts[index], imageAltTexts[nextIndex]] = [imageAltTexts[nextIndex], imageAltTexts[index]];
+      return { ...current, gallery, imageAltTexts };
     });
   };
 
@@ -1993,7 +2067,10 @@ function PropertyModal({ property, onClose, onSaved }) {
       ["type", "Property type"],
       ["category", "Property category"],
       ["dealType", "Deal type"],
+      ["status", "Listing status"],
+      ["propertyStatus", "Property status"],
       ["price", "Price"],
+      ["description", "Property description"],
     ];
     const missingFields = Object.fromEntries(requiredFields.filter(([name]) => !String(nextForm[name] || "").trim()).map(([name, label]) => [name, `${label} is required.`]));
     if (Object.keys(missingFields).length) {
@@ -2057,9 +2134,33 @@ function PropertyModal({ property, onClose, onSaved }) {
       const cleanedForm = clearFieldsForDisabledSections(nextForm, enabledSections);
       const computedArea = measurementValue ? `${measurementValue} ${measurementUnit}` : "";
       const landArea = sectionEnabled("land") ? computedArea : cleanedForm.landArea;
+      const listingType = nextForm.listingType || (/rent|lease/i.test(nextForm.dealType || "") ? "rent" : "sale");
+      const imageAltTexts = gallery.map((url, index) => nextForm.imageAltTexts?.[index] || `${nextForm.title || "Property"} in ${nextForm.location || nextForm.city || "Gujarat"}`);
       const payload = {
         ...nextForm,
         ...cleanedForm,
+        slug: nextForm.slug || nextForm.seo?.slug || "",
+        seoTitle: nextForm.seoTitle || nextForm.seo?.metaTitle || "",
+        metaDescription: nextForm.metaDescription || nextForm.seo?.metaDescription || "",
+        canonicalUrl: nextForm.canonicalUrl || "",
+        propertyType: nextForm.propertyType || nextForm.type,
+        listingType,
+        bhk: nextForm.bhk ?? nextForm.beds ?? 0,
+        carpetArea: nextForm.carpetArea || 0,
+        builtUpArea: nextForm.builtUpArea || (measurementUnit === "sqft" ? measurementValue : 0),
+        plotArea: nextForm.plotArea || (sectionEnabled("land") ? measurementValue : 0),
+        propertyAge: nextForm.propertyAge || nextForm.ageOfProperty || "",
+        floor: nextForm.floor || nextForm.floorNumber || "",
+        projectName: nextForm.projectName || nextForm.topProject || "",
+        societyName: nextForm.societyName || "",
+        address: nextForm.address || nextForm.map?.address || "",
+        locationId: nextForm.locationId || nextForm.locationRef || null,
+        district: nextForm.district || "",
+        latitude: nextForm.latitude ?? nextForm.map?.latitude ?? null,
+        longitude: nextForm.longitude ?? nextForm.map?.longitude ?? null,
+        sellerName: nextForm.sellerName || nextForm.ownerSellerName || nextForm.ownerName || "",
+        isFeatured: Boolean(nextForm.isFeatured || nextForm.featured),
+        isIndexable: Boolean(nextForm.isIndexable),
         status: nextForm.status || "active",
         visibility: nextForm.visibility || "public",
         source: nextForm.source || "pricing",
@@ -2068,8 +2169,11 @@ function PropertyModal({ property, onClose, onSaved }) {
         propertyCode,
         image: primaryImage,
         gallery,
+        images: gallery,
+        imageAltTexts,
         media: normalizedMedia,
         assignedTo: typeof nextForm.assignedTo === "object" ? nextForm.assignedTo?._id || null : nextForm.assignedTo || null,
+        assignedSupervisor: typeof nextForm.assignedTo === "object" ? nextForm.assignedTo?._id || null : nextForm.assignedTo || null,
         dealEnquiryId: nextForm.dealSource === "enquiry" ? nextForm.dealEnquiryId || null : null,
         measurement: { ...nextForm.measurement, unit: nextForm.measurement?.unit || "sqft", value: measurementValue },
         landArea,
@@ -2280,7 +2384,10 @@ function PropertyModal({ property, onClose, onSaved }) {
                     {form.gallery.map((item, index) => (
                       <div key={`${item}-${index}`} className="grid gap-3 rounded-xl border border-slate-100 bg-slate-50 p-3 md:grid-cols-[88px_1fr_auto] md:items-center">
                         <img src={item || form.image || "https://placehold.co/160x120?text=Image"} alt="" className="h-20 w-20 rounded-xl object-cover" />
-                        <input className="wf-input bg-white" value={item} onChange={(event) => updateGallery(index, event.target.value)} placeholder="Image URL or uploaded file preview" />
+                        <div className="space-y-2">
+                          <input className="wf-input bg-white" value={item} onChange={(event) => updateGallery(index, event.target.value)} placeholder="Image URL or uploaded file preview" />
+                          <input className="wf-input bg-white" value={form.imageAltTexts?.[index] || ""} onChange={(event) => updateImageAlt(index, event.target.value)} placeholder="Image alt text for SEO and accessibility" />
+                        </div>
                         <div className="flex gap-2">
                           <button type="button" onClick={() => moveGallery(index, -1)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold">Up</button>
                           <button type="button" onClick={() => moveGallery(index, 1)} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold">Down</button>
@@ -2441,6 +2548,36 @@ function PropertyModal({ property, onClose, onSaved }) {
 	              </div>
 	            </div>
 	          </FormSection>
+          )}
+
+          {sectionEnabled("seo") && (
+          <FormSection title="SEO / Publishing" subtitle={staffUser.role === "admin" ? "Manual overrides are optional. Leave blank to use generated property SEO." : "SEO fields are generated automatically from the saved property details."}>
+            {staffUser.role === "admin" ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <label>
+                  <span className="wf-label">SEO Title Override</span>
+                  <input className="wf-input" name="seoTitle" value={form.seoTitle || ""} onChange={update} placeholder="Auto-generated if left blank" />
+                  <span className={`mt-1.5 block text-xs font-semibold ${seoLengthTone(form.seoTitle, 50, 70)}`}>{String(form.seoTitle || "").length}/70 recommended, 90 max</span>
+                </label>
+                <label>
+                  <span className="wf-label">Property Slug Override</span>
+                  <input className="wf-input" name="slug" value={form.slug || ""} onChange={update} placeholder="Auto-generated if left blank" />
+                  <span className="mt-1.5 block text-xs font-semibold text-slate-400">Main slug stays stable after publishing unless admin changes it.</span>
+                </label>
+                <label className="md:col-span-2">
+                  <span className="wf-label">Meta Description Override</span>
+                  <textarea className="wf-input min-h-24" name="metaDescription" value={form.metaDescription || ""} onChange={update} placeholder="Auto-generated if left blank" />
+                  <span className={`mt-1.5 block text-xs font-semibold ${seoLengthTone(form.metaDescription, 120, 160)}`}>{String(form.metaDescription || "").length}/160 recommended, 180 max</span>
+                </label>
+                <ToggleField label="Allow Search Indexing" name="isIndexable" checked={form.isIndexable} onChange={update} />
+                <Field label="Canonical URL" name="canonicalUrl" value={form.canonicalUrl || "Generated after save"} onChange={update} helperText="Generated from the final slug." />
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-semibold text-blue-800">
+                SEO title, meta description, slug, canonical URL, and indexing status are generated and controlled by admin permissions.
+              </div>
+            )}
+          </FormSection>
           )}
         </div>
         </div>

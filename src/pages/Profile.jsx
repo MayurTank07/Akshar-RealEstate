@@ -732,7 +732,7 @@ function OwnerRequestCard({ request, onEdit, onDelete, onRequestDelete }) {
       )}
       <div className="mt-5 flex flex-wrap gap-2">
         {request.approvedPropertyId?._id && !isRemoved && (
-          <Link to={`/property/${request.approvedPropertyId._id}`} className="wf-btn wf-btn-secondary text-sm">
+          <Link to={`/property/${request.approvedPropertyId.slug || request.approvedPropertyId._id}`} className="wf-btn wf-btn-secondary text-sm">
             <FileText size={15} /> View Listing
           </Link>
         )}

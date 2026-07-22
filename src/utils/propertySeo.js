@@ -15,9 +15,9 @@ export function buildPropertySeo(property) {
   const type = property.type || "Property";
   const location = propertyLocation(property);
   const dealType = property.dealType || "Buy";
-  const canonical = `${window.location.origin}/property/${property._id || property.id || ""}`;
-  const metaTitle = compact(`${compact(title, 32)} | ${type} in ${compact(location, 24)} | Ahmedabad Broker`, 68);
-  const metaDescription = compact(
+  const canonical = property.canonicalUrl || `${window.location.origin}/property/${property.slug || property._id || property.id || ""}`;
+  const metaTitle = compact(property.seoTitle || property.seo?.metaTitle || `${compact(title, 32)} | ${type} in ${compact(location, 24)} | Ahmedabad Broker`, 68);
+  const metaDescription = compact(property.metaDescription || property.seo?.metaDescription ||
     `Explore ${title}, a verified ${type.toLowerCase()} in ${location}. Get Ahmedabad-focused broker-assisted ${dealType.toLowerCase()} guidance, pricing support, and private consultation from ${SITE_NAME}.`,
     160
   );

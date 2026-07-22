@@ -31,15 +31,16 @@ export default function PropertyDetails() {
   const remoteId = /^[a-f\d]{24}$/i.test(id || "")
     ? id
     : (/^[a-f\d]{24}$/i.test(initialProperty?._id || "") ? initialProperty._id : null);
+  const remoteSlug = id && !remoteId ? id : null;
   const [property, setProperty] = useState(initialProperty);
-  const [loading, setLoading] = useState(Boolean(remoteId));
+  const [loading, setLoading] = useState(Boolean(remoteId || remoteSlug));
   const [namePrompt, setNamePrompt] = useState({ open: false, name: storedEnquirerName(), error: "" });
 
   useEffect(() => {
-    if (!remoteId) return;
+    if (!remoteId && !remoteSlug) return;
     let active = true;
-    publicApi
-      .property(remoteId)
+    const loader = remoteId ? publicApi.property(remoteId) : publicApi.propertyBySlug(remoteSlug);
+    loader
       .then((response) => {
         if (active) setProperty(sanitizePublicProperty(response.data));
       })
@@ -52,7 +53,7 @@ export default function PropertyDetails() {
     return () => {
       active = false;
     };
-  }, [remoteId]);
+  }, [remoteId, remoteSlug]);
 
   useEffect(() => syncPropertySeo(property), [property]);
 
