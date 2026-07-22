@@ -113,6 +113,9 @@ Commits verified on production: `7a530a3`, `1662cdf`, `453b639`, `7e18de1`
 ## Google Search Console Actions Completed
 
 - Confirmed visible property: `https://www.aksharestate.in/`
+- Created and verified Domain Property: `aksharestate.in`
+- Verified Domain Property through GoDaddy Domain Connect DNS authorization
+- Submitted `https://www.aksharestate.in/sitemap.xml` in the Domain Property
 - Confirmed submitted sitemap: `/sitemap.xml`
 - Confirmed sitemap status: Success
 - Confirmed sitemap discovered pages: 23
