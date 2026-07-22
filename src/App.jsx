@@ -16,6 +16,7 @@ import PropertiesPage from "./pages/Properties";
 import NewProjects from "./pages/NewProjects";
 import SavedProperties from "./pages/SavedProperties";
 import Profile from "./pages/Profile";
+import LocationLanding from "./pages/LocationLanding";
 import ScrollToTop from "./components/ScrollToTop";
 import SplashScreen from "./components/SplashScreen";
 import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton";
@@ -40,6 +41,8 @@ function App() {
             <Route path="/saved" element={<SavedProperties />} />
             <Route path="/profile/*" element={<Profile />} />
             <Route path="/property/:id" element={<PropertyDetails />} />
+            <Route path="/properties-for-sale/:region" element={<LocationLanding />} />
+            <Route path="/properties-for-sale/:region/:locality" element={<LocationLanding />} />
             <Route path="/purchase/:category/:slug" element={<Pricing />} />
             <Route path="/enquiry" element={<Enquiry />} />
             <Route path="/login" element={<Login />} />

@@ -14,6 +14,22 @@
       "destination": "/api/property-route?key=:key"
     },
     {
+      "source": "/properties-for-sale/:region/:locality/",
+      "destination": "/api/sale-landing-route?region=:region&locality=:locality&slash=1"
+    },
+    {
+      "source": "/properties-for-sale/:region/:locality",
+      "destination": "/api/sale-landing-route?region=:region&locality=:locality"
+    },
+    {
+      "source": "/properties-for-sale/:region/",
+      "destination": "/api/sale-landing-route?region=:region&slash=1"
+    },
+    {
+      "source": "/properties-for-sale/:region",
+      "destination": "/api/sale-landing-route?region=:region"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
