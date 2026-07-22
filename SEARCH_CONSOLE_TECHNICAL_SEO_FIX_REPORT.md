@@ -80,6 +80,25 @@ Search Console verified state:
 - Old `/property?id=` redirect check: passed
 - Sitemap handler check: passed
 
+## Production Verification After Deployment
+
+Commit verified on production: `7a530a3`
+
+| URL | Status | Robots | Canonical / Redirect |
+|---|---:|---|---|
+| `https://www.aksharestate.in/` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/` |
+| `https://www.aksharestate.in/properties` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/properties` |
+| `https://www.aksharestate.in/about` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/about` |
+| `https://www.aksharestate.in/contact` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/contact` |
+| `https://www.aksharestate.in/login` | 200 | `noindex,nofollow` | `https://www.aksharestate.in/login` |
+| `https://www.aksharestate.in/admin` | 200 | `noindex,nofollow` | `https://www.aksharestate.in/admin` |
+| `https://www.aksharestate.in/no-such-page-seo-audit` | 404 | `noindex,follow` | `https://www.aksharestate.in/no-such-page-seo-audit` |
+| `https://www.aksharestate.in/sitemap.xml` | 200 | XML sitemap index | No page canonical needed |
+| `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/properties-for-sale/gandhinagar/dhanap` |
+| `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` | 200 | `noindex,follow` | `https://www.aksharestate.in/properties-for-sale/ahmedabad/dholera` |
+| `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` | 200 | `index,follow,max-image-preview:large` | `https://www.aksharestate.in/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
+| `https://www.aksharestate.in/property?id=agriculture-land-for-sale-dhanap-gandhinagar-0027` | 301 | Not applicable | Redirects to `/property/agriculture-land-for-sale-dhanap-gandhinagar-0027` |
+
 ## Google Search Console Actions Completed
 
 - Confirmed visible property: `https://www.aksharestate.in/`
