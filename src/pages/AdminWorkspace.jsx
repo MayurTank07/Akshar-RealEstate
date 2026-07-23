@@ -169,13 +169,13 @@ const emptyProperty = {
   carpetArea: 0,
   builtUpArea: 0,
   plotArea: 0,
-  measurement: { value: 0, unit: "" },
+  measurement: { value: 0, unit: "sqft" },
   area: "",
-  tag: "",
+  tag: "Standard",
   badge: "",
   badgeColor: "bg-blue-600",
-  status: "",
-  propertyStatus: "",
+  status: "active",
+  propertyStatus: "Ready",
   category: "",
   availability: "",
   constructionStatus: "",
@@ -183,7 +183,7 @@ const emptyProperty = {
   brokerageType: "",
   facing: "",
   ownership: "",
-  visibility: "",
+  visibility: "public",
   featured: false,
   isFeatured: false,
   isIndexable: true,
@@ -250,7 +250,7 @@ const emptyProperty = {
   longitude: null,
   publishedAt: null,
   lastModifiedAt: null,
-  source: "",
+  source: "pricing",
 };
 
 function ownerProofLabel(proof = {}) {
@@ -393,6 +393,41 @@ function propertyFormErrorFromApi(error) {
     ? `${error.message || "Property validation failed"}: ${entries.map(([path, issue]) => `${fieldLabel(path)} - ${issue}`).join("; ")}`
     : error.message || "Unable to save property.";
   return { message, fieldErrors };
+}
+
+const propertyFieldSections = {
+  title: "basic",
+  type: "basic",
+  category: "basic",
+  dealType: "price",
+  status: "price",
+  price: "price",
+  locationRef: "location",
+  locationId: "location",
+  location: "location",
+  city: "location",
+  image: "media",
+  gallery: "media",
+  images: "media",
+  description: "description",
+  propertyStatus: "legal",
+};
+
+const propertyFieldAliases = {
+  locationId: "locationRef",
+  location: "locationRef",
+  gallery: "image",
+  images: "image",
+};
+
+function propertyFieldSelector(name) {
+  const escape = typeof window !== "undefined" && window.CSS?.escape ? window.CSS.escape : ((value) => String(value).replace(/"/g, '\\"'));
+  const field = escape(name);
+  return `[data-field-name="${field}"], [name="${field}"]`;
+}
+
+function firstPropertyErrorField(errors = {}) {
+  return Object.keys(errors).find((key) => errors[key]);
 }
 
 function statusClass(status) {
@@ -1920,6 +1955,33 @@ function PropertyModal({ property, onClose, onSaved }) {
   const activeSections = useMemo(() => enabledSectionSet(enabledSections), [enabledSections]);
   const sectionEnabled = useCallback((sectionKey) => activeSections.has(sectionKey), [activeSections]);
 
+  const revealFields = useCallback((errors = {}) => {
+    const sectionsToEnable = new Set(enabledSections);
+    Object.keys(errors).forEach((field) => {
+      const section = propertyFieldSections[field] || propertyFieldSections[propertyFieldAliases[field]];
+      if (section) sectionsToEnable.add(section);
+    });
+    setEnabledSections(propertySectionOptions.filter((section) => sectionsToEnable.has(section.key)).map((section) => section.key));
+  }, [enabledSections]);
+
+  const scrollToField = useCallback((field) => {
+    const targetField = propertyFieldAliases[field] || field;
+    window.setTimeout(() => {
+      const element = document.querySelector(propertyFieldSelector(targetField)) || document.querySelector(propertyFieldSelector(field));
+      element?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+      if (typeof element?.focus === "function" && !element.matches?.("[type='file']")) element.focus({ preventScroll: true });
+    }, 120);
+  }, []);
+
+  const showValidationErrors = useCallback((errors = {}, fallback = "Please complete the highlighted required fields before saving.") => {
+    const entries = Object.entries(errors).filter(([, message]) => message);
+    setFieldErrors(errors);
+    revealFields(errors);
+    const firstField = firstPropertyErrorField(errors);
+    if (firstField) scrollToField(firstField);
+    setError(entries.length ? `${fallback} ${entries.map(([field, message]) => `${fieldLabel(field)}: ${message}`).join(" ")}` : fallback);
+  }, [revealFields, scrollToField]);
+
   const togglePropertySection = (sectionKey) => {
     setEnabledSections((current) => {
       const next = new Set(current);
@@ -2094,7 +2156,14 @@ function PropertyModal({ property, onClose, onSaved }) {
       else valid.push({ file, preview: URL.createObjectURL(file), id: `${file.name}-${file.lastModified}-${Math.random()}` });
     });
     if (rejected.length) setError(rejected.join(". "));
-    if (valid.length) setPendingFiles((current) => [...current, ...valid].slice(0, 12));
+    if (valid.length) {
+      setFieldErrors((current) => {
+        const next = { ...current };
+        delete next.image;
+        return next;
+      });
+      setPendingFiles((current) => [...current, ...valid].slice(0, 12));
+    }
     event.target.value = "";
   };
 
@@ -2112,29 +2181,25 @@ function PropertyModal({ property, onClose, onSaved }) {
     const requiredFields = [
       ["title", "Property title"],
       ["locationRef", "Master location"],
-      ["location", "Area / location"],
       ["city", "City"],
       ["type", "Property type"],
       ["category", "Property category"],
       ["dealType", "Deal type"],
       ["status", "Listing status"],
-      ["propertyStatus", "Property status"],
       ["price", "Price"],
       ["description", "Property description"],
     ];
     const missingFields = Object.fromEntries(requiredFields.filter(([name]) => !String(nextForm[name] || "").trim()).map(([name, label]) => [name, `${label} is required.`]));
     if (Object.keys(missingFields).length) {
-      setFieldErrors(missingFields);
-      setError("Please complete the highlighted required fields before saving.");
+      showValidationErrors(missingFields);
       return;
     }
     if (String(nextForm.description || "").trim().length < PROPERTY_DESCRIPTION_MIN) {
-      setFieldErrors((current) => ({ ...current, description: `Property description should be at least ${PROPERTY_DESCRIPTION_MIN} characters.` }));
-      setError(`Property description should be at least ${PROPERTY_DESCRIPTION_MIN} characters.`);
+      showValidationErrors({ description: `Property description should be at least ${PROPERTY_DESCRIPTION_MIN} characters.` }, "Please fix the highlighted field before saving.");
       return;
     }
     if (String(nextForm.description || "").length > PROPERTY_TEXT_LIMIT) {
-      setError(`Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
+      showValidationErrors({ description: `Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.` }, "Please fix the highlighted field before saving.");
       return;
     }
     if (String(nextForm.nearbyLandmarks || "").length > PROPERTY_TEXT_LIMIT) {
@@ -2179,7 +2244,8 @@ function PropertyModal({ property, onClose, onSaved }) {
       }
       const gallery = Array.from(new Set([...nextForm.gallery.map((item) => item.trim()).filter(Boolean), ...uploadedUrls]));
       if (!nextForm.image && !gallery[0]) {
-        throw new Error("Please add at least one property image.");
+        showValidationErrors({ image: "At least one property image is required." }, "Please complete the highlighted required fields before saving.");
+        return;
       }
       const primaryImage = nextForm.image || gallery[0];
       const normalizedMedia = buildPropertyMedia({
@@ -2245,8 +2311,7 @@ function PropertyModal({ property, onClose, onSaved }) {
       onSaved();
     } catch (err) {
       const formatted = propertyFormErrorFromApi(err);
-      setFieldErrors((current) => ({ ...current, ...formatted.fieldErrors }));
-      setError(formatted.message);
+      showValidationErrors(formatted.fieldErrors, err.message || formatted.message);
     } finally {
       setUploading(false);
     }
@@ -2317,7 +2382,7 @@ function PropertyModal({ property, onClose, onSaved }) {
               <OptionSelect label="Price Unit" name="priceUnit" value={form.priceUnit} options={masterOptions.priceUnits} onChange={update} masterGroup="priceUnits" onAddOption={addMasterOption} />
               <ComboField label="Deal Type" name="dealType" value={form.dealType} options={masterOptions.dealTypes} onChange={update} required error={fieldErrors.dealType} placeholder="Select Deal Type" masterGroup="dealTypes" onAddOption={addMasterOption} />
               <Field label="ROI" name="roi" value={form.roi} onChange={update} placeholder="e.g. 8.5% yearly" helperText="Useful for pre-leased and investment properties." />
-	              <SearchableDropdown label="Listing Status" name="status" value={form.status} onChange={update} placeholder="Select Listing Status" options={(masterOptions.listingStatuses || []).map((value) => ({ label: labelize(value), value }))} masterGroup="listingStatuses" onAddOption={addMasterOption} />
+	              <SearchableDropdown label="Listing Status" name="status" value={form.status} onChange={update} required error={fieldErrors.status} placeholder="Select Listing Status" options={(masterOptions.listingStatuses || []).map((value) => ({ label: labelize(value), value }))} masterGroup="listingStatuses" onAddOption={addMasterOption} />
               <OptionSelect label="Availability" name="availability" value={form.availability} options={masterOptions.availability} onChange={update} masterGroup="availability" onAddOption={addMasterOption} />
               <OptionSelect label="Brokerage / Commission Type" name="brokerageType" value={form.brokerageType} options={masterOptions.brokerageType} onChange={update} masterGroup="brokerageType" onAddOption={addMasterOption} />
               <Field label="Payment / Costing Details" name="paymentDetails" value={form.paymentDetails} onChange={update} placeholder="Token, loan, pending dues" />
@@ -2410,7 +2475,7 @@ function PropertyModal({ property, onClose, onSaved }) {
           <FormSection title="Media Gallery" subtitle="Upload/select multiple images, preview them, and reorder the public gallery.">
             <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
               <div>
-                <Field label="Primary Image URL" name="image" value={form.image} onChange={update} placeholder="Optional if selecting image files" />
+                <Field label="Primary Image URL" name="image" value={form.image} onChange={update} error={fieldErrors.image} placeholder="Optional if selecting image files" />
                 <div className="mt-4">
                   <Field label="Video URL" name="videoUrl" value={form.videoUrl} onChange={update} placeholder="YouTube, Instagram, or hosted walkthrough URL" helperText="Optional. Add a property walkthrough without leaving the gallery workflow." />
                 </div>
@@ -2867,7 +2932,7 @@ function FormFooterActions({ onCancel, disabled, cancelLabel = "Cancel", submitL
 
 function Field({ label, name, value, onChange, type = "text", required = false, placeholder = "", helperText = "", error = "" }) {
   return (
-    <label>
+    <label data-field-name={name}>
       <span className="wf-label">{label}{required && <span className="ml-1 text-red-500">*</span>}</span>
       <input className={`wf-input ${error ? "border-red-300 bg-red-50/30" : ""}`} name={name} type={type} value={value ?? ""} onChange={onChange} required={required} placeholder={placeholder} aria-invalid={Boolean(error)} />
       {(error || helperText) && <span className={`mt-1.5 block text-xs font-semibold ${error ? "text-red-600" : "text-slate-400"}`}>{error || helperText}</span>}
@@ -2934,7 +2999,7 @@ function MoneyField({ label, name, value, onChange, required = false, placeholde
     });
   };
   return (
-    <label>
+    <label data-field-name={name}>
       <span className="wf-label">{label}{required && <span className="ml-1 text-red-500">*</span>}</span>
       <div className={`flex overflow-hidden rounded-xl border bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 ${error ? "border-red-300" : "border-slate-200"}`}>
         <span className="grid w-12 place-items-center border-r border-slate-200 bg-slate-50 text-sm font-extrabold text-slate-700">₹</span>
@@ -3090,7 +3155,7 @@ function SearchableDropdown({ label, name, value, options = [], onChange, requir
   };
 
   return (
-    <div ref={containerRef} className="relative" onKeyDown={handleKeyDown}>
+    <div ref={containerRef} className="relative" onKeyDown={handleKeyDown} data-field-name={name}>
       <span className="wf-label">{label}{required && <span className="ml-1 text-red-500">*</span>}</span>
       <div
         className={`flex h-12 w-full items-center gap-2 rounded-xl border bg-white px-3 text-left text-sm font-semibold text-slate-900 shadow-sm outline-none transition ${
@@ -3100,6 +3165,7 @@ function SearchableDropdown({ label, name, value, options = [], onChange, requir
         <Search size={16} className="shrink-0 text-slate-400" />
         <input
           ref={inputRef}
+          name={name}
           value={inputValue}
           onFocus={openDropdown}
           onClick={openDropdown}
@@ -3365,7 +3431,7 @@ function LocationAutocompleteField({ label, name, value, options = [], onChange,
   }
 
   return (
-    <label>
+    <label data-field-name={name}>
       <span className="wf-label">{label}{required && <span className="ml-1 text-red-500">*</span>}</span>
       <div className={`flex h-12 items-center gap-2 rounded-xl border bg-white px-3 shadow-sm transition focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-100 ${error ? "border-red-300" : "border-slate-200"}`}>
         <MapPin size={17} className="shrink-0 text-slate-400" />
