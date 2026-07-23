@@ -93,6 +93,7 @@ const defaultSupervisorPermissions = [
 ];
 
 const PROPERTY_TEXT_LIMIT = 1000;
+const PROPERTY_DESCRIPTION_MIN = 20;
 
 const propertyOptionGroups = {
   amenities: ["Parking", "Lift", "Security", "Garden", "Swimming Pool", "Gym", "CCTV", "Power Backup", "Club House", "WiFi", "Air Conditioning", "Water Supply", "Balcony", "Furnished", "Semi Furnished", "Modular Kitchen", "Visitor Parking", "Kids Play Area", "Fire Safety", "Pet Friendly"],
@@ -347,6 +348,51 @@ function clearFieldsForDisabledSections(property, sections) {
     next.source = next.source || "pricing";
   }
   return next;
+}
+
+function fieldLabel(path = "") {
+  const labels = {
+    title: "Property title",
+    locationRef: "Master location",
+    locationId: "Master location",
+    location: "Area / location",
+    city: "City",
+    type: "Property type",
+    category: "Property category",
+    dealType: "Deal type",
+    status: "Listing status",
+    propertyStatus: "Property status",
+    price: "Price",
+    image: "Property image",
+    gallery: "Property images",
+    images: "Property images",
+    description: "Property description",
+    "measurement.unit": "Area unit",
+    "measurement.value": "Area value",
+    "contact.email": "Contact email",
+    dealCustomerEmail: "Customer email",
+    dealEnquiryId: "Deal enquiry",
+    assignedTo: "Assigned supervisor",
+    assignedSupervisor: "Assigned supervisor",
+    source: "Client-side source",
+  };
+  return labels[path] || labelize(path.split(".").at(-1) || path);
+}
+
+function propertyFormErrorFromApi(error) {
+  const errors = error?.errors && typeof error.errors === "object" ? error.errors : null;
+  if (!errors) return { message: error?.message || "Unable to save property.", fieldErrors: {} };
+  const entries = Object.entries(errors).filter(([, message]) => message);
+  const fieldErrors = entries.reduce((acc, [path, message]) => {
+    const directPath = path === "locationId" ? "locationRef" : path;
+    const visiblePath = directPath.startsWith("measurement.") ? directPath : directPath;
+    acc[visiblePath] = message;
+    return acc;
+  }, {});
+  const message = entries.length
+    ? `${error.message || "Property validation failed"}: ${entries.map(([path, issue]) => `${fieldLabel(path)} - ${issue}`).join("; ")}`
+    : error.message || "Unable to save property.";
+  return { message, fieldErrors };
 }
 
 function statusClass(status) {
@@ -2082,6 +2128,11 @@ function PropertyModal({ property, onClose, onSaved }) {
       setError("Please complete the highlighted required fields before saving.");
       return;
     }
+    if (String(nextForm.description || "").trim().length < PROPERTY_DESCRIPTION_MIN) {
+      setFieldErrors((current) => ({ ...current, description: `Property description should be at least ${PROPERTY_DESCRIPTION_MIN} characters.` }));
+      setError(`Property description should be at least ${PROPERTY_DESCRIPTION_MIN} characters.`);
+      return;
+    }
     if (String(nextForm.description || "").length > PROPERTY_TEXT_LIMIT) {
       setError(`Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
       return;
@@ -2193,7 +2244,9 @@ function PropertyModal({ property, onClose, onSaved }) {
       else await staffApi.createProperty(payload);
       onSaved();
     } catch (err) {
-      setError(err.message);
+      const formatted = propertyFormErrorFromApi(err);
+      setFieldErrors((current) => ({ ...current, ...formatted.fieldErrors }));
+      setError(formatted.message);
     } finally {
       setUploading(false);
     }
@@ -2545,7 +2598,8 @@ function PropertyModal({ property, onClose, onSaved }) {
 	                  <Sparkles size={16} /> Auto Generate Description
 	                </button>
 	              </div>
-	              <textarea className="wf-input mt-4 min-h-40 bg-white leading-6" name="description" value={form.description} onChange={update} maxLength={PROPERTY_TEXT_LIMIT} placeholder="Write a natural, premium property description or generate a complete starting point above." />
+	              <textarea className={`wf-input mt-4 min-h-40 bg-white leading-6 ${fieldErrors.description ? "border-red-300" : ""}`} name="description" value={form.description} onChange={update} maxLength={PROPERTY_TEXT_LIMIT} placeholder="Write a natural, premium property description or generate a complete starting point above." />
+	              {fieldErrors.description && <span className="mt-1.5 block text-xs font-semibold text-red-600">{fieldErrors.description}</span>}
 	              <span className="mt-1.5 block text-right text-xs font-semibold text-slate-400">{String(form.description || "").length}/{PROPERTY_TEXT_LIMIT}</span>
 	              <div className="mt-3 flex flex-wrap gap-2">
 	                {descriptionSuggestions.map((suggestion) => (

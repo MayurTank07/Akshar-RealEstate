@@ -58,6 +58,7 @@ async function request(path, options = {}) {
       if (!response.ok) {
         const error = new Error(data?.message || "Request failed");
         error.status = response.status;
+        error.errors = data?.errors;
         error.details = data?.details;
         if (response.status === 401 && token && typeof window !== "undefined" && path !== "/auth/staff/login") {
           window.dispatchEvent(new CustomEvent("staff-auth:unauthorized"));
