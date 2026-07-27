@@ -82,7 +82,7 @@ export function responsiveImageProps(url, {
     height,
     loading,
     decoding,
-    fetchPriority,
+    fetchpriority: fetchPriority,
     alt: alt || "Akshar Estate property image",
     className,
     onError: (event) => {

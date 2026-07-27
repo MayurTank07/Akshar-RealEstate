@@ -147,8 +147,8 @@ export default function PropertyAmenities({ property, whatsappAvailable, onWhats
         <div className="pt-6 border-t border-gray-100">
           <h3 className="font-bold text-gray-900 mb-4">Property Details</h3>
           <div className="space-y-3">
-            {details.map(([label, value]) => (
-              <div key={label} className="flex justify-between items-center gap-5 text-sm">
+            {details.map(([label, value], index) => (
+              <div key={`${label}-${index}`} className="flex justify-between items-center gap-5 text-sm">
                 <span className="text-gray-400 font-medium">{label}</span>
                 <span className="text-right text-gray-700 font-semibold">{value}</span>
               </div>

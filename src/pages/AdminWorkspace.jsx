@@ -42,9 +42,9 @@ import {
 import IndianMoneyInput from "../components/IndianMoneyInput";
 import { useStaffAuth } from "../contexts/useStaffAuth";
 import { publicApi, staffApi, toQueryString } from "../services/api";
-import { formatINR, parseINRAmount } from "../utils/currency";
+import { amountToIndianCurrencyWords, formatINR, parseINRAmount, validateINRAmount } from "../utils/currency";
 import { displayPropertyCode, isReadablePropertyCode } from "../utils/propertyCode";
-import { defaultSectionsForProperty, propertySectionOptions } from "../utils/propertyTypeRules";
+import { defaultSectionsForProperty, propertySectionOptions, supportsStandaloneResidential } from "../utils/propertyTypeRules";
 import { defaultAboutContent, defaultContactContent, defaultHomeSectionsContent, defaultNavbarAreas, defaultTopLists, enabledSorted, normalizeAreaName } from "../config/navigationContent";
 
 const navItems = [
@@ -134,6 +134,93 @@ const preferredMeasurementUnits = [
   { label: "Guntha", value: "guntha", description: "Land parcels" },
   { label: "Hectare", value: "hectare", description: "Large agriculture land" },
 ];
+
+const standalonePlotAreaUnits = ["Square Feet", "Square Meter", "Square Yard", "Vaar", "Guntha"];
+const standaloneAreaUnits = ["Square Feet", "Square Meter", "Square Yard", "Vaar", "Guntha"];
+const standaloneFacingOptions = ["North", "South", "East", "West", "North-East", "North-West", "South-East", "South-West"];
+const standaloneConstructionStatusOptions = ["Ready to Move", "Under Construction", "Newly Constructed", "Resale", "Renovation Required"];
+const standaloneStructureTypeOptions = ["RCC", "Load-Bearing", "Other"];
+const standaloneFurnishingOptions = ["Unfurnished", "Semi-Furnished", "Fully Furnished"];
+
+const emptyBungalowDetails = {
+  plotArea: null,
+  plotAreaUnit: "",
+  plotLength: null,
+  plotWidth: null,
+  plotFacing: "",
+  cornerPlot: false,
+  openSides: null,
+  totalConstructionArea: null,
+  constructionAreaUnit: "",
+  groundFloorConstructionArea: null,
+  firstFloorConstructionArea: null,
+  secondFloorConstructionArea: null,
+  otherFloorConstructionArea: null,
+  numberOfFloors: null,
+  constructionYear: null,
+  propertyAge: "",
+  constructionStatus: "",
+  structureType: "",
+  bedrooms: null,
+  bathrooms: null,
+  balconies: null,
+  kitchens: null,
+  livingRooms: null,
+  storeRooms: null,
+  servantRoom: false,
+  poojaRoom: false,
+  studyRoom: false,
+  terrace: false,
+  basement: false,
+  garden: false,
+  privateParking: false,
+  carParkingSpaces: null,
+  twoWheelerParkingSpaces: null,
+  furnishingStatus: "",
+  waterAvailability: "",
+  electricityAvailability: "",
+  roadWidth: "",
+  boundaryWall: false,
+  gatedProperty: false,
+  municipalApproval: false,
+  loanAvailable: false,
+  additionalConstructionDetails: "",
+};
+
+const PROPERTY_NUMBER_FIELDS = new Set([
+  "beds",
+  "bhk",
+  "baths",
+  "sqft",
+  "yearBuilt",
+  "measurement.value",
+  "map.latitude",
+  "map.longitude",
+  "carpetArea",
+  "builtUpArea",
+  "plotArea",
+  "latitude",
+  "longitude",
+  "bungalowDetails.plotArea",
+  "bungalowDetails.plotLength",
+  "bungalowDetails.plotWidth",
+  "bungalowDetails.openSides",
+  "bungalowDetails.totalConstructionArea",
+  "bungalowDetails.groundFloorConstructionArea",
+  "bungalowDetails.firstFloorConstructionArea",
+  "bungalowDetails.secondFloorConstructionArea",
+  "bungalowDetails.otherFloorConstructionArea",
+  "bungalowDetails.numberOfFloors",
+  "bungalowDetails.constructionYear",
+  "bungalowDetails.bedrooms",
+  "bungalowDetails.bathrooms",
+  "bungalowDetails.balconies",
+  "bungalowDetails.kitchens",
+  "bungalowDetails.livingRooms",
+  "bungalowDetails.storeRooms",
+  "bungalowDetails.carParkingSpaces",
+  "bungalowDetails.twoWheelerParkingSpaces",
+]);
 
 function hasStaffPermission(user, permission) {
   if (!permission || user.role === "admin") return true;
@@ -241,6 +328,7 @@ const emptyProperty = {
   contact: { name: "", phone: "", email: "" },
   map: { address: "", area: "", city: "", state: "", pincode: "", latitude: null, longitude: null, placeId: "", embedUrl: "" },
   seo: { metaTitle: "", metaDescription: "", slug: "" },
+  bungalowDetails: emptyBungalowDetails,
   yearBuilt: null,
   propertyCode: "",
   assignedTo: "",
@@ -333,6 +421,9 @@ function clearFieldsForDisabledSections(property, sections) {
   if (!active.has("land")) {
     Object.assign(next, { landArea: "", plotSize: "", roadAccess: "", waterAvailability: "", electricityAvailability: "", zoning: "" });
   }
+  if (!active.has("bungalow") || !supportsStandaloneResidential(next)) {
+    next.bungalowDetails = { ...emptyBungalowDetails };
+  }
   if (!active.has("commercial")) {
     Object.assign(next, { frontage: "", washrooms: "", businessSuitability: "", pantry: "", loadingAccess: "" });
   }
@@ -348,6 +439,17 @@ function clearFieldsForDisabledSections(property, sections) {
     next.source = next.source || "pricing";
   }
   return next;
+}
+
+function bungalowValidationErrors(property = {}, sections = []) {
+  if (!enabledSectionSet(sections).has("bungalow") || !supportsStandaloneResidential(property)) return {};
+  const details = property.bungalowDetails || {};
+  const errors = {};
+  if (!details.plotArea || Number(details.plotArea) <= 0) errors["bungalowDetails.plotArea"] = "Plot area is required for bungalow, villa, and independent house listings.";
+  if (!String(details.plotAreaUnit || "").trim()) errors["bungalowDetails.plotAreaUnit"] = "Plot area unit is required.";
+  if (!details.totalConstructionArea || Number(details.totalConstructionArea) <= 0) errors["bungalowDetails.totalConstructionArea"] = "Total construction area is required.";
+  if (!String(details.constructionAreaUnit || "").trim()) errors["bungalowDetails.constructionAreaUnit"] = "Construction area unit is required.";
+  return errors;
 }
 
 function fieldLabel(path = "") {
@@ -375,6 +477,11 @@ function fieldLabel(path = "") {
     assignedTo: "Assigned supervisor",
     assignedSupervisor: "Assigned supervisor",
     source: "Client-side source",
+    bungalowDetails: "Standalone home details",
+    "bungalowDetails.plotArea": "Plot area",
+    "bungalowDetails.totalConstructionArea": "Total construction area",
+    "bungalowDetails.plotAreaUnit": "Plot area unit",
+    "bungalowDetails.constructionAreaUnit": "Construction area unit",
   };
   return labels[path] || labelize(path.split(".").at(-1) || path);
 }
@@ -411,6 +518,11 @@ const propertyFieldSections = {
   images: "media",
   description: "description",
   propertyStatus: "legal",
+  bungalowDetails: "bungalow",
+  "bungalowDetails.plotArea": "bungalow",
+  "bungalowDetails.totalConstructionArea": "bungalow",
+  "bungalowDetails.plotAreaUnit": "bungalow",
+  "bungalowDetails.constructionAreaUnit": "bungalow",
 };
 
 const propertyFieldAliases = {
@@ -1864,6 +1976,7 @@ function PropertyModal({ property, onClose, onSaved }) {
     contact: { ...emptyProperty.contact, ...(property.contact || {}) },
     map: { ...emptyProperty.map, ...(property.map || {}) },
     seo: { ...emptyProperty.seo, ...(property.seo || {}) },
+    bungalowDetails: { ...emptyBungalowDetails, ...(property.bungalowDetails || {}) },
     amenities: property.amenities || [],
     features: property.features || [],
     facilities: property.facilities || [],
@@ -2081,9 +2194,8 @@ function PropertyModal({ property, onClose, onSaved }) {
       return next;
     });
     if (name === "propertyCode") setPropertyCodeTouched(true);
-    const numberFields = ["beds", "bhk", "baths", "sqft", "yearBuilt", "measurement.value", "map.latitude", "map.longitude", "carpetArea", "builtUpArea", "plotArea", "latitude", "longitude"];
     const rawValue = name === "propertyCode" ? value.toUpperCase() : value;
-    const nextValue = type === "checkbox" ? checked : numberFields.includes(name) ? (rawValue === "" ? null : Number(rawValue)) : rawValue;
+    const nextValue = type === "checkbox" ? checked : PROPERTY_NUMBER_FIELDS.has(name) ? (rawValue === "" ? null : Number(rawValue)) : rawValue;
     updatePath(name, nextValue);
     if (name === "beds") updatePath("bhk", nextValue || 0);
     if (name === "type") updatePath("propertyType", rawValue);
@@ -2198,6 +2310,16 @@ function PropertyModal({ property, onClose, onSaved }) {
       showValidationErrors({ description: `Property description should be at least ${PROPERTY_DESCRIPTION_MIN} characters.` }, "Please fix the highlighted field before saving.");
       return;
     }
+    const priceError = validateINRAmount(nextForm.priceAmount || nextForm.price, { required: true });
+    if (priceError) {
+      showValidationErrors({ price: priceError }, "Please fix the highlighted field before saving.");
+      return;
+    }
+    const bungalowErrors = bungalowValidationErrors(nextForm, enabledSections);
+    if (Object.keys(bungalowErrors).length) {
+      showValidationErrors(bungalowErrors, "Please complete the essential standalone home fields before saving.");
+      return;
+    }
     if (String(nextForm.description || "").length > PROPERTY_TEXT_LIMIT) {
       showValidationErrors({ description: `Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.` }, "Please fix the highlighted field before saving.");
       return;
@@ -2301,6 +2423,7 @@ function PropertyModal({ property, onClose, onSaved }) {
         assignedSupervisor: typeof nextForm.assignedTo === "object" ? nextForm.assignedTo?._id || null : nextForm.assignedTo || null,
         dealEnquiryId: nextForm.dealSource === "enquiry" ? nextForm.dealEnquiryId || null : null,
         measurement: { ...nextForm.measurement, unit: nextForm.measurement?.unit || "sqft", value: measurementValue },
+        bungalowDetails: cleanedForm.bungalowDetails || { ...emptyBungalowDetails },
         landArea,
         sqft: nextForm.sqft || (measurementUnit === "sqft" ? measurementValue : 0),
         area: computedArea || nextForm.area || "",
@@ -2378,7 +2501,7 @@ function PropertyModal({ property, onClose, onSaved }) {
           {sectionEnabled("price") && (
           <FormSection title="Pricing & Deal" subtitle="Capture the commercial positioning and current deal stage. ROI is available as a reusable deal type.">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              <MoneyField label="Price" name="price" value={form.priceAmount || form.price} onChange={update} required error={fieldErrors.price} helperText="Enter the numeric INR amount." />
+              <MoneyField label="Price" name="price" value={form.priceAmount || form.price} onChange={update} required error={fieldErrors.price} helperText="Enter the numeric INR amount." showAmountWords />
               <OptionSelect label="Price Unit" name="priceUnit" value={form.priceUnit} options={masterOptions.priceUnits} onChange={update} masterGroup="priceUnits" onAddOption={addMasterOption} />
               <ComboField label="Deal Type" name="dealType" value={form.dealType} options={masterOptions.dealTypes} onChange={update} required error={fieldErrors.dealType} placeholder="Select Deal Type" masterGroup="dealTypes" onAddOption={addMasterOption} />
               <Field label="ROI" name="roi" value={form.roi} onChange={update} placeholder="e.g. 8.5% yearly" helperText="Useful for pre-leased and investment properties." />
@@ -2551,6 +2674,81 @@ function PropertyModal({ property, onClose, onSaved }) {
               <OptionSelect label="Furnishing" name="furnishing" value={form.furnishing} options={masterOptions.furnishing} onChange={update} masterGroup="furnishing" onAddOption={addMasterOption} />
 	              <OptionSelect label="Facing" name="facing" value={form.facing} options={masterOptions.facing} onChange={update} masterGroup="facing" onAddOption={addMasterOption} />
               <Field label="Year Built" name="yearBuilt" type="number" value={form.yearBuilt ?? ""} onChange={update} />
+            </div>
+          </FormSection>
+          )}
+
+          {sectionEnabled("bungalow") && supportsStandaloneResidential(form) && (
+          <FormSection title="Standalone Home Details" subtitle="Detailed bungalow, villa, and independent house fields grouped for clean entry.">
+            <div className="space-y-6">
+              <div>
+                <p className="mb-3 text-sm font-extrabold text-slate-800">Plot Details</p>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Field label="Plot Area" name="bungalowDetails.plotArea" type="number" value={form.bungalowDetails.plotArea ?? ""} onChange={update} required error={fieldErrors["bungalowDetails.plotArea"]} placeholder="e.g. 250" />
+                  <OptionSelect label="Plot Area Unit" name="bungalowDetails.plotAreaUnit" value={form.bungalowDetails.plotAreaUnit} options={standalonePlotAreaUnits} onChange={update} required error={fieldErrors["bungalowDetails.plotAreaUnit"]} />
+                  <OptionSelect label="Plot Facing" name="bungalowDetails.plotFacing" value={form.bungalowDetails.plotFacing} options={standaloneFacingOptions} onChange={update} />
+                  <Field label="Plot Length" name="bungalowDetails.plotLength" type="number" value={form.bungalowDetails.plotLength ?? ""} onChange={update} placeholder="Length" />
+                  <Field label="Plot Width" name="bungalowDetails.plotWidth" type="number" value={form.bungalowDetails.plotWidth ?? ""} onChange={update} placeholder="Width" />
+                  <Field label="Number of Open Sides" name="bungalowDetails.openSides" type="number" value={form.bungalowDetails.openSides ?? ""} onChange={update} placeholder="e.g. 2" />
+                  <ToggleField label="Corner Plot" name="bungalowDetails.cornerPlot" checked={form.bungalowDetails.cornerPlot} onChange={update} />
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-3 text-sm font-extrabold text-slate-800">Construction Details</p>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Field label="Total Construction Area" name="bungalowDetails.totalConstructionArea" type="number" value={form.bungalowDetails.totalConstructionArea ?? ""} onChange={update} required error={fieldErrors["bungalowDetails.totalConstructionArea"]} placeholder="e.g. 3500" />
+                  <OptionSelect label="Construction Area Unit" name="bungalowDetails.constructionAreaUnit" value={form.bungalowDetails.constructionAreaUnit} options={standaloneAreaUnits} onChange={update} required error={fieldErrors["bungalowDetails.constructionAreaUnit"]} />
+                  <Field label="Ground Floor Construction Area" name="bungalowDetails.groundFloorConstructionArea" type="number" value={form.bungalowDetails.groundFloorConstructionArea ?? ""} onChange={update} />
+                  <Field label="First Floor Construction Area" name="bungalowDetails.firstFloorConstructionArea" type="number" value={form.bungalowDetails.firstFloorConstructionArea ?? ""} onChange={update} />
+                  <Field label="Second Floor Construction Area" name="bungalowDetails.secondFloorConstructionArea" type="number" value={form.bungalowDetails.secondFloorConstructionArea ?? ""} onChange={update} />
+                  <Field label="Other Floor Construction Area" name="bungalowDetails.otherFloorConstructionArea" type="number" value={form.bungalowDetails.otherFloorConstructionArea ?? ""} onChange={update} />
+                  <Field label="Number of Floors" name="bungalowDetails.numberOfFloors" type="number" value={form.bungalowDetails.numberOfFloors ?? ""} onChange={update} />
+                  <Field label="Construction Year" name="bungalowDetails.constructionYear" type="number" value={form.bungalowDetails.constructionYear ?? ""} onChange={update} />
+                  <Field label="Property Age" name="bungalowDetails.propertyAge" value={form.bungalowDetails.propertyAge} onChange={update} placeholder="e.g. 5 years" />
+                  <OptionSelect label="Construction Status" name="bungalowDetails.constructionStatus" value={form.bungalowDetails.constructionStatus} options={standaloneConstructionStatusOptions} onChange={update} />
+                  <OptionSelect label="Structure Type" name="bungalowDetails.structureType" value={form.bungalowDetails.structureType} options={standaloneStructureTypeOptions} onChange={update} />
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-3 text-sm font-extrabold text-slate-800">Bungalow Configuration</p>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Field label="Number of Bedrooms" name="bungalowDetails.bedrooms" type="number" value={form.bungalowDetails.bedrooms ?? ""} onChange={update} />
+                  <Field label="Number of Bathrooms" name="bungalowDetails.bathrooms" type="number" value={form.bungalowDetails.bathrooms ?? ""} onChange={update} />
+                  <Field label="Number of Balconies" name="bungalowDetails.balconies" type="number" value={form.bungalowDetails.balconies ?? ""} onChange={update} />
+                  <Field label="Number of Kitchens" name="bungalowDetails.kitchens" type="number" value={form.bungalowDetails.kitchens ?? ""} onChange={update} />
+                  <Field label="Number of Living Rooms" name="bungalowDetails.livingRooms" type="number" value={form.bungalowDetails.livingRooms ?? ""} onChange={update} />
+                  <Field label="Number of Store Rooms" name="bungalowDetails.storeRooms" type="number" value={form.bungalowDetails.storeRooms ?? ""} onChange={update} />
+                  <OptionSelect label="Furnishing Status" name="bungalowDetails.furnishingStatus" value={form.bungalowDetails.furnishingStatus} options={standaloneFurnishingOptions} onChange={update} />
+                  <Field label="Number of Car Parking Spaces" name="bungalowDetails.carParkingSpaces" type="number" value={form.bungalowDetails.carParkingSpaces ?? ""} onChange={update} />
+                  <Field label="Number of Two-Wheeler Parking Spaces" name="bungalowDetails.twoWheelerParkingSpaces" type="number" value={form.bungalowDetails.twoWheelerParkingSpaces ?? ""} onChange={update} />
+                  <ToggleField label="Servant Room" name="bungalowDetails.servantRoom" checked={form.bungalowDetails.servantRoom} onChange={update} />
+                  <ToggleField label="Pooja Room" name="bungalowDetails.poojaRoom" checked={form.bungalowDetails.poojaRoom} onChange={update} />
+                  <ToggleField label="Study Room" name="bungalowDetails.studyRoom" checked={form.bungalowDetails.studyRoom} onChange={update} />
+                  <ToggleField label="Terrace" name="bungalowDetails.terrace" checked={form.bungalowDetails.terrace} onChange={update} />
+                  <ToggleField label="Basement" name="bungalowDetails.basement" checked={form.bungalowDetails.basement} onChange={update} />
+                  <ToggleField label="Garden" name="bungalowDetails.garden" checked={form.bungalowDetails.garden} onChange={update} />
+                  <ToggleField label="Private Parking" name="bungalowDetails.privateParking" checked={form.bungalowDetails.privateParking} onChange={update} />
+                </div>
+              </div>
+
+              <div>
+                <p className="mb-3 text-sm font-extrabold text-slate-800">Additional Property Information</p>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Field label="Water Availability" name="bungalowDetails.waterAvailability" value={form.bungalowDetails.waterAvailability} onChange={update} placeholder="Municipal, borewell, both..." />
+                  <Field label="Electricity Availability" name="bungalowDetails.electricityAvailability" value={form.bungalowDetails.electricityAvailability} onChange={update} placeholder="Available / pending" />
+                  <Field label="Road Width" name="bungalowDetails.roadWidth" value={form.bungalowDetails.roadWidth} onChange={update} placeholder="e.g. 30 ft" />
+                  <ToggleField label="Boundary Wall" name="bungalowDetails.boundaryWall" checked={form.bungalowDetails.boundaryWall} onChange={update} />
+                  <ToggleField label="Gated Property" name="bungalowDetails.gatedProperty" checked={form.bungalowDetails.gatedProperty} onChange={update} />
+                  <ToggleField label="Municipal Approval" name="bungalowDetails.municipalApproval" checked={form.bungalowDetails.municipalApproval} onChange={update} />
+                  <ToggleField label="Loan Available" name="bungalowDetails.loanAvailable" checked={form.bungalowDetails.loanAvailable} onChange={update} />
+                  <label className="md:col-span-3" data-field-name="bungalowDetails.additionalConstructionDetails">
+                    <span className="wf-label">Property Description / Additional Construction Details</span>
+                    <textarea className="wf-input min-h-28" name="bungalowDetails.additionalConstructionDetails" value={form.bungalowDetails.additionalConstructionDetails || ""} onChange={update} placeholder="Construction quality, renovations, extensions, or other important details" />
+                  </label>
+                </div>
+              </div>
             </div>
           </FormSection>
           )}
@@ -2988,7 +3186,7 @@ function moneyPlaceholderFor(name = "", label = "") {
   return "50,00,000";
 }
 
-function MoneyField({ label, name, value, onChange, required = false, placeholder = "", helperText = "", error = "" }) {
+function MoneyField({ label, name, value, onChange, required = false, placeholder = "", helperText = "", error = "", showAmountWords = false }) {
   const handleValueChange = (rawValue) => {
     onChange({
       target: {
@@ -2998,10 +3196,13 @@ function MoneyField({ label, name, value, onChange, required = false, placeholde
       },
     });
   };
+  const amountWords = showAmountWords ? amountToIndianCurrencyWords(value) : "";
+  const amountError = showAmountWords && value ? validateINRAmount(value, { required }) : "";
+  const visibleError = error || amountError;
   return (
     <label data-field-name={name}>
       <span className="wf-label">{label}{required && <span className="ml-1 text-red-500">*</span>}</span>
-      <div className={`flex overflow-hidden rounded-xl border bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 ${error ? "border-red-300" : "border-slate-200"}`}>
+      <div className={`flex overflow-hidden rounded-xl border bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 ${visibleError ? "border-red-300" : "border-slate-200"}`}>
         <span className="grid w-12 place-items-center border-r border-slate-200 bg-slate-50 text-sm font-extrabold text-slate-700">₹</span>
         <IndianMoneyInput
           className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm font-medium text-slate-900 outline-none"
@@ -3012,7 +3213,8 @@ function MoneyField({ label, name, value, onChange, required = false, placeholde
           placeholder={placeholder || moneyPlaceholderFor(name, label)}
         />
       </div>
-      {(error || helperText) && <span className={`mt-1.5 block text-xs font-semibold ${error ? "text-red-600" : "text-slate-400"}`}>{error || helperText}</span>}
+      {amountWords && !visibleError && <span className="mt-1.5 block text-xs font-bold leading-5 text-blue-700/80">{amountWords}</span>}
+      {(visibleError || helperText) && <span className={`mt-1.5 block text-xs font-semibold ${visibleError ? "text-red-600" : "text-slate-400"}`}>{visibleError || helperText}</span>}
     </label>
   );
 }

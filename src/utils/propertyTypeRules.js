@@ -5,6 +5,7 @@ const SECTION_PRESETS = {
   features: "Property Features",
   rooms: "Room Details",
   land: "Land / Plot Details",
+  bungalow: "Standalone Home Details",
   commercial: "Commercial Details",
   amenities: "Amenities",
   nearby: "Nearby Landmarks",
@@ -21,7 +22,8 @@ const sectionDefaults = {
   residential: ["basic", "price", "location", "rooms", "features", "amenities", "nearby", "owner", "media", "legal", "seo", "description"],
   land: ["basic", "price", "location", "land", "features", "nearby", "owner", "media", "legal", "seo", "description"],
   commercial: ["basic", "price", "location", "commercial", "features", "amenities", "nearby", "owner", "media", "legal", "seo", "description"],
-  farmhouse: ["basic", "price", "location", "rooms", "land", "features", "amenities", "nearby", "owner", "media", "legal", "seo", "description"],
+  standalone: ["basic", "price", "location", "rooms", "bungalow", "features", "amenities", "nearby", "owner", "media", "legal", "seo", "description"],
+  farmhouse: ["basic", "price", "location", "rooms", "bungalow", "land", "features", "amenities", "nearby", "owner", "media", "legal", "seo", "description"],
   mixed: ["basic", "price", "location", "rooms", "land", "commercial", "features", "amenities", "nearby", "owner", "media", "legal", "seo", "description"],
 };
 
@@ -31,9 +33,10 @@ function kindFromText(value = "") {
   const normalized = String(value || "").toLowerCase().replace(/[_-]+/g, " ");
   if (!normalized.trim()) return "";
   if (textIncludes(normalized, ["farm house", "farmhouse"])) return "farmhouse";
+  if (textIncludes(normalized, ["bungalow", "villa", "independent house", "row house", "standalone house", "independent home", "bunglow"])) return "standalone";
   if (textIncludes(normalized, ["agriculture", "agricultural", "plot", "land"])) return "land";
   if (textIncludes(normalized, ["shop", "office", "warehouse", "commercial", "showroom", "godown", "industrial"])) return "commercial";
-  if (textIncludes(normalized, ["flat", "apartment", "apartments", "house", "bungalow", "villa", "penthouse", "row house", "home"])) return "residential";
+  if (textIncludes(normalized, ["flat", "apartment", "apartments", "house", "penthouse", "home"])) return "residential";
   return "";
 }
 
@@ -51,7 +54,7 @@ export function defaultSectionsForProperty(propertyOrType = "") {
 }
 
 export function supportsRooms(propertyOrType = "") {
-  return ["residential", "farmhouse", "mixed"].includes(propertyKind(propertyOrType));
+  return ["residential", "standalone", "farmhouse", "mixed"].includes(propertyKind(propertyOrType));
 }
 
 export function supportsLand(propertyOrType = "") {
@@ -60,6 +63,10 @@ export function supportsLand(propertyOrType = "") {
 
 export function supportsCommercial(propertyOrType = "") {
   return ["commercial", "mixed"].includes(propertyKind(propertyOrType));
+}
+
+export function supportsStandaloneResidential(propertyOrType = "") {
+  return ["standalone", "farmhouse", "mixed"].includes(propertyKind(propertyOrType));
 }
 
 export function compactSpecs(property = {}) {
@@ -96,6 +103,43 @@ export function compactSpecs(property = {}) {
       ["Water Availability", property.waterAvailability],
       ["Electricity", property.electricityAvailability],
       ["Zoning", property.zoning]
+    );
+  }
+
+  if (supportsStandaloneResidential(property)) {
+    const details = property.bungalowDetails || {};
+    const boolText = (value) => value === true ? "Yes" : "";
+    rows.push(
+      ["Plot Area", details.plotArea ? `${details.plotArea} ${details.plotAreaUnit || ""}`.trim() : ""],
+      ["Plot Dimensions", [details.plotLength, details.plotWidth].filter(Boolean).join(" x ")],
+      ["Plot Facing", details.plotFacing],
+      ["Corner Plot", boolText(details.cornerPlot)],
+      ["Open Sides", details.openSides],
+      ["Construction Area", details.totalConstructionArea ? `${details.totalConstructionArea} ${details.constructionAreaUnit || ""}`.trim() : ""],
+      ["Construction Status", details.constructionStatus],
+      ["Structure Type", details.structureType],
+      ["Floors", details.numberOfFloors],
+      ["Bedrooms", details.bedrooms],
+      ["Bathrooms", details.bathrooms],
+      ["Kitchens", details.kitchens],
+      ["Living Rooms", details.livingRooms],
+      ["Store Rooms", details.storeRooms],
+      ["Servant Room", boolText(details.servantRoom)],
+      ["Pooja Room", boolText(details.poojaRoom)],
+      ["Study Room", boolText(details.studyRoom)],
+      ["Terrace", boolText(details.terrace)],
+      ["Basement", boolText(details.basement)],
+      ["Garden", boolText(details.garden)],
+      ["Private Parking", boolText(details.privateParking)],
+      ["Car Parking", details.carParkingSpaces],
+      ["Two-Wheeler Parking", details.twoWheelerParkingSpaces],
+      ["Furnishing", details.furnishingStatus],
+      ["Road Width", details.roadWidth],
+      ["Boundary Wall", boolText(details.boundaryWall)],
+      ["Gated Property", boolText(details.gatedProperty)],
+      ["Municipal Approval", boolText(details.municipalApproval)],
+      ["Loan Available", boolText(details.loanAvailable)],
+      ["Additional Construction Details", details.additionalConstructionDetails]
     );
   }
 
