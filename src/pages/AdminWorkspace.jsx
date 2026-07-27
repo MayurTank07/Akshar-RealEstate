@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import IndianMoneyInput from "../components/IndianMoneyInput";
 import { useStaffAuth } from "../contexts/useStaffAuth";
+import { useFormDraft } from "../hooks/useFormDraft";
 import { publicApi, staffApi, toQueryString } from "../services/api";
 import { amountToIndianCurrencyWords, formatINR, parseINRAmount, validateINRAmount } from "../utils/currency";
 import { displayPropertyCode, isReadablePropertyCode } from "../utils/propertyCode";
@@ -542,6 +543,43 @@ function firstPropertyErrorField(errors = {}) {
   return Object.keys(errors).find((key) => errors[key]);
 }
 
+function hasMeaningfulValue(value) {
+  if (Array.isArray(value)) return value.some(hasMeaningfulValue);
+  if (value && typeof value === "object") return Object.values(value).some(hasMeaningfulValue);
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value > 0;
+  return String(value || "").trim().length > 0;
+}
+
+function propertyDraftHasContent(payload = {}) {
+  const form = payload.form || payload;
+  const meaningfulKeys = [
+    "title", "locationRef", "locationId", "location", "city", "type", "category", "dealType", "developerName",
+    "topProject", "ownerSellerName", "price", "priceAmount", "roi", "paymentDetails", "nearbyLandmarks",
+    "image", "gallery", "images", "media", "videoUrl", "beds", "baths", "sqft", "measurement", "kitchen",
+    "balcony", "floorNumber", "totalFloors", "parking", "furnishing", "facing", "yearBuilt", "landArea",
+    "plotSize", "roadAccess", "zoning", "frontage", "washrooms", "businessSuitability", "pantry",
+    "loadingAccess", "features", "facilities", "highlights", "propertyTags", "amenities", "contact", "map",
+    "finalPrice", "commission", "statusRemarks", "legalNotes", "description", "seoTitle", "metaDescription",
+    "slug", "canonicalUrl", "bungalowDetails",
+  ];
+  if (meaningfulKeys.some((key) => {
+    if (key === "measurement") return Number(form?.measurement?.value || 0) > 0;
+    if (key === "map") {
+      const mapDraft = { ...(form?.map || {}) };
+      delete mapDraft.state;
+      return hasMeaningfulValue(mapDraft);
+    }
+    return hasMeaningfulValue(form?.[key]);
+  })) return true;
+  const sections = Array.isArray(payload.enabledSections) ? payload.enabledSections : [];
+  return sections.join("|") !== defaultSectionsForProperty(form || {}).join("|");
+}
+
+function genericDraftHasContent(payload = {}) {
+  return hasMeaningfulValue(payload);
+}
+
 function statusClass(status) {
   const normalized = String(status).toLowerCase();
   if (normalized === "active" || normalized === "closed" || normalized === "approved" || normalized === "sold") return "bg-emerald-100 text-emerald-700";
@@ -796,6 +834,62 @@ function InlineAlert({ message, tone = "red" }) {
     blue: "border-blue-100 bg-blue-50 text-blue-700",
   };
   return <div className={`mb-5 rounded-xl border px-4 py-3 text-sm font-bold ${tones[tone]}`}>{message}</div>;
+}
+
+function formatDraftTime(value) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit" }).format(new Date(value));
+}
+
+function DraftStatusPill({ status, lastSavedAt }) {
+  if (status === "idle" && !lastSavedAt) return null;
+  const copy = status === "saving"
+    ? "Saving draft..."
+    : status === "error"
+      ? "Unable to save draft"
+      : lastSavedAt
+        ? `Last saved at ${formatDraftTime(lastSavedAt)}`
+        : "Draft saved";
+  const tone = status === "error" ? "border-rose-100 bg-rose-50 text-rose-700" : status === "saving" ? "border-blue-100 bg-blue-50 text-blue-700" : "border-emerald-100 bg-emerald-50 text-emerald-700";
+  return <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-extrabold ${tone}`}>{copy}</span>;
+}
+
+function DraftRestoreNotice({ draft, title, onContinue, onStartNew, onDiscard }) {
+  if (!draft) return null;
+  return (
+    <div className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div>
+          <p className="text-sm font-extrabold text-blue-950">{title}</p>
+          <p className="mt-1 text-xs font-semibold text-blue-700">
+            Saved {formatDraftTime(draft.updatedAt || draft.createdAt)}. Continue it, start fresh, or discard it permanently.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button type="button" onClick={onContinue} className="wf-btn wf-btn-primary text-sm">Continue Draft</button>
+          <button type="button" onClick={onStartNew} className="wf-btn wf-btn-secondary text-sm">Start New</button>
+          <button type="button" onClick={onDiscard} className="wf-btn wf-btn-secondary text-sm text-rose-600 ring-rose-100 hover:bg-rose-50">Discard Draft</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DraftExitDialog({ open, onSaveExit, onDiscardExit, onContinue }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[800] grid place-items-center bg-slate-950/60 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl">
+        <h3 className="text-xl font-extrabold text-slate-950">Progress Saved</h3>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">Your progress has been saved as a draft. You can continue later or discard this draft before leaving.</p>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onContinue} className="wf-btn wf-btn-secondary">Continue Editing</button>
+          <button type="button" onClick={onDiscardExit} className="wf-btn wf-btn-secondary text-rose-600 ring-rose-100 hover:bg-rose-50">Discard and Exit</button>
+          <button type="button" onClick={onSaveExit} className="wf-btn wf-btn-primary">Save and Exit</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function EmptyState({ title, description, action }) {
@@ -1994,6 +2088,7 @@ function PropertyModal({ property, onClose, onSaved }) {
   const [dealModalOpen, setDealModalOpen] = useState(false);
   const [propertyCodeTouched, setPropertyCodeTouched] = useState(Boolean(initialPropertyCode));
   const [propertyCodeLoading, setPropertyCodeLoading] = useState(false);
+  const [draftExitOpen, setDraftExitOpen] = useState(false);
   const maxImageSizeMb = 15;
 
   useEffect(() => {
@@ -2287,6 +2382,69 @@ function PropertyModal({ property, onClose, onSaved }) {
     });
   };
 
+  const restorePropertyDraft = useCallback((draftPayload = {}) => {
+    const draftForm = draftPayload.form || {};
+    setForm((current) => ({
+      ...emptyProperty,
+      ...current,
+      ...draftForm,
+      measurement: { ...emptyProperty.measurement, ...(current.measurement || {}), ...(draftForm.measurement || {}) },
+      contact: { ...emptyProperty.contact, ...(current.contact || {}), ...(draftForm.contact || {}) },
+      map: { ...emptyProperty.map, ...(current.map || {}), ...(draftForm.map || {}) },
+      seo: { ...emptyProperty.seo, ...(current.seo || {}), ...(draftForm.seo || {}) },
+      bungalowDetails: { ...emptyBungalowDetails, ...(current.bungalowDetails || {}), ...(draftForm.bungalowDetails || {}) },
+      gallery: Array.isArray(draftForm.gallery) ? draftForm.gallery : current.gallery || [],
+      media: Array.isArray(draftForm.media) ? draftForm.media : current.media || [],
+    }));
+    if (Array.isArray(draftPayload.enabledSections) && draftPayload.enabledSections.length) {
+      setEnabledSections(draftPayload.enabledSections);
+    } else {
+      setEnabledSections(defaultSectionsForProperty(draftForm));
+    }
+    setPendingFiles([]);
+    setFieldErrors({});
+    setError("");
+    setNotice("Draft restored. Uploaded file selections may need to be reselected if they were not already saved as URLs.");
+  }, []);
+
+  const propertyDraft = useFormDraft({
+    formType: "property",
+    mode: form._id ? "edit" : "create",
+    recordId: form._id || "new",
+    user: staffUser,
+    payload: { form, enabledSections },
+    onRestore: restorePropertyDraft,
+    shouldSave: propertyDraftHasContent,
+  });
+
+  const closePropertyModal = async ({ discard = false } = {}) => {
+    if (discard) await propertyDraft.discardDraft();
+    else await propertyDraft.saveNow();
+    setDraftExitOpen(false);
+    onClose();
+  };
+
+  const requestClosePropertyModal = async () => {
+    if (!propertyDraft.hasChanges) {
+      onClose();
+      return;
+    }
+    await propertyDraft.saveNow();
+    setDraftExitOpen(true);
+  };
+  const savePropertyDraftNow = propertyDraft.saveNow;
+
+  useEffect(() => {
+    window.history.pushState({ propertyModalDraftGuard: true }, "");
+    const handlePopState = () => {
+      savePropertyDraftNow();
+      setDraftExitOpen(true);
+      window.history.pushState({ propertyModalDraftGuard: true }, "");
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [savePropertyDraftNow]);
+
   const saveProperty = async (nextForm = form) => {
     setError("");
     setNotice("");
@@ -2304,29 +2462,35 @@ function PropertyModal({ property, onClose, onSaved }) {
     const missingFields = Object.fromEntries(requiredFields.filter(([name]) => !String(nextForm[name] || "").trim()).map(([name, label]) => [name, `${label} is required.`]));
     if (Object.keys(missingFields).length) {
       showValidationErrors(missingFields);
-      return;
+      await propertyDraft.saveNow();
+      return false;
     }
     if (String(nextForm.description || "").trim().length < PROPERTY_DESCRIPTION_MIN) {
       showValidationErrors({ description: `Property description should be at least ${PROPERTY_DESCRIPTION_MIN} characters.` }, "Please fix the highlighted field before saving.");
-      return;
+      await propertyDraft.saveNow();
+      return false;
     }
     const priceError = validateINRAmount(nextForm.priceAmount || nextForm.price, { required: true });
     if (priceError) {
       showValidationErrors({ price: priceError }, "Please fix the highlighted field before saving.");
-      return;
+      await propertyDraft.saveNow();
+      return false;
     }
     const bungalowErrors = bungalowValidationErrors(nextForm, enabledSections);
     if (Object.keys(bungalowErrors).length) {
       showValidationErrors(bungalowErrors, "Please complete the essential standalone home fields before saving.");
-      return;
+      await propertyDraft.saveNow();
+      return false;
     }
     if (String(nextForm.description || "").length > PROPERTY_TEXT_LIMIT) {
       showValidationErrors({ description: `Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.` }, "Please fix the highlighted field before saving.");
-      return;
+      await propertyDraft.saveNow();
+      return false;
     }
     if (String(nextForm.nearbyLandmarks || "").length > PROPERTY_TEXT_LIMIT) {
       setError(`Nearby landmarks must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
-      return;
+      await propertyDraft.saveNow();
+      return false;
     }
     const requiresDeal = ["sold", "rented"].includes(nextForm.status);
     const missingDeal = requiresDeal && [
@@ -2339,7 +2503,8 @@ function PropertyModal({ property, onClose, onSaved }) {
     if (missingDeal?.length) {
       setError(`${missingDeal.join(", ")} ${missingDeal.length === 1 ? "is" : "are"} required for ${labelize(nextForm.status)} properties.`);
       setDealModalOpen(true);
-      return;
+      await propertyDraft.saveNow();
+      return false;
     }
     setUploading(true);
     try {
@@ -2367,7 +2532,8 @@ function PropertyModal({ property, onClose, onSaved }) {
       const gallery = Array.from(new Set([...nextForm.gallery.map((item) => item.trim()).filter(Boolean), ...uploadedUrls]));
       if (!nextForm.image && !gallery[0]) {
         showValidationErrors({ image: "At least one property image is required." }, "Please complete the highlighted required fields before saving.");
-        return;
+        await propertyDraft.saveNow();
+        return false;
       }
       const primaryImage = nextForm.image || gallery[0];
       const normalizedMedia = buildPropertyMedia({
@@ -2431,10 +2597,14 @@ function PropertyModal({ property, onClose, onSaved }) {
       };
       if (nextForm._id) await staffApi.updateProperty(nextForm._id, payload);
       else await staffApi.createProperty(payload);
+      await propertyDraft.clearDraft();
       onSaved();
+      return true;
     } catch (err) {
       const formatted = propertyFormErrorFromApi(err);
       showValidationErrors(formatted.fieldErrors, err.message || formatted.message);
+      await propertyDraft.saveNow();
+      return false;
     } finally {
       setUploading(false);
     }
@@ -2448,8 +2618,9 @@ function PropertyModal({ property, onClose, onSaved }) {
   const submitDeal = async (dealData) => {
     const nextForm = { ...form, ...dealData };
     setForm(nextForm);
-    setDealModalOpen(false);
-    await saveProperty(nextForm);
+    const saved = await saveProperty(nextForm);
+    if (saved) setDealModalOpen(false);
+    return saved;
   };
 
   const descriptionSuggestions = [
@@ -2473,10 +2644,18 @@ function PropertyModal({ property, onClose, onSaved }) {
             <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-blue-600">Property CRM</p>
             <h3 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-950">{form._id ? "Edit Property" : "Create New Property"}</h3>
             <p className="mt-1 text-sm text-slate-500">Build a complete, reusable listing with guided fields and smart content tools.</p>
+            <div className="mt-2"><DraftStatusPill status={propertyDraft.status} lastSavedAt={propertyDraft.lastSavedAt} /></div>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
+          <button type="button" onClick={requestClosePropertyModal} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
         </div>
         <div className="wf-smooth-scroll flex-1 overflow-y-auto p-4 pb-28 sm:p-6">
+        <DraftRestoreNotice
+          draft={propertyDraft.restorePending ? propertyDraft.availableDraft : null}
+          title={form._id ? "An unfinished property edit draft was found." : "An unfinished property draft was found."}
+          onContinue={propertyDraft.restoreDraft}
+          onStartNew={propertyDraft.discardDraft}
+          onDiscard={propertyDraft.discardDraft}
+        />
         {error && <p className="mb-4 rounded-xl bg-red-50 p-3 text-sm font-bold text-red-600">{error}</p>}
         {notice && <p className="mb-4 rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700">{notice}</p>}
         {uploading && <p className="mb-4 rounded-xl bg-blue-50 p-3 text-sm font-bold text-blue-700">Uploading images and saving property...</p>}
@@ -2907,7 +3086,7 @@ function PropertyModal({ property, onClose, onSaved }) {
         </div>
         </div>
         <FormFooterActions
-          onCancel={onClose}
+          onCancel={requestClosePropertyModal}
           disabled={uploading}
           submitLabel={uploading ? "Saving..." : form._id ? "Update Property" : "Save Property"}
         />
@@ -2920,11 +3099,18 @@ function PropertyModal({ property, onClose, onSaved }) {
           saving={uploading}
         />
       )}
+      <DraftExitDialog
+        open={draftExitOpen}
+        onSaveExit={() => closePropertyModal()}
+        onDiscardExit={() => closePropertyModal({ discard: true })}
+        onContinue={() => setDraftExitOpen(false)}
+      />
     </div>
   );
 }
 
 function PropertyDealModal({ property, onClose, onSubmit, saving }) {
+  const { staffUser } = useStaffAuth();
   const dealStatus = property.status === "rented" ? "rented" : "sold";
   const [enquiries, setEnquiries] = useState([]);
   const [form, setForm] = useState({
@@ -2944,6 +3130,29 @@ function PropertyDealModal({ property, onClose, onSubmit, saving }) {
     statusRemarks: property.statusRemarks || "",
   });
   const [error, setError] = useState("");
+  const [draftExitOpen, setDraftExitOpen] = useState(false);
+
+  const dealDraft = useFormDraft({
+    formType: "property-deal",
+    mode: "edit",
+    recordId: property._id || property.propertyCode || "new",
+    user: staffUser,
+    payload: form,
+    onRestore: (draftPayload) => {
+      setForm((current) => ({ ...current, ...(draftPayload || {}) }));
+      setError("");
+    },
+    shouldSave: genericDraftHasContent,
+  });
+
+  const requestClose = async () => {
+    if (!dealDraft.hasChanges) {
+      onClose();
+      return;
+    }
+    await dealDraft.saveNow();
+    setDraftExitOpen(true);
+  };
 
   useEffect(() => {
     if (!property._id) return;
@@ -2990,7 +3199,7 @@ function PropertyDealModal({ property, onClose, onSubmit, saving }) {
     }));
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     setError("");
     const required = [
@@ -3004,12 +3213,14 @@ function PropertyDealModal({ property, onClose, onSubmit, saving }) {
     if (form.dealSource === "enquiry" && !form.dealEnquiryId) missing.push("Linked enquiry");
     if (missing.length) {
       setError(`${missing.join(", ")} ${missing.length === 1 ? "is" : "are"} required.`);
+      await dealDraft.saveNow();
       return;
     }
-    onSubmit({
+    const saved = await onSubmit({
       ...form,
       dealEnquiryId: form.dealSource === "enquiry" ? form.dealEnquiryId : "",
     });
+    if (saved) await dealDraft.clearDraft();
   };
 
   return (
@@ -3019,10 +3230,18 @@ function PropertyDealModal({ property, onClose, onSubmit, saving }) {
           <div>
             <h3 className="text-2xl font-extrabold text-slate-950">Complete {labelize(form.status)} Details</h3>
             <p className="mt-1 text-sm text-slate-500">{property.title} · {property.city || property.location || "Property Management"}</p>
+            <div className="mt-2"><DraftStatusPill status={dealDraft.status} lastSavedAt={dealDraft.lastSavedAt} /></div>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
+          <button type="button" onClick={requestClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
         </div>
         <div className="wf-smooth-scroll flex-1 overflow-y-auto p-5 pb-28 sm:p-6">
+        <DraftRestoreNotice
+          draft={dealDraft.restorePending ? dealDraft.availableDraft : null}
+          title="An unfinished deal draft was found."
+          onContinue={dealDraft.restoreDraft}
+          onStartNew={dealDraft.discardDraft}
+          onDiscard={dealDraft.discardDraft}
+        />
         <InlineAlert message={error} />
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -3087,11 +3306,23 @@ function PropertyDealModal({ property, onClose, onSubmit, saving }) {
 
         </div>
         <FormFooterActions
-          onCancel={onClose}
+          onCancel={requestClose}
           disabled={saving}
           submitLabel={saving ? "Saving..." : `Save ${labelize(form.status)} Deal`}
         />
       </form>
+      <DraftExitDialog
+        open={draftExitOpen}
+        onSaveExit={async () => {
+          await dealDraft.saveNow();
+          onClose();
+        }}
+        onDiscardExit={async () => {
+          await dealDraft.discardDraft();
+          onClose();
+        }}
+        onContinue={() => setDraftExitOpen(false)}
+      />
     </div>
   );
 }
@@ -4495,6 +4726,7 @@ function OwnerRequestDetailModal({ request, remarks, setRemarks, saving, onClose
 }
 
 function OwnerContentEditModal({ request, saving, onClose, onSave }) {
+  const { staffUser } = useStaffAuth();
   const initialDetails = request.propertyDetails || {};
   const [form, setForm] = useState({
     ownerDetails: {
@@ -4529,6 +4761,19 @@ function OwnerContentEditModal({ request, saving, onClose, onSave }) {
   });
   const [error, setError] = useState("");
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [draftExitOpen, setDraftExitOpen] = useState(false);
+  const ownerContentDraft = useFormDraft({
+    formType: "owner-content",
+    mode: "edit",
+    recordId: request._id,
+    user: staffUser,
+    payload: form,
+    onRestore: (draftPayload) => {
+      setForm((current) => ({ ...current, ...(draftPayload || {}) }));
+      setError("");
+    },
+    shouldSave: genericDraftHasContent,
+  });
   const updateOwner = (key, value) => setForm((current) => ({ ...current, ownerDetails: { ...current.ownerDetails, [key]: value } }));
   const updateDetails = (key, value) => setForm((current) => ({ ...current, propertyDetails: { ...current.propertyDetails, [key]: value } }));
   const urlLines = (value) => String(value || "").split("\n").map((item) => item.trim()).filter(Boolean);
@@ -4560,14 +4805,17 @@ function OwnerContentEditModal({ request, saving, onClose, onSave }) {
     const year = Number(form.propertyDetails.constructionYear);
     if (year && (year < 1900 || year > new Date().getFullYear())) {
       setError(`Construction year must be between 1900 and ${new Date().getFullYear()}.`);
+      await ownerContentDraft.saveNow();
       return;
     }
     if (String(form.propertyDetails.description || "").length > PROPERTY_TEXT_LIMIT) {
       setError(`Property description must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
+      await ownerContentDraft.saveNow();
       return;
     }
     if (String(form.propertyDetails.nearbyLandmarks || "").length > PROPERTY_TEXT_LIMIT) {
       setError(`Nearby landmarks must be ${PROPERTY_TEXT_LIMIT} characters or less.`);
+      await ownerContentDraft.saveNow();
       return;
     }
     try {
@@ -4582,18 +4830,35 @@ function OwnerContentEditModal({ request, saving, onClose, onSave }) {
         },
         media: { photos: form.photos, videos: urlLines(form.videos), documents: urlLines(form.documents) },
       });
+      await ownerContentDraft.clearDraft();
     } catch (err) {
       setError(err.message || "Unable to save changes.");
+      await ownerContentDraft.saveNow();
     }
+  };
+  const requestClose = async () => {
+    if (!ownerContentDraft.hasChanges) {
+      onClose();
+      return;
+    }
+    await ownerContentDraft.saveNow();
+    setDraftExitOpen(true);
   };
   return (
     <div className="fixed inset-0 z-[550] grid place-items-center bg-slate-950/55 p-4">
       <form onSubmit={save} className="flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-slate-100 p-5">
-          <div><h3 className="text-2xl font-black text-slate-950">Edit Submitted Content</h3><p className="mt-1 text-sm font-semibold text-slate-500">Changes to approved submissions update the live property while keeping owner proofs private.</p></div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
+          <div><h3 className="text-2xl font-black text-slate-950">Edit Submitted Content</h3><p className="mt-1 text-sm font-semibold text-slate-500">Changes to approved submissions update the live property while keeping owner proofs private.</p><div className="mt-2"><DraftStatusPill status={ownerContentDraft.status} lastSavedAt={ownerContentDraft.lastSavedAt} /></div></div>
+          <button type="button" onClick={requestClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
         </div>
         <div className="overflow-y-auto p-5">
+          <DraftRestoreNotice
+            draft={ownerContentDraft.restorePending ? ownerContentDraft.availableDraft : null}
+            title="An unfinished owner content draft was found."
+            onContinue={ownerContentDraft.restoreDraft}
+            onStartNew={ownerContentDraft.discardDraft}
+            onDiscard={ownerContentDraft.discardDraft}
+          />
           {error && <InlineAlert message={error} />}
           <div className="grid gap-5 lg:grid-cols-2">
             <FormSection title="Internal Owner Details" subtitle="Visible only to authorized staff.">
@@ -4706,10 +4971,22 @@ function OwnerContentEditModal({ request, saving, onClose, onSave }) {
           </FormSection>
         </div>
         <div className="flex justify-end gap-3 border-t border-slate-100 p-4">
-          <button type="button" onClick={onClose} className="wf-btn wf-btn-secondary">Cancel</button>
+          <button type="button" onClick={requestClose} className="wf-btn wf-btn-secondary">Cancel</button>
           <button disabled={saving} className="wf-btn wf-btn-primary"><Save size={16} /> {saving ? "Saving..." : "Save Changes"}</button>
         </div>
       </form>
+      <DraftExitDialog
+        open={draftExitOpen}
+        onSaveExit={async () => {
+          await ownerContentDraft.saveNow();
+          onClose();
+        }}
+        onDiscardExit={async () => {
+          await ownerContentDraft.discardDraft();
+          onClose();
+        }}
+        onContinue={() => setDraftExitOpen(false)}
+      />
     </div>
   );
 }
@@ -4991,6 +5268,7 @@ function BadgeCount({ label, value, tone = "blue" }) {
 }
 
 function ConversionModal({ enquiry, onClose, onSaved }) {
+  const { staffUser } = useStaffAuth();
   const property = enquiry.propertyId || {};
   const propertyName = property.title || enquiry.propertyTitle || "General enquiry";
   const propertyLocation = [property.city, property.location].filter(Boolean).join(", ") || enquiry.preferredLocation || "Not specified";
@@ -5009,6 +5287,19 @@ function ConversionModal({ enquiry, onClose, onSaved }) {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [draftExitOpen, setDraftExitOpen] = useState(false);
+  const conversionDraft = useFormDraft({
+    formType: "enquiry-conversion",
+    mode: "edit",
+    recordId: enquiry._id,
+    user: staffUser,
+    payload: form,
+    onRestore: (draftPayload) => {
+      setForm((current) => ({ ...current, ...(draftPayload || {}) }));
+      setError("");
+    },
+    shouldSave: genericDraftHasContent,
+  });
   const update = (event) => setForm((current) => ({
     ...current,
     [event.target.name]: event.target.value,
@@ -5027,12 +5318,22 @@ function ConversionModal({ enquiry, onClose, onSaved }) {
         status: "closed",
         ...form,
       });
+      await conversionDraft.clearDraft();
       onSaved();
     } catch (err) {
       setError(err.message || "Unable to close enquiry.");
+      await conversionDraft.saveNow();
     } finally {
       setSaving(false);
     }
+  };
+  const requestClose = async () => {
+    if (!conversionDraft.hasChanges) {
+      onClose();
+      return;
+    }
+    await conversionDraft.saveNow();
+    setDraftExitOpen(true);
   };
 
   return (
@@ -5042,10 +5343,18 @@ function ConversionModal({ enquiry, onClose, onSaved }) {
           <div>
             <h3 className="text-2xl font-extrabold text-slate-950">Close Enquiry</h3>
             <p className="mt-1 text-sm text-slate-500">{enquiry.name} · {propertyName}</p>
+            <div className="mt-2"><DraftStatusPill status={conversionDraft.status} lastSavedAt={conversionDraft.lastSavedAt} /></div>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
+          <button type="button" onClick={requestClose} className="grid h-10 w-10 place-items-center rounded-xl hover:bg-slate-100"><X size={20} /></button>
         </div>
         <div className="wf-smooth-scroll flex-1 overflow-y-auto p-5 pb-28 sm:p-6">
+        <DraftRestoreNotice
+          draft={conversionDraft.restorePending ? conversionDraft.availableDraft : null}
+          title="An unfinished enquiry closing draft was found."
+          onContinue={conversionDraft.restoreDraft}
+          onStartNew={conversionDraft.discardDraft}
+          onDiscard={conversionDraft.discardDraft}
+        />
         <InlineAlert message={error} />
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
@@ -5100,8 +5409,20 @@ function ConversionModal({ enquiry, onClose, onSaved }) {
           </label>
         </div>
         </div>
-        <FormFooterActions onCancel={onClose} disabled={saving} submitLabel={saving ? "Saving..." : "Save Closing"} />
+        <FormFooterActions onCancel={requestClose} disabled={saving} submitLabel={saving ? "Saving..." : "Save Closing"} />
       </form>
+      <DraftExitDialog
+        open={draftExitOpen}
+        onSaveExit={async () => {
+          await conversionDraft.saveNow();
+          onClose();
+        }}
+        onDiscardExit={async () => {
+          await conversionDraft.discardDraft();
+          onClose();
+        }}
+        onContinue={() => setDraftExitOpen(false)}
+      />
     </div>
   );
 }
@@ -6653,11 +6974,31 @@ function CmsFieldModal({ field, onClose, disabled }) {
 }
 
 function SimpleItemModal({ title, item, fields, onClose, onSave }) {
+  const { staffUser } = useStaffAuth();
   const [draft, setDraft] = useState(item || {});
+  const [draftExitOpen, setDraftExitOpen] = useState(false);
+  const itemDraft = useFormDraft({
+    formType: "property-cms-item",
+    mode: item ? "edit" : "create",
+    recordId: `${title}:${item?.source || String(item?.sourceIndex ?? item?.title ?? "new")}`,
+    user: staffUser,
+    payload: draft,
+    onRestore: (draftPayload) => setDraft((current) => ({ ...current, ...(draftPayload || {}) })),
+    shouldSave: genericDraftHasContent,
+  });
   const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    onSave(draft);
+    await Promise.resolve(onSave(draft));
+    await itemDraft.clearDraft();
+  };
+  const requestClose = async () => {
+    if (!itemDraft.hasChanges) {
+      onClose();
+      return;
+    }
+    await itemDraft.saveNow();
+    setDraftExitOpen(true);
   };
 
   return createPortal(
@@ -6667,10 +7008,20 @@ function SimpleItemModal({ title, item, fields, onClose, onSave }) {
           <div>
             <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-600">Page Edits</p>
             <h3 className="mt-1 text-2xl font-black text-slate-950">{title}</h3>
+            <div className="mt-2"><DraftStatusPill status={itemDraft.status} lastSavedAt={itemDraft.lastSavedAt} /></div>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Close">
+          <button type="button" onClick={requestClose} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Close">
             <X size={18} />
           </button>
+        </div>
+        <div className="mt-5">
+          <DraftRestoreNotice
+            draft={itemDraft.restorePending ? itemDraft.availableDraft : null}
+            title="An unfinished page item draft was found."
+            onContinue={itemDraft.restoreDraft}
+            onStartNew={itemDraft.discardDraft}
+            onDiscard={itemDraft.discardDraft}
+          />
         </div>
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {fields.map((field) => (
@@ -6694,10 +7045,22 @@ function SimpleItemModal({ title, item, fields, onClose, onSave }) {
           ))}
         </div>
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button type="button" className="wf-btn wf-btn-secondary" onClick={onClose}>Cancel</button>
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={requestClose}>Cancel</button>
           <button type="submit" className="wf-btn wf-btn-primary"><Save size={16} /> Save Item</button>
         </div>
       </form>
+      <DraftExitDialog
+        open={draftExitOpen}
+        onSaveExit={async () => {
+          await itemDraft.saveNow();
+          onClose();
+        }}
+        onDiscardExit={async () => {
+          await itemDraft.discardDraft();
+          onClose();
+        }}
+        onContinue={() => setDraftExitOpen(false)}
+      />
     </div>,
     document.body
   );
