@@ -105,6 +105,16 @@
   }
 }
 
+@keyframes owner-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 @keyframes akshar-fade-up {
   from {
     opacity: 0;

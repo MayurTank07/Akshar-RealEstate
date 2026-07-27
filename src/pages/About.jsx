@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -15,6 +15,7 @@ const AboutUs = () => {
   const navigate = useNavigate();
   const siteContent = useSiteContent();
   const about = { ...defaultAboutContent, ...(siteContent.aboutContent || {}) };
+  const ownerImageUrl = siteContent.isLoaded ? String(siteContent.aboutContent?.ownerPhoto || '').trim() : '';
   const stats = Array.isArray(about.stats) && about.stats.length ? about.stats : defaultAboutContent.stats;
   const features = Array.isArray(about.features) && about.features.length ? about.features : defaultAboutContent.features;
   const schema = useMemo(
@@ -129,18 +130,11 @@ const AboutUs = () => {
         </div>
         <div className="flex flex-col md:flex-row gap-16 items-center">
           <div className="md:w-1/2">
-            <div className="aspect-[4/5] bg-slate-100 rounded-2xl overflow-hidden shadow-2xl">
-               <img 
-                {...responsiveImageProps(about.ownerPhoto, {
-                  alt: `${about.ownerName}, ${about.ownerDesignation}`,
-                  width: 900,
-                  height: 1125,
-                  widths: [420, 640, 900],
-                  sizes: "(max-width: 768px) 100vw, 50vw",
-                  className: "h-full w-full object-cover",
-                })}
-              />
-            </div>
+            <OwnerProfileImage
+              src={ownerImageUrl}
+              alt={`${about.ownerName}, ${about.ownerDesignation}`}
+              isContentLoaded={siteContent.isLoaded}
+            />
           </div>
           <div className="md:w-1/2">
             <h2 className="text-sm uppercase tracking-[0.2em] text-blue-600 font-bold mb-4">Our Leadership</h2>
@@ -176,5 +170,74 @@ const AboutUs = () => {
     </div>
   );
 };
+
+function OwnerImageSkeleton() {
+  return (
+    <div className="absolute inset-0 overflow-hidden bg-slate-100" data-owner-image-skeleton="true">
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-100 via-slate-200 to-slate-100 bg-[length:200%_100%] animate-[owner-shimmer_1.4s_ease-in-out_infinite]" />
+      <div className="absolute inset-x-10 bottom-10 h-3 rounded-full bg-white/60" />
+      <div className="absolute inset-x-16 bottom-16 h-3 rounded-full bg-white/50" />
+    </div>
+  );
+}
+
+function OwnerImagePlaceholder() {
+  return (
+    <div className="absolute inset-0 grid place-items-center bg-slate-100" data-owner-image-placeholder="true">
+      <div className="h-20 w-20 rounded-full border border-slate-200 bg-white shadow-sm" />
+    </div>
+  );
+}
+
+function OwnerProfileImage({ src, alt, isContentLoaded }) {
+  const [imageState, setImageState] = useState({ src: '', loaded: false, error: false });
+
+  useEffect(() => {
+    if (!src) return undefined;
+
+    let active = true;
+    const image = new Image();
+    image.decoding = 'async';
+    image.onload = () => {
+      if (active) setImageState({ src, loaded: true, error: false });
+    };
+    image.onerror = () => {
+      if (active) setImageState({ src, loaded: false, error: true });
+    };
+    image.src = src;
+
+    return () => {
+      active = false;
+    };
+  }, [src]);
+
+  const isImageLoaded = imageState.src === src && imageState.loaded;
+  const imageError = imageState.src === src && imageState.error;
+  const showSkeleton = !isContentLoaded || (src && !isImageLoaded && !imageError);
+  const showPlaceholder = isContentLoaded && (!src || imageError);
+
+  return (
+    <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-slate-100 shadow-2xl">
+      {showSkeleton && <OwnerImageSkeleton />}
+      {showPlaceholder && <OwnerImagePlaceholder />}
+      {src && !imageError && (
+        <img
+          {...responsiveImageProps(src, {
+            alt,
+            width: 900,
+            height: 1125,
+            widths: [420, 640, 900],
+            sizes: "(max-width: 768px) 100vw, 50vw",
+            loading: "eager",
+            fetchPriority: "high",
+            className: `absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-out ${isImageLoaded ? 'opacity-100' : 'opacity-0'}`,
+          })}
+          onLoad={() => setImageState({ src, loaded: true, error: false })}
+          onError={() => setImageState({ src, loaded: false, error: true })}
+        />
+      )}
+    </div>
+  );
+}
 
 export default AboutUs;

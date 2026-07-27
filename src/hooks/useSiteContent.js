@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { publicApi } from "../services/api";
 import { defaultAboutContent, defaultContactContent, defaultHomeSectionsContent, defaultNavbarAreas, defaultTopLists } from "../config/navigationContent";
 
@@ -20,6 +20,7 @@ let contentPromise = null;
 
 export default function useSiteContent() {
   const [content, setContent] = useState(cachedContent || defaults);
+  const [isLoaded, setIsLoaded] = useState(Boolean(cachedContent));
 
   useEffect(() => {
     let active = true;
@@ -42,7 +43,9 @@ export default function useSiteContent() {
       });
 
     contentPromise.then((next) => {
-      if (active) setContent(next);
+      if (!active) return;
+      setContent(next);
+      setIsLoaded(true);
     });
 
     return () => {
@@ -50,5 +53,5 @@ export default function useSiteContent() {
     };
   }, []);
 
-  return content;
+  return useMemo(() => ({ ...content, isLoaded }), [content, isLoaded]);
 }
