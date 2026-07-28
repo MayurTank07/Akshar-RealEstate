@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, Bookmark, ChevronDown, Clock, Home, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowRight, Bookmark, ChevronDown, Clock, Home, LogIn, LogOut, Menu, Search, SlidersHorizontal, User, X } from "lucide-react";
 import BrandLogo from "./BrandLogo";
 import SavedBadge from "./SavedBadge";
 import useAuth from "../contexts/useAuth";
@@ -14,6 +14,16 @@ function getRecent() {
 }
 
 const categories = ["Buy", "Rent", "New Projects"];
+const mobileNavItems = [
+  { label: "Home", path: "/" },
+  { label: "Properties", path: "/properties" },
+  { label: "New Projects", path: "/new-projects" },
+  { label: "Services", path: "/services" },
+  { label: "Blog", path: "/blog" },
+  { label: "About Us", path: "/about" },
+  { label: "Contact Us", path: "/contact" },
+  { label: "Enquiry", path: "/enquiry" },
+];
 
 export default function PricingNavbar({
   searchType = "Buy",
@@ -26,7 +36,7 @@ export default function PricingNavbar({
   properties = [],
 }) {
   const navigate = useNavigate();
-  const { isAuthenticated, savedProperties } = useAuth();
+  const { isAuthenticated, logout, savedProperties } = useAuth();
   const siteContent = useSiteContent();
   const cities = cityOptionsFromAreas(siteContent.navbarAreas);
   const savedCount = savedProperties.length;
@@ -35,6 +45,7 @@ export default function PricingNavbar({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [recent] = useState(() => getRecent());
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const searchContainerRef = useRef(null);
   const toggleMenu = (menu) => setOpenMenu((current) => (current === menu ? null : menu));
 
@@ -50,6 +61,15 @@ export default function PricingNavbar({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (!mobileNavOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileNavOpen]);
 
   const handleSuggestionClick = (s) => {
     onQueryChange?.(s);
@@ -72,163 +92,252 @@ export default function PricingNavbar({
     setShowSuggestions(false);
   };
 
+  const openMobileNavigation = () => {
+    setMobileNavOpen(true);
+    setMobileSearchOpen(false);
+    setOpenMenu(null);
+    setShowSuggestions(false);
+  };
+
+  const navigateFromMobile = (path) => {
+    setMobileNavOpen(false);
+    navigate(path);
+  };
+
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
-      <div className="wf-container flex min-h-[72px] flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            className="flex min-w-0 items-center rounded-xl text-xl transition hover:opacity-90"
-            onClick={() => navigate("/")}
-          >
-            <BrandLogo />
-          </button>
-
-          <button
-            type="button"
-            className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-100 lg:hidden"
-            onClick={toggleMobileSearch}
-            aria-expanded={mobileSearchOpen}
-            aria-label={mobileSearchOpen ? "Hide search filters" : "Show search filters"}
-          >
-            {mobileSearchOpen ? <X size={18} /> : <SlidersHorizontal size={18} />}
-            Filter
-          </button>
-        </div>
-
-        <div className={`${mobileSearchOpen ? "flex" : "hidden"} w-full min-w-0 flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm sm:flex-row lg:flex lg:max-w-2xl`}>
-          <div className="relative grid gap-2 sm:min-w-[230px] sm:grid-cols-[0.8fr_1.2fr]">
+    <>
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
+        <div className="wf-container flex min-h-[72px] flex-col gap-3 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => toggleMenu("category")}
-              className="flex min-h-11 items-center justify-between gap-2 rounded-xl bg-white px-3 text-sm font-bold text-blue-700 shadow-sm"
+              className="flex min-w-0 items-center rounded-xl text-xl transition hover:opacity-90"
+              onClick={() => navigate("/")}
             >
-              <span className="truncate">{searchType}</span>
-              <ChevronDown size={16} className={`transition ${openMenu === "category" ? "rotate-180" : ""}`} />
+              <BrandLogo />
             </button>
 
-            <button
-              type="button"
-              onClick={() => toggleMenu("city")}
-              className="flex min-h-11 items-center justify-between gap-2 rounded-xl bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
-            >
-              <span className="truncate">{city}</span>
-              <ChevronDown size={16} className={`transition ${openMenu === "city" ? "rotate-180" : ""}`} />
-            </button>
-
-            {openMenu === "category" && (
-              <DropdownPanel className="left-0 w-44">
-                {categories.map((item) => (
-                  <DropdownButton key={item} active={item === searchType} onClick={() => selectCategory(item)}>
-                    {item}
-                  </DropdownButton>
-                ))}
-              </DropdownPanel>
-            )}
-
-            {openMenu === "city" && (
-              <DropdownPanel className="left-0 w-full sm:left-auto sm:right-0 sm:w-52">
-                {cities.map((item) => (
-                  <DropdownButton key={item} active={item === city} onClick={() => selectCity(item)}>
-                    {item}
-                  </DropdownButton>
-                ))}
-              </DropdownPanel>
-            )}
+            <div className="flex items-center gap-2 lg:hidden">
+              <button
+                type="button"
+                className="inline-flex h-10 items-center gap-2 rounded-xl border border-slate-200 px-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-100"
+                onClick={toggleMobileSearch}
+                aria-expanded={mobileSearchOpen}
+                aria-label={mobileSearchOpen ? "Hide search filters" : "Show search filters"}
+              >
+                {mobileSearchOpen ? <X size={18} /> : <SlidersHorizontal size={18} />}
+                Filter
+              </button>
+              <button
+                type="button"
+                className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-700 transition hover:bg-slate-100"
+                onClick={openMobileNavigation}
+                aria-label="Open navigation"
+              >
+                <Menu size={22} />
+              </button>
+            </div>
           </div>
 
-          <div className="relative flex-1" ref={searchContainerRef}>
-            <div className="flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 shadow-sm">
-              <Search size={17} className="shrink-0 text-slate-400" />
-              <input
-                className="min-h-0 w-full border-0 bg-transparent p-0 text-sm font-medium text-slate-700 shadow-none focus:shadow-none"
-                type="text"
-                placeholder="Search project, locality, builder"
-                value={query}
-                autoComplete="off"
-                onChange={(event) => { onQueryChange?.(event.target.value); setShowSuggestions(true); }}
-                onFocus={() => setShowSuggestions(true)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") { onQueryChange?.(""); setShowSuggestions(false); }
-                }}
-              />
-              {query && (
-                <button type="button" onClick={() => { onQueryChange?.(""); setSuggestions([]); setShowSuggestions(false); }} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Clear search">
-                  <X size={16} />
-                </button>
+          <div className={`${mobileSearchOpen ? "flex" : "hidden"} w-full min-w-0 flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-sm sm:flex-row lg:flex lg:max-w-2xl`}>
+            <div className="relative grid gap-2 sm:min-w-[230px] sm:grid-cols-[0.8fr_1.2fr]">
+              <button
+                type="button"
+                onClick={() => toggleMenu("category")}
+                className="flex min-h-11 items-center justify-between gap-2 rounded-xl bg-white px-3 text-sm font-bold text-blue-700 shadow-sm"
+              >
+                <span className="truncate">{searchType}</span>
+                <ChevronDown size={16} className={`transition ${openMenu === "category" ? "rotate-180" : ""}`} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => toggleMenu("city")}
+                className="flex min-h-11 items-center justify-between gap-2 rounded-xl bg-white px-3 text-sm font-bold text-slate-700 shadow-sm"
+              >
+                <span className="truncate">{city}</span>
+                <ChevronDown size={16} className={`transition ${openMenu === "city" ? "rotate-180" : ""}`} />
+              </button>
+
+              {openMenu === "category" && (
+                <DropdownPanel className="left-0 w-44">
+                  {categories.map((item) => (
+                    <DropdownButton key={item} active={item === searchType} onClick={() => selectCategory(item)}>
+                      {item}
+                    </DropdownButton>
+                  ))}
+                </DropdownPanel>
               )}
-              {onToggleFilters && (
-                <button
-                  type="button"
-                  onClick={onToggleFilters}
-                  className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50 xl:hidden"
-                  aria-label="Toggle filters"
-                >
-                  <SlidersHorizontal size={17} />
-                </button>
+
+              {openMenu === "city" && (
+                <DropdownPanel className="left-0 w-full sm:left-auto sm:right-0 sm:w-52">
+                  {cities.map((item) => (
+                    <DropdownButton key={item} active={item === city} onClick={() => selectCity(item)}>
+                      {item}
+                    </DropdownButton>
+                  ))}
+                </DropdownPanel>
               )}
             </div>
 
-            {showSuggestions && (
-              <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[90] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl">
-                {!query.trim() ? (
-                  recent.length > 0 && (
-                    <div className="px-2 py-2">
-                      <p className="mb-1 flex items-center gap-1 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        <Clock size={10} /> Recent
-                      </p>
-                      {recent.slice(0, 4).map((s) => (
-                        <button key={s} type="button" onClick={() => handleSuggestionClick(s)} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
-                          <Clock size={13} className="shrink-0 text-slate-300" />
+            <div className="relative flex-1" ref={searchContainerRef}>
+              <div className="flex min-h-11 items-center gap-2 rounded-xl bg-white px-3 shadow-sm">
+                <Search size={17} className="shrink-0 text-slate-400" />
+                <input
+                  className="min-h-0 w-full border-0 bg-transparent p-0 text-sm font-medium text-slate-700 shadow-none focus:shadow-none"
+                  type="text"
+                  placeholder="Search project, locality, builder"
+                  value={query}
+                  autoComplete="off"
+                  onChange={(event) => { onQueryChange?.(event.target.value); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") { onQueryChange?.(""); setShowSuggestions(false); }
+                  }}
+                />
+                {query && (
+                  <button type="button" onClick={() => { onQueryChange?.(""); setSuggestions([]); setShowSuggestions(false); }} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="Clear search">
+                    <X size={16} />
+                  </button>
+                )}
+                {onToggleFilters && (
+                  <button
+                    type="button"
+                    onClick={onToggleFilters}
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-blue-600 transition hover:bg-blue-50 xl:hidden"
+                    aria-label="Toggle filters"
+                  >
+                    <SlidersHorizontal size={17} />
+                  </button>
+                )}
+              </div>
+
+              {showSuggestions && (
+                <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-[90] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl">
+                  {!query.trim() ? (
+                    recent.length > 0 && (
+                      <div className="px-2 py-2">
+                        <p className="mb-1 flex items-center gap-1 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          <Clock size={10} /> Recent
+                        </p>
+                        {recent.slice(0, 4).map((s) => (
+                          <button key={s} type="button" onClick={() => handleSuggestionClick(s)} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-50">
+                            <Clock size={13} className="shrink-0 text-slate-300" />
+                            <span className="flex-1 truncate">{s}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )
+                  ) : suggestions.length > 0 ? (
+                    <div className="py-1.5">
+                      {suggestions.map((s) => (
+                        <button key={s} type="button" onClick={() => handleSuggestionClick(s)} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-700">
+                          <Search size={13} className="shrink-0 text-slate-300" />
                           <span className="flex-1 truncate">{s}</span>
+                          <ArrowRight size={13} className="shrink-0 text-slate-200" />
                         </button>
                       ))}
                     </div>
-                  )
-                ) : suggestions.length > 0 ? (
-                  <div className="py-1.5">
-                    {suggestions.map((s) => (
-                      <button key={s} type="button" onClick={() => handleSuggestionClick(s)} className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-700">
-                        <Search size={13} className="shrink-0 text-slate-300" />
-                        <span className="flex-1 truncate">{s}</span>
-                        <ArrowRight size={13} className="shrink-0 text-slate-200" />
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="hidden items-center gap-2 lg:flex">
+            <button type="button" onClick={() => navigate("/")} className="wf-btn wf-btn-secondary">
+              <Home size={16} />
+              Home
+            </button>
+            {isAuthenticated && (
+              <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
+                <Bookmark size={16} />
+                Saved
+                <SavedBadge count={savedCount} />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2 lg:hidden">
+            <button type="button" onClick={() => navigate("/")} className="wf-btn wf-btn-secondary flex-1">
+              <Home size={16} />
+              Home
+            </button>
+            {isAuthenticated && (
+              <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary flex-1">
+                <Bookmark size={16} />
+                Saved
+                <SavedBadge count={savedCount} />
+              </button>
             )}
           </div>
         </div>
+      </header>
 
-        <div className="hidden items-center gap-2 lg:flex">
-          <button type="button" onClick={() => navigate("/")} className="wf-btn wf-btn-secondary">
-            <Home size={16} />
-            Home
-          </button>
-          {isAuthenticated && (
-            <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary">
-              <Bookmark size={16} />
-              Saved
-              <SavedBadge count={savedCount} />
-            </button>
-          )}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-[120] lg:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 h-full w-full bg-slate-950/45 backdrop-blur-sm"
+            onClick={() => setMobileNavOpen(false)}
+            aria-label="Close navigation backdrop"
+          />
+
+          <aside className="absolute right-0 top-0 flex h-full w-[min(88vw,390px)] flex-col bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <BrandLogo />
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(false)}
+                className="grid h-10 w-10 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                aria-label="Close navigation"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <nav className="wf-smooth-scroll flex-1 space-y-2 overflow-y-auto px-4 py-5">
+              {mobileNavItems.map((item) => (
+                <button
+                  type="button"
+                  key={item.path}
+                  onClick={() => navigateFromMobile(item.path)}
+                  className="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-bold text-slate-700 transition hover:bg-slate-100"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+
+            <div className="space-y-3 border-t border-slate-200 p-4">
+              {isAuthenticated && (
+                <button type="button" onClick={() => navigateFromMobile("/saved")} className="wf-btn wf-btn-secondary w-full">
+                  <Bookmark size={16} />
+                  Saved
+                  <SavedBadge count={savedCount} />
+                </button>
+              )}
+              {!isAuthenticated ? (
+                <button type="button" onClick={() => navigateFromMobile("/login")} className="wf-btn wf-btn-secondary w-full">
+                  <LogIn size={16} />
+                  Login
+                </button>
+              ) : (
+                <>
+                  <button type="button" onClick={() => navigateFromMobile("/profile")} className="wf-btn wf-btn-secondary w-full">
+                    <User size={16} />
+                    Profile
+                  </button>
+                  <button type="button" onClick={() => { setMobileNavOpen(false); logout(); }} className="wf-btn wf-btn-secondary w-full">
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </>
+              )}
+            </div>
+          </aside>
         </div>
-        <div className="flex items-center gap-2 lg:hidden">
-          <button type="button" onClick={() => navigate("/")} className="wf-btn wf-btn-secondary flex-1">
-            <Home size={16} />
-            Home
-          </button>
-          {isAuthenticated && (
-            <button type="button" onClick={() => navigate("/saved")} className="wf-btn wf-btn-secondary flex-1">
-              <Bookmark size={16} />
-              Saved
-              <SavedBadge count={savedCount} />
-            </button>
-          )}
-        </div>
-      </div>
-    </header>
+      )}
+    </>
   );
 }
 
