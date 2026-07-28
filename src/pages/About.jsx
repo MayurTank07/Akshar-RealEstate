@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import BrandLogo from '../components/BrandLogo';
+// Future founder-image redesign: restore BrandLogo import when reusing the commented layout below.
+// import BrandLogo from '../components/BrandLogo';
 import Breadcrumbs from '../components/Breadcrumbs';
 import CertificationsSection from '../components/CertificationsSection';
 import StructuredData from '../components/StructuredData';
@@ -15,7 +16,9 @@ const AboutUs = () => {
   const navigate = useNavigate();
   const siteContent = useSiteContent();
   const about = { ...defaultAboutContent, ...(siteContent.aboutContent || {}) };
-  const ownerImageUrl = siteContent.isLoaded ? String(siteContent.aboutContent?.ownerPhoto || '').trim() : '';
+  // Founder image support is intentionally paused for the current text-only founder section.
+  // Keep this reference for the future founder-image redesign:
+  // const ownerImageUrl = siteContent.isLoaded ? String(siteContent.aboutContent?.ownerPhoto || '').trim() : '';
   const stats = Array.isArray(about.stats) && about.stats.length ? about.stats : defaultAboutContent.stats;
   const features = Array.isArray(about.features) && about.features.length ? about.features : defaultAboutContent.features;
   const schema = useMemo(
@@ -124,30 +127,52 @@ const AboutUs = () => {
         </div>
       </section>
 
-      <section className="py-24 px-6 max-w-7xl mx-auto">
-        <div className="mb-12 flex items-center gap-3">
-          <BrandLogo />
-        </div>
-        <div className="flex flex-col md:flex-row gap-16 items-center">
-          <div className="md:w-1/2">
-            <OwnerProfileImage
-              src={ownerImageUrl}
-              alt={`${about.ownerName}, ${about.ownerDesignation}`}
-              isContentLoaded={siteContent.isLoaded}
-            />
-          </div>
-          <div className="md:w-1/2">
-            <h2 className="text-sm uppercase tracking-[0.2em] text-blue-600 font-bold mb-4">Our Leadership</h2>
-            <h3 className="text-4xl font-bold mb-2">{about.ownerName}</h3>
-            <p className="mb-6 text-sm font-extrabold uppercase tracking-[0.2em] text-slate-400">
-              {about.ownerDesignation}
-            </p>
-            <p className="text-slate-600 text-lg mb-8 leading-relaxed">
-              {about.ownerBio}
-            </p>
-            <div className="bg-slate-900 text-white p-8 rounded-tr-[50px] shadow-xl">
-              <p className="italic text-xl">"{about.ownerQuote}"</p>
-              <p className="mt-4 font-bold text-blue-400">— {about.ownerName}</p>
+      <section className="py-20 px-6 sm:py-24">
+        <div className="mx-auto max-w-5xl">
+          {/* Future founder-image redesign reference:
+              The previous section displayed BrandLogo, OwnerProfileImage, owner designation,
+              and owner bio in a two-column layout. Restore/adapt this block when the founder
+              image is ready:
+
+              <div className="mb-12 flex items-center gap-3">
+                <BrandLogo />
+              </div>
+              <div className="flex flex-col md:flex-row gap-16 items-center">
+                <div className="md:w-1/2">
+                  <OwnerProfileImage
+                    src={ownerImageUrl}
+                    alt={`${about.ownerName}, ${about.ownerDesignation}`}
+                    isContentLoaded={siteContent.isLoaded}
+                  />
+                </div>
+                <div className="md:w-1/2">
+                  <h2 className="text-sm uppercase tracking-[0.2em] text-blue-600 font-bold mb-4">Our Leadership</h2>
+                  <h3 className="text-4xl font-bold mb-2">{about.ownerName}</h3>
+                  <p className="mb-6 text-sm font-extrabold uppercase tracking-[0.2em] text-slate-400">
+                    {about.ownerDesignation}
+                  </p>
+                  <p className="text-slate-600 text-lg mb-8 leading-relaxed">
+                    {about.ownerBio}
+                  </p>
+                  <div className="bg-slate-900 text-white p-8 rounded-tr-[50px] shadow-xl">
+                    <p className="italic text-xl">"{about.ownerQuote}"</p>
+                    <p className="mt-4 font-bold text-blue-400">— {about.ownerName}</p>
+                  </div>
+                </div>
+              </div>
+          */}
+
+          <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white px-6 py-12 text-center shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10 sm:py-16 lg:px-16">
+            <div className="absolute inset-x-0 top-0 h-1 bg-blue-600" aria-hidden="true" />
+            <div className="mx-auto max-w-3xl">
+              <h2 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl md:text-5xl">
+                {about.ownerName}
+              </h2>
+              <blockquote className="mt-8 border-y border-slate-100 py-8 sm:mt-10 sm:py-10">
+                <p className="text-xl font-medium leading-relaxed text-slate-700 sm:text-2xl">
+                  "{about.ownerQuote}"
+                </p>
+              </blockquote>
             </div>
           </div>
         </div>
@@ -170,6 +195,11 @@ const AboutUs = () => {
     </div>
   );
 };
+
+/* Future founder-image redesign reference:
+   These helpers powered the previous founder image block. They are intentionally commented
+   out while the current section remains text-only, so they can be reused when the founder
+   image is added back.
 
 function OwnerImageSkeleton() {
   return (
@@ -239,5 +269,6 @@ function OwnerProfileImage({ src, alt, isContentLoaded }) {
     </div>
   );
 }
+*/
 
 export default AboutUs;
