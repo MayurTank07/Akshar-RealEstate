@@ -158,7 +158,7 @@ export default function PropertyDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 pt-28 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 pt-5 sm:px-6 sm:pt-6 lg:px-8">
         <Breadcrumbs items={[
           { label: "Home", href: "/" },
           { label: "Properties", href: "/properties" },
