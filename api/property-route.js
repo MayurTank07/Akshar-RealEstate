@@ -139,7 +139,7 @@ function stripStaticSeo(html) {
 }
 
 function buildPropertyMeta(property, slug) {
-  const title = compact(property.seoTitle || propertyPageTitle(property), 70);
+  const title = compact(storedSeoTitle(property) || propertyPageTitle(property), 70);
   const description = propertyMetaDescription(property);
   const url = canonicalUrl(slug, property);
   const image = propertyImages(property)[0]?.url || "";
@@ -185,13 +185,34 @@ function jsonLdScript(data, id) {
   return `<script${idAttribute} type="application/ld+json">${schemaScriptContent(data)}</script>`;
 }
 
+function isUrlLike(value) {
+  return /^https?:\/\//i.test(String(value || "")) || /maps\.app\.goo\.gl|goo\.gl\/maps|google\.com\/maps/i.test(String(value || ""));
+}
+
+function cleanPropertyText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
 function propertyLocation(property) {
-  return [property.locationMaster?.name || property.location, property.city].filter(Boolean).join(", ");
+  const rawLocation = property.locationMaster?.name || property.location || property.map?.area || "";
+  const location = isUrlLike(rawLocation) ? "" : cleanPropertyText(rawLocation);
+  const city = isUrlLike(property.city) ? "" : cleanPropertyText(property.city || property.map?.city || "");
+  if (location && city && !new RegExp(`\\b${escapeRegExp(city)}\\b`, "i").test(location)) return `${location}, ${city}`;
+  return location || city;
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function propertyKind(property) {
-  if (property.bhk) return `${property.bhk} BHK ${property.type || property.propertyType || "Property"}`;
-  return property.type || property.propertyType || "Property";
+  const rawType = property.type || property.propertyType || "Property";
+  const cleanType = cleanPropertyText(rawType)
+    .replace(/\b(for\s+sale|for\s+rent|sale|rent|lease)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim() || "Property";
+  if (property.bhk && !/\bbhk\b/i.test(cleanType)) return `${property.bhk} BHK ${cleanType}`;
+  return cleanType;
 }
 
 function listingAction(property) {
@@ -219,6 +240,13 @@ function isNoindexLifecycleStatus(status) {
 
 function propertyPageTitle(property) {
   return `${propertyKind(property)} for ${listingAction(property)} in ${propertyLocation(property) || "Gujarat"}`;
+}
+
+function storedSeoTitle(property) {
+  const title = cleanPropertyText(property.seoTitle);
+  if (!title) return "";
+  if (isUrlLike(title) || /\b(sale|rent)\s+for\s+(sale|rent)\b/i.test(title)) return "";
+  return title;
 }
 
 function propertyMetaDescription(property) {
@@ -426,7 +454,7 @@ function buildInitialPropertyPage(property, related = {}) {
           ["Phone", broker.phone || "Available after assignment"],
           ["Company", broker.companyName || "Akshar Estate The Property Hub"],
         ]))}
-        ${section("Contact This Property", `<p><a href="${escapeHtml(broker.phone ? `tel:${String(broker.phone).replace(/[^\d+]/g, "")}` : "/contact")}">Call button</a></p><p><a href="${escapeHtml(broker.whatsapp ? `https://wa.me/${String(broker.whatsapp).replace(/[^\d]/g, "")}` : "/contact")}">WhatsApp button</a></p>`)}
+        ${section("Contact This Property", `<p><a href="${escapeHtml(broker.phone ? `tel:${String(broker.phone).replace(/[^\d+]/g, "")}` : "/contact")}">Call Akshar Estate about this property</a></p><p><a href="${escapeHtml(broker.whatsapp ? `https://wa.me/${String(broker.whatsapp).replace(/[^\d]/g, "")}` : "/contact")}">Send a WhatsApp enquiry for this property</a></p>`)}
         ${section("Similar Properties", linkList(links.similar) || "<p>Similar active properties will appear here as inventory updates.</p>")}
         ${section("Properties in the Same Location", linkList(links.sameLocation) || "<p>More active properties in this location will appear here as inventory updates.</p>")}
         ${section("Same BHK Properties", linkList(links.sameBhk) || "<p>Same BHK active properties will appear here as inventory updates.</p>")}

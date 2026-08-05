@@ -6,19 +6,46 @@ function compact(value, limit) {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
 }
 
+function isUrlLike(value) {
+  return /^https?:\/\//i.test(String(value || "")) || /maps\.app\.goo\.gl|goo\.gl\/maps|google\.com\/maps/i.test(String(value || ""));
+}
+
+function cleanPropertyText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function propertyLocation(property) {
-  const location = property.location || property.city || "Ahmedabad";
-  const city = property.city || "Ahmedabad";
-  return new RegExp(city, "i").test(location) ? location : `${location}, ${city}`;
+  const location = isUrlLike(property.location) ? "" : cleanPropertyText(property.location || property.map?.area || "");
+  const city = isUrlLike(property.city || property.map?.city) ? "" : cleanPropertyText(property.city || property.map?.city || "Ahmedabad");
+  if (location && city && !new RegExp(`\\b${escapeRegExp(city)}\\b`, "i").test(location)) return `${location}, ${city}`;
+  return location || city || "Ahmedabad";
+}
+
+function propertyType(property) {
+  return cleanPropertyText(property.type || property.propertyType || "Property")
+    .replace(/\b(for\s+sale|for\s+rent|sale|rent|lease)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim() || "Property";
+}
+
+function storedSeoTitle(property) {
+  const title = cleanPropertyText(property.seoTitle || property.seo?.metaTitle || "");
+  if (!title) return "";
+  if (isUrlLike(title) || /\b(sale|rent)\s+for\s+(sale|rent)\b/i.test(title)) return "";
+  return title;
 }
 
 export function buildPropertySeo(property) {
   const title = property.title || "Verified Property";
-  const type = property.type || "Property";
+  const type = propertyType(property);
   const location = propertyLocation(property);
   const dealType = property.dealType || "Buy";
   const canonical = property.canonicalUrl || `${window.location.origin}/property/${property.slug || property._id || property.id || ""}`;
-  const metaTitle = compact(property.seoTitle || property.seo?.metaTitle || `${compact(title, 32)} | ${type} in ${compact(location, 24)} | Ahmedabad Broker`, 68);
+  const metaTitle = compact(storedSeoTitle(property) || `${compact(title, 32)} | ${type} in ${compact(location, 24)} | Ahmedabad Broker`, 68);
   const metaDescription = compact(property.metaDescription || property.seo?.metaDescription ||
     `Explore ${title}, a verified ${type.toLowerCase()} in ${location}. Get Ahmedabad-focused broker-assisted ${dealType.toLowerCase()} guidance, pricing support, and private consultation from ${SITE_NAME}.`,
     160

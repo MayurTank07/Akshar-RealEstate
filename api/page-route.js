@@ -6,20 +6,22 @@ import { buildBreadcrumbSchema, schemaScriptContent } from "../src/utils/structu
 
 const PUBLIC_PAGES = {
   "/": {
-    title: "Akshar Estate The Property HUB",
-    description: "Discover verified residential, commercial, rental and land opportunities across Gujarat with Akshar Estate The Property HUB.",
+    title: "Akshar Estate | Real Estate in Ahmedabad and Gandhinagar",
+    description: "Find verified property in Ahmedabad and Gandhinagar with Akshar Estate: flats, plots, shops, offices, houses and commercial real estate leads.",
     h1: "Akshar Estate The Property HUB",
-    body: "Find verified residential, commercial, rental and land opportunities across Gandhinagar, Ahmedabad and nearby Gujarat property markets.",
+    body: "Find verified residential, commercial, rental and land opportunities across Ahmedabad, Gandhinagar and nearby Gujarat property markets.",
     links: [
+      ["/properties-for-sale/ahmedabad", "Property in Ahmedabad"],
       ["/properties-for-sale/gandhinagar", "Properties for sale in Gandhinagar"],
+      ["/properties-for-sale/gandhinagar/palaj", "Properties in Palaj"],
       ["/properties-for-sale/gandhinagar/dhanap", "Properties in Dhanap"],
       ["/properties-for-sale/ahmedabad/memnagar", "Properties in Memnagar"],
       ["/properties", "All properties"],
     ],
   },
   "/properties": {
-    title: "Properties for Sale and Rent in Gujarat | Akshar Estate",
-    description: "Browse verified Akshar Estate property listings across Gandhinagar, Ahmedabad and nearby Gujarat locations with supervisor contact and fresh inventory.",
+    title: "Property in Ahmedabad and Gandhinagar | Akshar Estate",
+    description: "Browse verified flats, plots, shops, offices, houses and commercial property in Ahmedabad, Gandhinagar and nearby Akshar Estate locations.",
     h1: "Properties for Sale and Rent in Gujarat",
     body: "Browse active Akshar Estate listings by location, property type, BHK, price and availability.",
     links: [
@@ -44,14 +46,14 @@ const PUBLIC_PAGES = {
   },
   "/services": {
     title: "Real Estate Services in Gandhinagar and Ahmedabad | Akshar Estate",
-    description: "Akshar Estate offers property buying, selling, rental, investment and supervisor-assisted real estate services across Gujarat.",
+    description: "Akshar Estate offers buying, selling, rental, investment and supervisor-assisted real estate services in Ahmedabad, Gandhinagar and Gujarat.",
     h1: "Real Estate Services",
     body: "Get support for buying, selling, renting and evaluating real estate opportunities across Gandhinagar, Ahmedabad and nearby markets.",
     links: [["/contact", "Ask for property assistance"], ["/properties-for-sale/gandhinagar", "Gandhinagar properties"]],
   },
   "/contact": {
-    title: "Contact Akshar Estate | Property Experts in Gandhinagar",
-    description: "Contact Akshar Estate The Property HUB for verified property options, supervisor details and real estate guidance in Gujarat.",
+    title: "Contact Akshar Estate | Ahmedabad and Gandhinagar Property Experts",
+    description: "Contact Akshar Estate for verified property options, WhatsApp enquiries, supervisor details and real estate guidance in Ahmedabad and Gandhinagar.",
     h1: "Contact Akshar Estate",
     body: `${BUSINESS_INFO.name} can help with property enquiries across Gandhinagar, Ahmedabad and nearby Gujarat locations.`,
     links: [["/properties", "Browse properties"], ["/properties-for-sale/gandhinagar", "Gandhinagar properties"]],

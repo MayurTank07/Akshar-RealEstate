@@ -17,8 +17,6 @@ const STATIC_PAGES = [
   { path: "/about", lastmod: "2026-07-22" },
   { path: "/services", lastmod: "2026-07-22" },
   { path: "/contact", lastmod: "2026-07-22" },
-  { path: "/privacy-policy", lastmod: "2026-07-22" },
-  { path: "/terms-of-service", lastmod: "2026-07-22" },
 ];
 
 const SITEMAP_FILES = [
@@ -28,7 +26,7 @@ const SITEMAP_FILES = [
   "sitemap-property-types.xml",
   "sitemap-blog.xml",
 ];
-const SITEMAP_PROPERTY_STATUSES = ["active", "published", "available", "reserved", "sold", "rented"];
+const SITEMAP_PROPERTY_STATUSES = ["active", "published", "available", "reserved"];
 
 function escapeXml(value) {
   return String(value || "")
@@ -110,6 +108,16 @@ function propertyMatchesPage(property, page) {
   return false;
 }
 
+function isSitemapEligibleProperty(property = {}) {
+  return Boolean(
+    property.slug &&
+    SITEMAP_PROPERTY_STATUSES.includes(String(property.status || "").toLowerCase()) &&
+    property.isIndexable !== false &&
+    !property.deletedAt &&
+    property.visibility !== "private"
+  );
+}
+
 function salePages() {
   return [
     ...SALE_LANDING_PAGES.regions.map((page) => ({ ...page, kind: "region", path: `/properties-for-sale/${page.slug}` })),
@@ -135,8 +143,9 @@ function dedupe(entries) {
 }
 
 function activeInventoryPageEntries(properties, pages) {
+  const indexableProperties = properties.filter(isSitemapEligibleProperty);
   return pages.flatMap((page) => {
-    const matches = properties.filter((property) => propertyMatchesPage(property, page));
+    const matches = indexableProperties.filter((property) => propertyMatchesPage(property, page));
     if (!page.verified || !page.intro || page.duplicateOf || !matches.length) return [];
     return [{ path: page.path, lastmod: newestLastmod(matches) }];
   });
@@ -148,13 +157,7 @@ function pageEntries() {
 
 function propertyEntries(properties) {
   return properties
-    .filter((property) =>
-      property.slug &&
-      SITEMAP_PROPERTY_STATUSES.includes(String(property.status || "").toLowerCase()) &&
-      property.isIndexable !== false &&
-      !property.deletedAt &&
-      property.visibility !== "private"
-    )
+    .filter(isSitemapEligibleProperty)
     .map((property) => ({
       path: `/property/${property.slug}`,
       lastmod: property.lastModifiedAt || property.updatedAt || property.publishedAt,

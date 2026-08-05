@@ -16,6 +16,7 @@ const API_BASE_URL =
   process.env.API_BASE_URL ||
   "https://akshar-realestate-backend.onrender.com/api";
 const PAGE_SIZE = 9;
+const INDEXABLE_PROPERTY_STATUSES = ["active", "published", "available", "reserved"];
 const SALE_PATH_RE = /^\/properties-for-sale\/([^/?#]+)(?:\/([^/?#]+))?(?:\/([^/?#]+))?\/?/i;
 const TYPE_PATH_RE = /^\/(plots-for-sale|commercial-property|industrial-property)\/([^/?#]+)\/?/i;
 
@@ -124,6 +125,16 @@ function typeMatchesIntent(property = {}, page = {}) {
     ...(property.propertyTags || []),
   ].join(" ").toLowerCase();
   return (page.typeMatchers || []).some((matcher) => haystack.includes(String(matcher).toLowerCase()));
+}
+
+function isIndexableProperty(property = {}) {
+  return Boolean(
+    property.slug &&
+    INDEXABLE_PROPERTY_STATUSES.includes(String(property.status || "").toLowerCase()) &&
+    property.isIndexable !== false &&
+    !property.deletedAt &&
+    property.visibility !== "private"
+  );
 }
 
 function propertyLink(property = {}) {
@@ -402,7 +413,7 @@ function injectHtml(shell, page, context) {
       ])}</section>
       <section><h2>Related Blog Posts</h2>${linkList(buildRelatedBlogLinks(relatedBlogs)) || "<p>Related Akshar Estate property guides will appear here after editorial review.</p>"}</section>
       ${buildFaqs(page)}
-      <section><h2>Contact Akshar Estate</h2><p>Speak with Akshar Estate for verified property options, supervisor contact and fresh inventory in ${escapeHtml(page.name)}.</p><p><a href="/contact">Contact CTA</a></p></section>
+      <section><h2>Contact Akshar Estate</h2><p>Speak with Akshar Estate for verified property options, supervisor contact and fresh inventory in ${escapeHtml(page.name)}.</p><p><a href="/contact">Contact Akshar Estate for ${escapeHtml(page.name)} property enquiries</a></p></section>
     </main>`;
 
   return stripStaticSeo(shell)
@@ -468,7 +479,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    const allProperties = await fetchPublicProperties();
+    const allProperties = (await fetchPublicProperties()).filter(isIndexableProperty);
     const relatedBlogs = await fetchPublicBlogs(page);
     const pageListings = allProperties.filter((property) => propertyMatchesPage(property, page));
     const propertyTypes = uniqueValues(pageListings, propertyType);

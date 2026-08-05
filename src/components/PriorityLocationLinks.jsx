@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
 
 const priorityLocations = [
+  ["Ahmedabad", "/properties-for-sale/ahmedabad"],
+  ["Ahmedabad West", "/properties-for-sale/ahmedabad-west"],
+  ["South West Ahmedabad", "/properties-for-sale/south-west-ahmedabad"],
+  ["Memnagar", "/properties-for-sale/ahmedabad/memnagar"],
+  ["Shela", "/properties-for-sale/ahmedabad/shela"],
+  ["Viramgam", "/properties-for-sale/ahmedabad/viramgam"],
   ["Gandhinagar", "/properties-for-sale/gandhinagar"],
   ["Kudasan", "/properties-for-sale/gandhinagar/kudasan"],
-  ["Sargasan", "/properties-for-sale/gandhinagar/sargasan"],
-  ["GIFT City", "/properties-for-sale/gandhinagar/gift-city"],
-  ["Ahmedabad", "/properties-for-sale/ahmedabad"],
-  ["Bopal", "/properties-for-sale/ahmedabad/bopal"],
-  ["South Bopal", "/properties-for-sale/ahmedabad/south-bopal"],
-  ["Shela", "/properties-for-sale/ahmedabad/shela"],
-  ["Science City", "/properties-for-sale/ahmedabad/science-city"],
-  ["Sanand", "/properties-for-sale/ahmedabad/sanand"],
+  ["Palaj", "/properties-for-sale/gandhinagar/palaj"],
+  ["Dhanap", "/properties-for-sale/gandhinagar/dhanap"],
 ];
 
 export default function PriorityLocationLinks() {

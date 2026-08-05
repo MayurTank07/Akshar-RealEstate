@@ -110,7 +110,8 @@ const primaryRegions = [
     nearbyAreas: ["Ahmedabad", "Gandhinagar", "Anand", "Nadiad", "Mahemdavad"],
     landmarks: ["Ahmedabad-Vadodara Expressway", "GIFT City", "SP Ring Road", "Anand-Nadiad Corridor"],
     connectivity: "The region is supported by expressway, railway and industrial links between Ahmedabad, Vadodara and Saurashtra-bound routes.",
-    verified: true,
+    verified: false,
+    verificationNote: "Held noindex after Google live test reported Soft 404 on August 5, 2026. Publish only after stronger regional content and verified inventory depth are available.",
   },
   {
     slug: "north-gujarat",
@@ -122,7 +123,8 @@ const primaryRegions = [
     nearbyAreas: ["Gandhinagar", "Kalol", "Kadi", "Dehgam", "Vijapur"],
     landmarks: ["Gandhinagar", "Kalol Industrial Belt", "Mahudi Road", "Mehsana Highway"],
     connectivity: "State highways, industrial routes and Gandhinagar-Ahmedabad access support residential and land demand across this region.",
-    verified: true,
+    verified: false,
+    verificationNote: "Held noindex until the page has stronger standalone north Gujarat content and verified inventory depth.",
   },
 ];
 
@@ -131,6 +133,7 @@ const localityDefinitions = [
   ["gandhinagar", "Sargasan", "Gandhinagar", "A fast-growing Gandhinagar locality with apartment projects, retail activity and strong access to Kudasan, Raysan and GIFT City.", ["Kudasan", "Vavol", "Raysan", "Palaj"], ["Sargasan Cross Road", "GIFT City Road", "PDPU Road"], "Sargasan benefits from arterial roads toward GIFT City, Infocity, Gandhinagar city centre and Ahmedabad."],
   ["gandhinagar", "Vavol", "Gandhinagar", "A practical residential locality in Gandhinagar with family housing, plotted pockets and access to Sargasan and Pethapur.", ["Sargasan", "Pethapur", "Kudasan", "Randheja"], ["Vavol Road", "Pethapur Road", "Gandhinagar Sector Access"], "Vavol links with central Gandhinagar, Pethapur and the Sargasan-Kudasan corridor."],
   ["gandhinagar", "Pethapur", "Gandhinagar", "A traditional Gandhinagar-side locality with residential plots, independent homes and access toward Vavol and Randheja.", ["Vavol", "Randheja", "Mahudi Road", "Gandhinagar"], ["Pethapur Road", "Randheja Road", "Gandhinagar Sector Area"], "Pethapur connects with Gandhinagar city roads and north-side routes toward Randheja and Mahudi."],
+  ["gandhinagar", "Palaj", "Gandhinagar", "A Gandhinagar growth location with active apartment and plot options near education hubs, civic routes and developing residential pockets.", ["Gandhinagar", "Dhanap", "Pethapur", "Kudasan"], ["Palaj", "IIT Gandhinagar side", "Gandhinagar residential corridor"], "Palaj connects with Gandhinagar city roads, IIT Gandhinagar-side movement and nearby Dhanap, Pethapur and Kudasan pockets.", [], { rolloutPhase: 18 }],
   ["gandhinagar", "Dhanap", "Gandhinagar", "A Gandhinagar-side land and residential pocket for buyers comparing quieter property options near the capital city and nearby north-side areas.", ["Gandhinagar", "Pundrasan", "Pethapur", "Lavarpur"], ["Dhanap", "Gandhinagar side", "North Gandhinagar approach"], "Dhanap connects with Gandhinagar city access roads and nearby north-side localities such as Pundrasan, Pethapur and Lavarpur.", [], { rolloutPhase: 17 }],
   ["gandhinagar", "GIFT City", "Gandhinagar", "A premium business district and investment corridor for buyers looking near offices, finance-sector growth and modern infrastructure.", ["Kudasan", "Raysan", "Sargasan", "PDPU Road"], ["GIFT City", "GIFT City Club", "PDPU", "Sabarmati Riverfront GIFT Link"], "GIFT City connects to Gandhinagar, Ahmedabad airport, SG Highway and the expanding metro corridor."],
   ["north-gujarat", "Dehgam", "Gujarat", "A north Gujarat market to prepare for future land, residential and plotted inventory once listings and local verification are available.", ["Gandhinagar", "Mahudi", "Vijapur", "Prantij"], ["Dehgam", "North Gujarat corridor", "Gandhinagar-side routes"], "Dehgam connects with Gandhinagar-side routes and north Gujarat road movement.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],

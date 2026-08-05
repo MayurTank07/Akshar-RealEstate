@@ -104,6 +104,11 @@ export function businessIdentity(contact = {}) {
         }]
       : undefined,
     sameAs: socialProfiles(contact),
+    areaServed: [
+      { "@type": "City", name: "Ahmedabad" },
+      { "@type": "City", name: "Gandhinagar" },
+      { "@type": "AdministrativeArea", name: "Gujarat" },
+    ],
     geo: lat && lng ? { "@type": "GeoCoordinates", latitude: Number(lat), longitude: Number(lng) } : undefined,
     contactPoint: [{
       "@type": "ContactPoint",
@@ -170,11 +175,6 @@ export function buildBusinessSchemas({ path = "/", pageName = BUSINESS_INFO.name
       name: BUSINESS_INFO.name,
       url: SITE_ORIGIN,
       publisher: { "@id": `${SITE_ORIGIN}/#organization` },
-      potentialAction: {
-        "@type": "SearchAction",
-        target: `${SITE_ORIGIN}/properties?query={search_term_string}`,
-        "query-input": "required name=search_term_string",
-      },
     },
     includeBreadcrumbs && {
       "@type": "BreadcrumbList",
@@ -202,15 +202,34 @@ export function buildBusinessSchemas({ path = "/", pageName = BUSINESS_INFO.name
   });
 }
 
+function isUrlLike(value) {
+  return /^https?:\/\//i.test(String(value || "")) || /maps\.app\.goo\.gl|goo\.gl\/maps|google\.com\/maps/i.test(String(value || ""));
+}
+
+function cleanPropertyText(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function propertyLocation(property = {}) {
-  return [property.locationMaster?.name || property.location || property.map?.area, property.city || property.map?.city]
-    .filter(Boolean)
-    .join(", ");
+  const rawLocation = property.locationMaster?.name || property.location || property.map?.area || "";
+  const location = isUrlLike(rawLocation) ? "" : cleanPropertyText(rawLocation);
+  const city = isUrlLike(property.city || property.map?.city) ? "" : cleanPropertyText(property.city || property.map?.city || "");
+  if (location && city && !new RegExp(`\\b${escapeRegExp(city)}\\b`, "i").test(location)) return `${location}, ${city}`;
+  return location || city;
 }
 
 function propertyKind(property = {}) {
-  if (property.bhk) return `${property.bhk} BHK ${property.type || property.propertyType || "Property"}`;
-  return property.type || property.propertyType || "Property";
+  const rawType = property.type || property.propertyType || "Property";
+  const cleanType = cleanPropertyText(rawType)
+    .replace(/\b(for\s+sale|for\s+rent|sale|rent|lease)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim() || "Property";
+  if (property.bhk && !/\bbhk\b/i.test(cleanType)) return `${property.bhk} BHK ${cleanType}`;
+  return cleanType;
 }
 
 function propertySchemaType(property = {}) {
@@ -232,7 +251,9 @@ function listingAction(property = {}) {
 }
 
 function propertyTitle(property = {}) {
-  return property.seoTitle || `${propertyKind(property)} for ${listingAction(property)} in ${propertyLocation(property) || "Gujarat"}`;
+  const title = cleanPropertyText(property.seoTitle);
+  if (title && !isUrlLike(title) && !/\b(sale|rent)\s+for\s+(sale|rent)\b/i.test(title)) return title;
+  return `${propertyKind(property)} for ${listingAction(property)} in ${propertyLocation(property) || "Gujarat"}`;
 }
 
 function propertyDescription(property = {}) {
