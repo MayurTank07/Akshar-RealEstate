@@ -19,7 +19,6 @@ const mobileNavItems = [
   { label: "Properties", path: "/properties" },
   { label: "New Projects", path: "/new-projects" },
   { label: "Services", path: "/services" },
-  { label: "Blog", path: "/blog" },
   { label: "About Us", path: "/about" },
   { label: "Contact Us", path: "/contact" },
   { label: "Enquiry", path: "/enquiry" },

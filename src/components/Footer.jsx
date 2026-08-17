@@ -78,7 +78,6 @@ const Footer = () => {
               <li><RouterLink to={pricingPathFor("Properties for Rent in Ahmedabad", "rentals")} state={pricingStateFromLabel("Properties for Rent in Ahmedabad", "rentals")} className="hover:text-white transition-colors">Rent Property</RouterLink></li>
               <li><RouterLink to="/enquiry" className="hover:text-white transition-colors">Sell Property</RouterLink></li>
               <li><RouterLink to="/services" className="hover:text-white transition-colors">Services</RouterLink></li>
-              <li><RouterLink to="/blog" className="hover:text-white transition-colors">Property Guides</RouterLink></li>
               <li><RouterLink to="/properties" className="hover:text-white transition-colors">Properties</RouterLink></li>
             </ul>
           </div>
@@ -90,7 +89,7 @@ const Footer = () => {
               <li><RouterLink to="/about" className="hover:text-white transition-colors">About Us</RouterLink></li>
               <li><RouterLink to="/contact" className="hover:text-white transition-colors">Contact Us</RouterLink></li>
               <li><RouterLink to="/services" className="hover:text-white transition-colors">Services</RouterLink></li>
-              <li><RouterLink to="/blog" className="hover:text-white transition-colors">Property Guides</RouterLink></li>
+              <li><RouterLink to="/blog" className="hover:text-white transition-colors">Blog</RouterLink></li>
               <li><RouterLink to="/properties" className="hover:text-white transition-colors">Properties</RouterLink></li>
               <li><RouterLink to="/stafflogin" className="hover:text-white transition-colors">Staff Login</RouterLink></li>
             </ul>

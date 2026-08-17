@@ -37,7 +37,6 @@ export default function Navbar() {
     { title: "For Rentals", key: "rentals" },
     { title: "New Projects", key: "new-projects", path: "/new-projects" },
     { title: "Services", key: "services", path: "/services" },
-    { title: "Blog", key: "blog", path: "/blog" },
     { title: "About Us", key: "about", path: "/about" },
   ];
 
