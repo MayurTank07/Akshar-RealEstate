@@ -17,10 +17,10 @@ const primaryRegions = [
     city: "Gandhinagar",
     title: "Properties for Sale in Gandhinagar | Akshar Estate",
     h1: "Properties for Sale in Gandhinagar",
-    intro: "Gandhinagar is a planned capital city with strong demand around civic offices, education hubs, GIFT City connectivity and emerging residential corridors.",
+    intro: "Gandhinagar is a planned capital city where buyers compare apartments, plots, shops and land around civic offices, education hubs, GIFT City connectivity, sector roads and emerging residential corridors.",
     nearbyAreas: ["Kudasan", "Sargasan", "Vavol", "Pethapur", "Palaj", "Dhanap", "Adalaj"],
     landmarks: ["GIFT City", "IIT Gandhinagar", "Akshardham", "Mahatma Mandir", "Sargasan Cross Road"],
-    connectivity: "The city connects to Ahmedabad through SG Highway, Gift City Road, Airport Road and the expanding metro-led urban corridor.",
+    connectivity: "The city connects to Ahmedabad through SG Highway, GIFT City Road, Airport Road, Sarkhej-Gandhinagar movement and the expanding metro-led urban corridor.",
     verified: true,
   },
   {
@@ -29,10 +29,10 @@ const primaryRegions = [
     city: "Ahmedabad",
     title: "Properties for Sale in Ahmedabad | Akshar Estate",
     h1: "Properties for Sale in Ahmedabad",
-    intro: "Ahmedabad has a wide real estate mix, from apartments and plotted developments to commercial corridors across the west, north and south belts.",
+    intro: "Ahmedabad has a wide real estate mix for end users and investors, from family apartments and plotted developments to shops, offices and commercial corridors across the west, north and south belts.",
     nearbyAreas: ["Bopal", "South Bopal", "Shela", "Thaltej", "Gota", "Science City"],
     landmarks: ["SG Highway", "SP Ring Road", "Science City", "Gujarat University", "Sabarmati Riverfront"],
-    connectivity: "SG Highway, SP Ring Road, BRTS routes, metro access and airport connectivity shape the major property corridors.",
+    connectivity: "SG Highway, SP Ring Road, BRTS routes, metro access, airport connectivity and Sanand-side industrial movement shape the major property corridors.",
     verified: true,
   },
   {
@@ -129,11 +129,11 @@ const primaryRegions = [
 ];
 
 const localityDefinitions = [
-  ["gandhinagar", "Kudasan", "Gandhinagar", "A preferred apartment and commercial pocket between Gandhinagar and GIFT City, popular for new housing and everyday convenience.", ["Sargasan", "Raysan", "GIFT City", "Vavol"], ["Kudasan Cross Road", "GIFT City Road", "Sargasan Circle"], "Kudasan connects quickly to GIFT City, Sargasan, Infocity and Ahmedabad through SG Highway and capital-region roads."],
+  ["gandhinagar", "Kudasan", "Gandhinagar", "A preferred apartment and commercial pocket between Gandhinagar and GIFT City, Kudasan is popular with buyers comparing new housing, office-side convenience, schools, retail access and daily services.", ["Sargasan", "Raysan", "GIFT City", "Vavol"], ["Kudasan Cross Road", "GIFT City Road", "Sargasan Circle"], "Kudasan connects quickly to GIFT City, Sargasan, Infocity, PDPU Road and Ahmedabad through SG Highway and capital-region roads."],
   ["gandhinagar", "Sargasan", "Gandhinagar", "A fast-growing Gandhinagar locality with apartment projects, retail activity and strong access to Kudasan, Raysan and GIFT City.", ["Kudasan", "Vavol", "Raysan", "Palaj"], ["Sargasan Cross Road", "GIFT City Road", "PDPU Road"], "Sargasan benefits from arterial roads toward GIFT City, Infocity, Gandhinagar city centre and Ahmedabad."],
   ["gandhinagar", "Vavol", "Gandhinagar", "A practical residential locality in Gandhinagar with family housing, plotted pockets and access to Sargasan and Pethapur.", ["Sargasan", "Pethapur", "Kudasan", "Randheja"], ["Vavol Road", "Pethapur Road", "Gandhinagar Sector Access"], "Vavol links with central Gandhinagar, Pethapur and the Sargasan-Kudasan corridor."],
   ["gandhinagar", "Pethapur", "Gandhinagar", "A traditional Gandhinagar-side locality with residential plots, independent homes and access toward Vavol and Randheja.", ["Vavol", "Randheja", "Mahudi Road", "Gandhinagar"], ["Pethapur Road", "Randheja Road", "Gandhinagar Sector Area"], "Pethapur connects with Gandhinagar city roads and north-side routes toward Randheja and Mahudi."],
-  ["gandhinagar", "Palaj", "Gandhinagar", "A Gandhinagar growth location with active apartment and plot options near education hubs, civic routes and developing residential pockets.", ["Gandhinagar", "Dhanap", "Pethapur", "Kudasan"], ["Palaj", "IIT Gandhinagar side", "Gandhinagar residential corridor"], "Palaj connects with Gandhinagar city roads, IIT Gandhinagar-side movement and nearby Dhanap, Pethapur and Kudasan pockets.", [], { rolloutPhase: 18 }],
+  ["gandhinagar", "Palaj", "Gandhinagar", "A Gandhinagar growth location with active apartment and plot options, Palaj suits buyers comparing education-hub access, civic routes, quieter residential pockets and capital-region land demand.", ["Gandhinagar", "Dhanap", "Pethapur", "Kudasan"], ["Palaj", "IIT Gandhinagar side", "Gandhinagar residential corridor"], "Palaj connects with Gandhinagar city roads, IIT Gandhinagar-side movement and nearby Dhanap, Pethapur and Kudasan pockets.", [], { rolloutPhase: 18 }],
   ["gandhinagar", "Dhanap", "Gandhinagar", "A Gandhinagar-side land and residential pocket for buyers comparing quieter property options near the capital city and nearby north-side areas.", ["Gandhinagar", "Pundrasan", "Pethapur", "Lavarpur"], ["Dhanap", "Gandhinagar side", "North Gandhinagar approach"], "Dhanap connects with Gandhinagar city access roads and nearby north-side localities such as Pundrasan, Pethapur and Lavarpur.", [], { rolloutPhase: 17 }],
   ["gandhinagar", "GIFT City", "Gandhinagar", "A premium business district and investment corridor for buyers looking near offices, finance-sector growth and modern infrastructure.", ["Kudasan", "Raysan", "Sargasan", "PDPU Road"], ["GIFT City", "GIFT City Club", "PDPU", "Sabarmati Riverfront GIFT Link"], "GIFT City connects to Gandhinagar, Ahmedabad airport, SG Highway and the expanding metro corridor."],
   ["north-gujarat", "Dehgam", "Gujarat", "A north Gujarat market to prepare for future land, residential and plotted inventory once listings and local verification are available.", ["Gandhinagar", "Mahudi", "Vijapur", "Prantij"], ["Dehgam", "North Gujarat corridor", "Gandhinagar-side routes"], "Dehgam connects with Gandhinagar-side routes and north Gujarat road movement.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
@@ -151,7 +151,7 @@ const localityDefinitions = [
   ["ahmedabad", "Bagodara", "Ahmedabad", "A highway-side Ahmedabad outskirts location prepared for future land and industrial inventory after verification.", ["Bavla", "Dholera", "Changodar", "Viramgam"], ["Bagodara", "Highway-side locality", "Ahmedabad outskirts"], "Bagodara connects with Bavla, Dholera-side movement, Changodar and wider highway routes.", [], { rolloutPhase: 17, verificationNote: "No active verified inventory during Phase 17." }],
   ["ahmedabad", "Bopal", "Ahmedabad", "A mature west Ahmedabad residential market with apartments, shops and family-friendly access to schools and daily services.", ["South Bopal", "Ghuma", "Shela", "Ambli"], ["Bopal Circle", "SP Ring Road", "Ambli Road"], "Bopal connects to South Bopal, Ambli, SG Highway and SP Ring Road."],
   ["ahmedabad", "South Bopal", "Ahmedabad", "A premium residential belt known for gated communities, modern apartments and strong ring-road connectivity.", ["Bopal", "Shela", "Ghuma", "Shantipura"], ["South Bopal Extension", "SP Ring Road", "Club 07 Road"], "South Bopal has quick access to SP Ring Road, Shela, Shantipura, Bopal and SG Highway."],
-  ["ahmedabad", "Shela", "Ahmedabad", "A high-growth south-west Ahmedabad location with new apartments, plotted schemes and good access to education and clubs.", ["South Bopal", "Ghuma", "Shantipura", "Sanathal"], ["Shela Road", "Club 07", "SP Ring Road"], "Shela connects with South Bopal, Sanathal, SP Ring Road and SG Highway via Ambli and Bopal routes."],
+  ["ahmedabad", "Shela", "Ahmedabad", "A high-growth south-west Ahmedabad location with new apartments, plotted schemes, family housing demand, school access and club-side lifestyle pockets near the Bopal-South Bopal belt.", ["South Bopal", "Ghuma", "Shantipura", "Sanathal"], ["Shela Road", "Club 07", "SP Ring Road"], "Shela connects with South Bopal, Sanathal, SP Ring Road and SG Highway via Ambli and Bopal routes."],
   ["ahmedabad", "Ghuma", "Ahmedabad", "A residential locality near Bopal and South Bopal with practical apartment and plot options for end users.", ["Bopal", "South Bopal", "Shela", "Manipur"], ["Ghuma Road", "Bopal-Ghuma Road", "SP Ring Road"], "Ghuma links with Bopal, South Bopal, Shela and Sanand-side routes."],
   ["ahmedabad", "Science City", "Ahmedabad", "A popular west Ahmedabad address for families who want apartment living near schools, hospitals and Science City Road.", ["Sola", "Thaltej", "Gota", "S.G. Highway"], ["Science City", "Science City Road", "Sola Civil Hospital"], "Science City connects to Sola, Thaltej, SG Highway, Gota and SP Ring Road."],
   ["ahmedabad", "Thaltej", "Ahmedabad", "A premium west Ahmedabad locality with established housing, offices, hospitals and fast access to SG Highway.", ["Science City", "Sola", "Bodakdev", "S.G. Highway"], ["Thaltej Cross Road", "SG Highway", "Zydus Hospital"], "Thaltej offers metro, SG Highway and Sindhu Bhavan side connectivity."],

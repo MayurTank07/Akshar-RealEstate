@@ -11,12 +11,12 @@ const API_BASE_URL =
   "https://akshar-realestate-backend.onrender.com/api";
 
 const STATIC_PAGES = [
-  { path: "/", lastmod: "2026-07-22" },
-  { path: "/properties", lastmod: "2026-07-22" },
-  { path: "/new-projects", lastmod: "2026-07-22" },
-  { path: "/about", lastmod: "2026-07-22" },
-  { path: "/services", lastmod: "2026-07-22" },
-  { path: "/contact", lastmod: "2026-07-22" },
+  { path: "/", lastmod: "2026-08-17" },
+  { path: "/properties", lastmod: "2026-08-17" },
+  { path: "/new-projects", lastmod: "2026-08-17" },
+  { path: "/about", lastmod: "2026-08-17" },
+  { path: "/services", lastmod: "2026-08-17" },
+  { path: "/contact", lastmod: "2026-08-17" },
 ];
 
 const SITEMAP_FILES = [
@@ -27,6 +27,8 @@ const SITEMAP_FILES = [
   "sitemap-blog.xml",
 ];
 const SITEMAP_PROPERTY_STATUSES = ["active", "published", "available", "reserved"];
+const PROPERTY_FETCH_LIMIT = 100;
+const MAX_PROPERTY_PAGES = 25;
 
 function escapeXml(value) {
   return String(value || "")
@@ -48,10 +50,17 @@ function cleanDate(value) {
 }
 
 async function fetchPublicProperties() {
-  const response = await fetch(`${API_BASE_URL}/public/properties?limit=100&sort=updatedAt&order=desc`);
-  if (!response.ok) return [];
-  const body = await response.json();
-  return Array.isArray(body?.data) ? body.data : [];
+  const properties = [];
+  for (let page = 1; page <= MAX_PROPERTY_PAGES; page += 1) {
+    const response = await fetch(`${API_BASE_URL}/public/properties?limit=${PROPERTY_FETCH_LIMIT}&page=${page}&sort=updatedAt&order=desc`);
+    if (!response.ok) break;
+    const body = await response.json();
+    const rows = Array.isArray(body?.data) ? body.data : [];
+    properties.push(...rows);
+    const totalPages = Number(body?.pagination?.pages || 1);
+    if (!rows.length || page >= totalPages) break;
+  }
+  return properties;
 }
 
 async function fetchPublicBlogs() {

@@ -32,11 +32,48 @@ function propertyType(property) {
     .trim() || "Property";
 }
 
+function priceLabel(property) {
+  const amount = Number(property.priceAmount || property.price || 0);
+  if (amount > 0) {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+  return cleanPropertyText(property.price || "");
+}
+
+function primaryAreaLabel(property) {
+  if (property.area) return property.area;
+  if (property.plotArea) return `${property.plotArea} sq.ft plot area`;
+  if (property.landArea) return property.landArea;
+  if (property.carpetArea) return `${property.carpetArea} sq.ft carpet area`;
+  if (property.builtUpArea) return `${property.builtUpArea} sq.ft built-up area`;
+  if (property.sqft) return `${property.sqft} sq.ft`;
+  if (property.measurement?.value) return `${property.measurement.value} ${property.measurement.unit || "sq.ft"}`;
+  return "";
+}
+
+function generatedMetaDescription(property, { title, type, location }) {
+  const price = priceLabel(property);
+  const area = primaryAreaLabel(property);
+  const facts = [area, price && `priced at ${price}`].filter(Boolean).join(", ");
+  return `${title || type} in ${location}${facts ? ` with ${facts}` : ""}. View photos, locality details, supervisor contact and similar active listings from ${SITE_NAME}.`;
+}
+
 function storedSeoTitle(property) {
   const title = cleanPropertyText(property.seoTitle || property.seo?.metaTitle || "");
   if (!title) return "";
   if (isUrlLike(title) || /\b(sale|rent)\s+for\s+(sale|rent)\b/i.test(title)) return "";
   return title;
+}
+
+function storedMetaDescription(property) {
+  const description = cleanPropertyText(property.metaDescription || property.seo?.metaDescription || "");
+  if (!description) return "";
+  if (/view price,\s*(carpet area,\s*)?amenities,\s*photos,\s*location and contact details/i.test(description)) return "";
+  return description;
 }
 
 export function buildPropertySeo(property) {
@@ -46,8 +83,8 @@ export function buildPropertySeo(property) {
   const dealType = property.dealType || "Buy";
   const canonical = property.canonicalUrl || `${window.location.origin}/property/${property.slug || property._id || property.id || ""}`;
   const metaTitle = compact(storedSeoTitle(property) || `${compact(title, 32)} | ${type} in ${compact(location, 24)} | Ahmedabad Broker`, 68);
-  const metaDescription = compact(property.metaDescription || property.seo?.metaDescription ||
-    `Explore ${title}, a verified ${type.toLowerCase()} in ${location}. Get Ahmedabad-focused broker-assisted ${dealType.toLowerCase()} guidance, pricing support, and private consultation from ${SITE_NAME}.`,
+  const metaDescription = compact(storedMetaDescription(property) ||
+    generatedMetaDescription(property, { title, type, location }),
     160
   );
   const keywords = [

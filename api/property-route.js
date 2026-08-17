@@ -28,6 +28,14 @@ function compact(value, limit) {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
 }
 
+function titleCase(value) {
+  return String(value || "")
+    .replace(/[-_]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 function canonicalPath(slug) {
   return `/property/${slug}`;
 }
@@ -249,10 +257,20 @@ function storedSeoTitle(property) {
   return title;
 }
 
+function storedMetaDescription(property) {
+  const description = cleanPropertyText(property.metaDescription || property.seo?.metaDescription || "");
+  if (!description) return "";
+  if (/view price,\s*(carpet area,\s*)?amenities,\s*photos,\s*location and contact details/i.test(description)) return "";
+  return description;
+}
+
 function propertyMetaDescription(property) {
+  const price = priceLabel(property);
+  const area = primaryAreaLabel(property);
+  const details = [area, price && `priced at ${price}`].filter(Boolean).join(", ");
   return compact(
-    property.metaDescription ||
-      `Explore this ${propertyKind(property).toLowerCase()} for ${listingAction(property).toLowerCase()} in ${propertyLocation(property) || "Gujarat"}. View price, area, amenities, photos, map, supervisor contact and similar properties.`,
+    storedMetaDescription(property) ||
+      `${propertyKind(property)} for ${listingAction(property).toLowerCase()} in ${propertyLocation(property) || "Gujarat"}${details ? ` with ${details}` : ""}. View photos, location details, supervisor contact and similar active listings.`,
     160
   );
 }
@@ -281,6 +299,77 @@ function formatDate(value) {
 function formatArea(value, label) {
   if (!value) return "";
   return `${value} sq.ft ${label}`;
+}
+
+function priceLabel(property) {
+  const amount = Number(property.priceAmount || property.price || 0);
+  if (amount > 0) {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+  return cleanPropertyText(property.price || "");
+}
+
+function primaryAreaLabel(property) {
+  if (property.area) return property.area;
+  if (property.plotArea) return `${property.plotArea} sq.ft plot area`;
+  if (property.landArea) return property.landArea;
+  if (property.carpetArea) return `${property.carpetArea} sq.ft carpet area`;
+  if (property.builtUpArea) return `${property.builtUpArea} sq.ft built-up area`;
+  if (property.sqft) return `${property.sqft} sq.ft`;
+  if (property.measurement?.value) return `${property.measurement.value} ${property.measurement.unit || "sq.ft"}`;
+  return "";
+}
+
+function localMarketContext(property) {
+  const location = propertyLocation(property);
+  const key = slugifyLocation(location);
+  if (key.includes("palaj")) {
+    return "Palaj is a Gandhinagar growth pocket for buyers comparing plotted and residential options near IIT Gandhinagar-side movement, Dhanap, Pethapur, Kudasan and city access roads.";
+  }
+  if (key.includes("kudasan")) {
+    return "Kudasan is preferred for apartment and commercial demand between Gandhinagar, GIFT City, Sargasan and Infocity-side routes.";
+  }
+  if (key.includes("shela")) {
+    return "Shela is a south-west Ahmedabad growth location with apartment, plotted and family-housing demand near South Bopal, SP Ring Road and club-side corridors.";
+  }
+  if (key.includes("ahmedabad")) {
+    return "Ahmedabad offers mature residential, commercial and plotted property demand across west, north, south and ring-road corridors.";
+  }
+  if (key.includes("gandhinagar")) {
+    return "Gandhinagar attracts buyers looking near civic offices, education hubs, GIFT City access, planned sectors and emerging residential pockets.";
+  }
+  return `${location || "This Gujarat location"} is covered by Akshar Estate for verified property enquiries, supervisor contact and active inventory updates.`;
+}
+
+function generatedPropertyDescription(property) {
+  const kind = propertyKind(property);
+  const action = listingAction(property).toLowerCase();
+  const location = propertyLocation(property) || "Gujarat";
+  const price = priceLabel(property);
+  const area = primaryAreaLabel(property);
+  const mediaLabel = propertyImages(property).some((image) => image.url !== PROPERTY_IMAGE_FALLBACK)
+    ? "uploaded property photos"
+    : "a placeholder image while fresh listing photos are updated";
+  const facts = [
+    area && `a listed area of ${area}`,
+    price && `a quoted price of ${price}`,
+    property.propertyStatus && `${property.propertyStatus.toLowerCase()} possession/status information`,
+    property.nearbyLandmarks && `nearby landmark context including ${property.nearbyLandmarks}`,
+  ].filter(Boolean);
+  const factSentence = facts.length
+    ? ` The listing includes ${facts.join(", ")}.`
+    : " The Akshar Estate team can confirm current price, exact area, possession and site details on enquiry.";
+  return `${titleCase(kind)} for ${action} in ${location} is an active Akshar Estate listing for buyers comparing verified options in this micro-market.${factSentence} ${localMarketContext(property)} The page includes ${mediaLabel}, canonical property details, contact options and links to similar active properties.`;
+}
+
+function publicDescription(property) {
+  const saved = cleanPropertyText(property.description);
+  if (saved.length >= 80) return saved;
+  return generatedPropertyDescription(property);
 }
 
 function mapLabel(property) {
@@ -404,7 +493,7 @@ function buildInternalLinks(property, related = {}) {
 
 function buildInitialPropertyPage(property, related = {}) {
   const title = propertyPageTitle(property);
-  const description = property.description || propertyMetaDescription(property);
+  const description = publicDescription(property);
   const images = propertyImages(property);
   const broker = property.broker || {};
   const links = buildInternalLinks(property, related);
@@ -416,6 +505,31 @@ function buildInitialPropertyPage(property, related = {}) {
       ? `<aside style="border:1px solid #e2e8f0;background:#f8fafc;color:#475569;padding:16px;border-radius:10px;margin:20px 0"><strong>This property is currently inactive.</strong><p style="margin:8px 0 0">It is not shown in public listing results while the Akshar Estate team reviews availability.</p></aside>`
       : "";
   const lastUpdated = formatDate(property.lastModifiedAt || property.updatedAt);
+  const area = primaryAreaLabel(property);
+  const price = priceLabel(property);
+  const listingFacts = detailList([
+    ["Property status", status],
+    ["Last updated", lastUpdated],
+    ["Property type", propertyKind(property)],
+    ["Listing type", listingAction(property)],
+    ["Location", propertyLocation(property)],
+    ["Price", price || property.price || "Price on request"],
+    ["Primary area", area || "Available on request"],
+    ["Property code", property.propertyCode],
+  ]);
+  const plotDetails = /plot|land/i.test(propertyKind(property))
+    ? section("Plot Details", `<p>${escapeHtml(localMarketContext(property))}</p>${detailList([
+        ["Plot area", property.area || (property.plotArea ? `${property.plotArea} sq.ft` : "")],
+        ["Plot size", property.plotSize],
+        ["Road access", property.roadAccess || "Confirm current road access with Akshar Estate"],
+        ["Facing", property.facing],
+        ["Zoning", property.zoning],
+        ["Water availability", property.waterAvailability],
+        ["Electricity availability", property.electricityAvailability],
+        ["Ownership", property.ownership],
+        ["Legal notes", property.legalNotes],
+      ])}`)
+    : "";
 
   return `
     <main class="akshar-property-seo" style="max-width:1120px;margin:0 auto;padding:32px 20px;font-family:Arial,sans-serif;line-height:1.6;color:#0f172a">
@@ -430,16 +544,12 @@ function buildInitialPropertyPage(property, related = {}) {
         </header>
         ${lifecycleNotice}
         ${images.length ? `<figure><img ${imageAttributes(images[0], { width: 1600, height: 1000, widths: [640, 960, 1280, 1600], sizes: "(max-width: 768px) 100vw, 1120px", loading: "eager", fetchPriority: "high" })} style="width:100%;height:auto;border-radius:12px" /><figcaption>${escapeHtml(images[0].alt)}</figcaption></figure>` : ""}
-        ${section("Property Overview", `<p>${escapeHtml(description)}</p>${detailList([
-          ["Property status", status],
-          ["Last updated", lastUpdated],
-          ["Property type", propertyKind(property)],
-          ["Listing type", listingAction(property)],
-        ])}`)}
-        ${section("Price", `<p>${escapeHtml(property.price || "Price on request")}</p>`)}
-        ${section("Carpet Area", `<p>${escapeHtml(formatArea(property.carpetArea, "carpet area") || property.area || "Available on request")}</p>`)}
+        ${section("Property Overview", `<p>${escapeHtml(description)}</p>${listingFacts}`)}
+        ${plotDetails}
+        ${section("Price", `<p>${escapeHtml(price || property.price || "Price on request")}</p>`)}
+        ${section("Carpet Area", `<p>${escapeHtml(formatArea(property.carpetArea, "carpet area") || "Available on request")}</p>`)}
         ${section("Built-up Area", `<p>${escapeHtml(formatArea(property.builtUpArea, "built-up area") || (property.sqft ? `${property.sqft} sq.ft` : "Available on request"))}</p>`)}
-        ${section("Property Description", `<p>${escapeHtml(description)}</p>`)}
+        ${section("Local Property Context", `<p>${escapeHtml(localMarketContext(property))}</p>`)}
         ${section("Amenities", property.amenities?.length ? linkList(property.amenities.map((item) => ({ label: `${item} properties in ${property.location || property.city || "Gujarat"}`, href: localityLandingHref(property.city, property.location) }))) : "<p>Amenities available on request.</p>")}
         ${section("Furnishing", `<p>${escapeHtml(property.furnishing || "Available on request")}</p>`)}
         ${section("Floor Details", `<p>${escapeHtml([property.floor || property.floorNumber, property.totalFloors ? `Total floors: ${property.totalFloors}` : ""].filter(Boolean).join(", ") || "Available on request")}</p>`)}
