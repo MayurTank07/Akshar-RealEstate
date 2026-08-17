@@ -21,21 +21,24 @@ import { trackAnalyticsEvent } from "../utils/analytics";
 
 const gujaratLocations = [
   "Ahmedabad",
-  "Surat",
-  "Vadodara",
-  "Rajkot",
   "Gandhinagar",
-  "Bhavnagar",
-  "Jamnagar",
-  "Junagadh",
+  "Kudasan, Gandhinagar",
+  "Sargasan, Gandhinagar",
+  "Palaj, Gandhinagar",
+  "Dhanap, Gandhinagar",
+  "GIFT City, Gandhinagar",
+  "Bopal, Ahmedabad",
+  "South Bopal, Ahmedabad",
+  "Shela, Ahmedabad",
+  "Memnagar, Ahmedabad",
+  "Chandkheda, Ahmedabad",
+  "Ognaj, Ahmedabad",
+  "Viramgam, Ahmedabad",
   "Anand",
-  "Bharuch",
-  "Vesu, Surat",
-  "Bodakdev, Ahmedabad",
-  "Alkapuri, Vadodara",
-  "Gift City, Gandhinagar",
-  "Kalawad Road, Rajkot",
 ];
+
+const intentOptions = ["Buy", "Rent", "Sell", "Invest"];
+const timelineOptions = ["Immediately", "Within 30 days", "1-3 months", "Just exploring"];
 
 const steps = [
   { id: 1, label: "Basic Details" },
@@ -56,6 +59,8 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
     location: "",
     budget: 50,
     type: "Apartment",
+    intent: "Buy",
+    timeline: "Within 30 days",
   });
 
   const locationOptions = useMemo(() => gujaratLocations, []);
@@ -103,6 +108,14 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
       preferredLocation: form.location.trim(),
       propertyType: form.type,
       budgetLabel: getActualBudget(form.budget),
+      source: "website",
+      message: [
+        `Intent: ${form.intent}`,
+        `Timeline: ${form.timeline}`,
+        `Budget: Up to ${getActualBudget(form.budget)}`,
+        `Property type: ${form.type}`,
+        `Preferred location: ${form.location.trim()}`,
+      ].join("\n"),
     };
 
     try {
@@ -224,7 +237,7 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
                       value={form.location}
                       onChange={update}
                       list="gujarat-location-options"
-                      placeholder="Type or select Ahmedabad, Surat, Vadodara..."
+                      placeholder="Type or select Gandhinagar, Kudasan, Shela..."
                       className={`wf-input pl-10 ${errors.location ? "border-red-500" : ""}`}
                     />
                     <datalist id="gujarat-location-options">
@@ -234,6 +247,20 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
                     </datalist>
                   </div>
                   {errors.location && <p className="mt-1 text-xs font-bold text-red-500">{errors.location}</p>}
+                </div>
+
+                <div>
+                  <label className="wf-label">Requirement</label>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {intentOptions.map((intent) => (
+                      <SegmentButton
+                        key={intent}
+                        label={intent}
+                        active={form.intent === intent}
+                        onClick={() => setForm((current) => ({ ...current, intent }))}
+                      />
+                    ))}
+                  </div>
                 </div>
               </section>
             )}
@@ -270,13 +297,27 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
                 <div>
                   <label className="wf-label">Property Type</label>
                   <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                    {["Apartment", "Villa", "Plot", "Bungalow"].map((type) => (
+                    {["Apartment", "Villa", "Plot", "Commercial"].map((type) => (
                       <TypeCard
                         key={type}
                         icon={type === "Villa" ? <Home /> : type === "Apartment" ? <Building2 /> : type === "Plot" ? <Mountain /> : <TreePine />}
                         label={type}
                         active={form.type === type}
                         onClick={() => setForm((current) => ({ ...current, type }))}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="wf-label">Timeline</label>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {timelineOptions.map((timeline) => (
+                      <SegmentButton
+                        key={timeline}
+                        label={timeline}
+                        active={form.timeline === timeline}
+                        onClick={() => setForm((current) => ({ ...current, timeline }))}
                       />
                     ))}
                   </div>
@@ -299,6 +340,8 @@ export default function PropertyForm({ isModal = false, onSubmitted }) {
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <ReviewItem label="Max Budget" value={getActualBudget(form.budget)} />
                     <ReviewItem label="Type" value={form.type} />
+                    <ReviewItem label="Requirement" value={form.intent} />
+                    <ReviewItem label="Timeline" value={form.timeline} />
                   </div>
                 </ReviewSection>
               </section>
@@ -397,6 +440,22 @@ function TypeCard({ icon, label, active, onClick }) {
     >
       <div className={`mb-2 transition-transform ${active ? "scale-110" : ""}`}>{icon}</div>
       <span className="text-xs font-extrabold">{label}</span>
+    </button>
+  );
+}
+
+function SegmentButton({ label, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-h-11 rounded-xl border px-3 py-2 text-sm font-extrabold transition ${
+        active
+          ? "border-blue-600 bg-blue-600 text-white shadow-sm"
+          : "border-slate-200 bg-white text-slate-500 hover:border-blue-200 hover:bg-blue-50"
+      }`}
+    >
+      {label}
     </button>
   );
 }
