@@ -89,6 +89,55 @@
     background: rgba(37, 99, 235, 0.18);
     color: var(--wf-ink);
   }
+
+  .akshar-video-carousel {
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    overscroll-behavior-inline: contain;
+  }
+
+  .akshar-video-carousel::-webkit-scrollbar {
+    display: none;
+  }
+
+  .akshar-video-frame video {
+    background: #020617;
+    object-fit: contain;
+  }
+
+  .akshar-video-frame video:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    object-fit: contain;
+  }
+
+  .akshar-video-frame video:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    object-fit: contain;
+  }
+
+  .akshar-video-player video {
+    background: #000;
+    object-fit: contain;
+  }
+
+  .akshar-video-player video:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    object-fit: contain;
+  }
+
+  .akshar-video-player video:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    object-fit: contain;
+  }
 }
 
 @keyframes akshar-loader {

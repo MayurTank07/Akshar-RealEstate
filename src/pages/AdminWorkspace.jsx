@@ -6348,6 +6348,19 @@ function PageEditsSection() {
       setSaving(false);
     }
   };
+  const uploadHomeVideo = async (file) => {
+    setSaving(true);
+    setError("");
+    try {
+      return await staffApi.uploadHomeVideo(file);
+    } finally {
+      setSaving(false);
+    }
+  };
+  const deleteUploadedHomeVideo = async (filePath) => {
+    if (!filePath) return;
+    await staffApi.deleteHomeVideoUpload(filePath);
+  };
   const save = async () => {
     setSaving(true);
     setMessage("");
@@ -6387,7 +6400,7 @@ function PageEditsSection() {
               ))}
             </div>
           </div>
-          {activeTab === "home" && <HomeCMSForm content={content} homeSections={homeSectionsContent} updateLocal={updateLocal} updateHomeSections={updateHomeSections} uploadImage={uploadContentImage} disabled={saving} />}
+          {activeTab === "home" && <HomeCMSForm content={content} homeSections={homeSectionsContent} updateLocal={updateLocal} updateHomeSections={updateHomeSections} uploadImage={uploadContentImage} uploadVideo={uploadHomeVideo} deleteUploadedVideo={deleteUploadedHomeVideo} disabled={saving} onMessage={setMessage} onError={setError} />}
           {activeTab === "about" && <AboutCMSForm value={aboutContent} onChange={updateAbout} onUpload={uploadAboutImage} disabled={saving} />}
           {activeTab === "contact" && <ContactCMSForm value={contactContent} onChange={updateContact} disabled={saving} />}
           {activeTab === "navbar" && <NavbarManagement value={{ navbarAreas, topLists }} onChange={updateContentKey} />}
@@ -6564,7 +6577,27 @@ function SettingsSection() {
   );
 }
 
-function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, uploadImage, disabled }) {
+const HOME_VIDEO_MAX_BYTES = 100 * 1024 * 1024;
+const HOME_VIDEO_ACCEPT = ".mp4,.webm,.mov,.m4v,video/mp4,video/webm,video/quicktime";
+
+function isLocalHomeVideo(value = "") {
+  try {
+    return new URL(value).pathname.startsWith("/uploads/videos/");
+  } catch {
+    return String(value || "").startsWith("/uploads/videos/");
+  }
+}
+
+function homeVideoMode(item = {}) {
+  if (item.videoType === "upload" || item.storage === "local" || item.filePath || isLocalHomeVideo(item.url)) return "upload";
+  return "youtube";
+}
+
+function homeVideoSourceLabel(item = {}) {
+  return homeVideoMode(item) === "upload" ? "Uploaded video" : "YouTube link";
+}
+
+function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, uploadImage, uploadVideo, deleteUploadedVideo, disabled, onMessage, onError }) {
   const [editingHomeItem, setEditingHomeItem] = useState(null);
   const item = (key) => content.find((entry) => entry.key === key);
   const field = (key) => item(key) || { _id: key, value: "" };
@@ -6584,6 +6617,9 @@ function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, u
   const removeSectionItem = (key, index) => {
     const current = section(key);
     const items = Array.isArray(current.items) ? current.items : [];
+    if (key === "videos" && homeVideoMode(items[index]) === "upload") {
+      onMessage?.("Uploaded video removed from the list. Click Save Page Edits to delete the backend file.");
+    }
     updateSection(key, { items: items.filter((_, itemIndex) => itemIndex !== index) });
   };
   const openHomeItemEditor = (key, index = null) => {
@@ -6622,7 +6658,8 @@ function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, u
             { label: "Title", render: (video) => video.title || "-" },
             { label: "Location", render: (video) => video.location || "-" },
             { label: "Overlay", render: (video) => video.overlay || "-" },
-            { label: "Video Link", render: (video) => video.url || "-" },
+            { label: "Video Source", render: (video) => homeVideoSourceLabel(video) },
+            { label: "Video", render: (video) => video.filename || video.url || "-" },
             { label: "Status", render: (video) => <StatusBadge active={video.enabled !== false} /> },
           ]}
           onEdit={(index) => openHomeItemEditor("videos", index)}
@@ -6688,6 +6725,11 @@ function HomeCMSForm({ content, homeSections, updateLocal, updateHomeSections, u
           editor={editingHomeItem}
           onClose={() => setEditingHomeItem(null)}
           onSave={(nextItem) => saveSectionItem(editingHomeItem.key, editingHomeItem.index, nextItem)}
+          onUploadVideo={uploadVideo}
+          onDeleteUploadedVideo={deleteUploadedVideo}
+          disabled={disabled}
+          onMessage={onMessage}
+          onError={onError}
         />
       )}
     </div>
@@ -6723,7 +6765,7 @@ function HomeSectionEditor({ title, section, onChange, addLabel, onAdd, children
 
 function createHomeSectionItem(key) {
   const defaults = {
-    videos: { title: "", location: "", image: "/home-video-1.svg", overlay: "", button: "Contact Agent", url: "", enabled: true },
+    videos: { title: "", location: "", image: "/home-video-1.svg", overlay: "", button: "Contact Agent", url: "", videoType: "youtube", filePath: "", filename: "", enabled: true },
     agents: { name: "", city: "", image: "/home-agent-1.svg", description: "", linkText: "View Agent Profile", linkUrl: "", enabled: true },
     testimonials: { name: "", role: "", image: "/home-testimonial-1.svg", text: "", rating: 5, enabled: true },
     stats: { value: "", label: "", enabled: true },
@@ -6788,13 +6830,93 @@ function StatusBadge({ active }) {
   );
 }
 
-function HomeItemModal({ editor, onClose, onSave }) {
-  const [draft, setDraft] = useState(() => ({ ...createHomeSectionItem(editor.key), ...(editor.item || {}) }));
+function HomeItemModal({ editor, onClose, onSave, onUploadVideo, onDeleteUploadedVideo, disabled, onMessage, onError }) {
+  const initialDraft = { ...createHomeSectionItem(editor.key), ...(editor.item || {}) };
+  const originalFilePath = homeVideoMode(initialDraft) === "upload" ? initialDraft.filePath || initialDraft.url || "" : "";
+  const [draft, setDraft] = useState(initialDraft);
+  const [videoMode, setVideoMode] = useState(() => homeVideoMode(initialDraft));
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState("");
+  const [uploadError, setUploadError] = useState("");
   const update = (patch) => setDraft((current) => ({ ...current, ...patch }));
   const title = `${typeof editor.index === "number" ? "Edit" : "Add"} ${homeItemLabel(editor.key)}`;
 
+  const cleanupUnsavedUpload = async (filePath) => {
+    if (!filePath || filePath === originalFilePath || !onDeleteUploadedVideo) return;
+    await onDeleteUploadedVideo(filePath);
+  };
+
+  const handleVideoLinkChange = async (event) => {
+    const value = event.target.value;
+    setUploadError("");
+    setUploadStatus("");
+    if ((draft.filePath || draft.url) && (draft.filePath || draft.url) !== originalFilePath && homeVideoMode(draft) === "upload") {
+      try {
+        await cleanupUnsavedUpload(draft.filePath || draft.url);
+      } catch (err) {
+        setUploadError(err.message || "Unable to remove the uploaded video.");
+        return;
+      }
+    }
+    update({ videoType: "youtube", storage: "", url: value, filePath: "", filename: "", mimeType: "", size: 0, uploadedAt: "" });
+    setVideoMode("youtube");
+  };
+
+  const handleVideoFile = async (file) => {
+    if (!file) return;
+    setUploadError("");
+    setUploadStatus("");
+    if (!file.type?.startsWith("video/")) {
+      setUploadError("Please select a valid video file.");
+      return;
+    }
+    if (file.size > HOME_VIDEO_MAX_BYTES) {
+      setUploadError("Video is too large. Maximum allowed size is 100MB.");
+      return;
+    }
+    setUploadingVideo(true);
+    try {
+      const previousUnsaved = draft.filePath || draft.url;
+      const response = await onUploadVideo(file);
+      const uploaded = response.data || {};
+      if (previousUnsaved && previousUnsaved !== originalFilePath) {
+        await cleanupUnsavedUpload(previousUnsaved);
+      }
+      update({
+        videoType: "upload",
+        storage: "local",
+        url: uploaded.url || "",
+        filePath: uploaded.filePath || "",
+        filename: uploaded.filename || file.name,
+        originalName: uploaded.originalName || file.name,
+        mimeType: uploaded.mimeType || file.type,
+        size: uploaded.size || file.size,
+        uploadedAt: uploaded.uploadedAt || new Date().toISOString(),
+      });
+      setVideoMode("upload");
+      setUploadStatus("Video uploaded. Click Save Item, then Save Page Edits to publish it.");
+      onMessage?.("Video uploaded. Save the item and page edits to keep it.");
+    } catch (err) {
+      const message = err.message || "Unable to upload video.";
+      setUploadError(message);
+      onError?.(message);
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
+  const closeModal = async () => {
+    try {
+      await cleanupUnsavedUpload(draft.filePath || draft.url);
+    } catch {
+      // The backend update path still prevents deleting files outside /uploads/videos.
+    }
+    onClose();
+  };
+
   const submit = (event) => {
     event.preventDefault();
+    if (uploadingVideo) return;
     onSave({ ...draft, rating: editor.key === "testimonials" ? Number(draft.rating || 5) : draft.rating });
   };
 
@@ -6806,7 +6928,7 @@ function HomeItemModal({ editor, onClose, onSave }) {
             <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-600">Home CMS</p>
             <h3 className="mt-1 text-2xl font-black text-slate-950">{title}</h3>
           </div>
-          <button type="button" onClick={onClose} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Close">
+          <button type="button" onClick={closeModal} className="grid h-10 w-10 place-items-center rounded-xl border border-slate-200 text-slate-500 transition hover:bg-slate-50" aria-label="Close">
             <X size={18} />
           </button>
         </div>
@@ -6816,7 +6938,32 @@ function HomeItemModal({ editor, onClose, onSave }) {
               <Field label="Title" name="home-video-title" value={draft.title || ""} onChange={(event) => update({ title: event.target.value })} placeholder="Bungalow for Sale" />
               <Field label="Location" name="home-video-location" value={draft.location || ""} onChange={(event) => update({ location: event.target.value })} placeholder="Karali, Vadodara" />
               <Field label="Image URL" name="home-video-image" value={draft.image || ""} onChange={(event) => update({ image: event.target.value })} placeholder="/home-video-1.svg" />
-              <Field label="Video Link" name="home-video-url" value={draft.url || ""} onChange={(event) => update({ url: event.target.value })} placeholder="https://youtube.com/..." />
+              <div>
+                <Field label="Video Link" name="home-video-url" value={videoMode === "youtube" ? draft.url || "" : ""} onChange={handleVideoLinkChange} placeholder="https://youtube.com/..." helperText="Paste YouTube link here, or upload from device on the right." />
+              </div>
+              <div>
+                <span className="wf-label">Upload From Device</span>
+                <div className={`rounded-xl border px-4 py-3 ${videoMode === "upload" ? "border-blue-200 bg-blue-50/60" : "border-slate-200 bg-slate-50"}`}>
+                  <label className={`wf-btn wf-btn-secondary w-full justify-center ${disabled || uploadingVideo ? "pointer-events-none opacity-60" : "cursor-pointer"}`}>
+                    <Upload size={16} />
+                    {uploadingVideo ? "Uploading..." : draft.filename ? "Replace Video" : "Choose Video"}
+                    <input type="file" accept={HOME_VIDEO_ACCEPT} className="hidden" disabled={disabled || uploadingVideo} onChange={(event) => { handleVideoFile(event.target.files?.[0]); event.target.value = ""; }} />
+                  </label>
+                  <p className="mt-2 text-xs font-semibold text-slate-500">MP4, WebM, MOV, M4V up to 100MB. Uploading stores video through backend.</p>
+                  {draft.filename && <p className="mt-2 break-all text-xs font-bold text-blue-700">{draft.filename}</p>}
+                </div>
+              </div>
+              {videoMode === "upload" && draft.url && (
+                <div className="md:col-span-2">
+                  <span className="wf-label">Uploaded Video Preview</span>
+                  <video src={draft.url} controls preload="metadata" className="h-64 w-full rounded-xl bg-slate-950 object-contain" />
+                </div>
+              )}
+              {(uploadError || uploadStatus) && (
+                <div className={`md:col-span-2 rounded-xl border px-4 py-3 text-sm font-bold ${uploadError ? "border-red-100 bg-red-50 text-red-700" : "border-emerald-100 bg-emerald-50 text-emerald-700"}`}>
+                  {uploadError || uploadStatus}
+                </div>
+              )}
               <Field label="Overlay Text" name="home-video-overlay" value={draft.overlay || ""} onChange={(event) => update({ overlay: event.target.value })} placeholder="Property video" />
               <Field label="Button Text" name="home-video-button" value={draft.button || ""} onChange={(event) => update({ button: event.target.value })} placeholder="Contact Agent" />
             </>
@@ -6855,8 +7002,8 @@ function HomeItemModal({ editor, onClose, onSave }) {
           <StatusSelect value={draft.enabled !== false} onChange={(enabled) => update({ enabled })} />
         </div>
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button type="button" className="wf-btn wf-btn-secondary" onClick={onClose}>Cancel</button>
-          <button type="submit" className="wf-btn wf-btn-primary"><Save size={16} /> Save Item</button>
+          <button type="button" className="wf-btn wf-btn-secondary" onClick={closeModal}>Cancel</button>
+          <button type="submit" className="wf-btn wf-btn-primary" disabled={uploadingVideo}><Save size={16} /> {uploadingVideo ? "Uploading..." : "Save Item"}</button>
         </div>
       </form>
     </div>,

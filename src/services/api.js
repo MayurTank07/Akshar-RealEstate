@@ -190,6 +190,12 @@ export const staffApi = {
   deleteUser: (id) => request(`/admin/users/${id}`, { method: "DELETE", authRequired: true }),
   usersExportUrl: (format, params = {}) => `${API_BASE_URL}/admin/users/export${toQueryString({ ...params, format })}`,
   updateContent: (id, value) => request(`/admin/content/${id}`, { method: "PUT", body: JSON.stringify({ value }), authRequired: true }),
+  uploadHomeVideo: (file) => {
+    const formData = new FormData();
+    formData.append("video", file);
+    return request("/admin/uploads/home-video", { method: "POST", body: formData, authRequired: true });
+  },
+  deleteHomeVideoUpload: (filePath) => request("/admin/uploads/home-video", { method: "DELETE", body: JSON.stringify({ filePath }), authRequired: true }),
   blogs: () => request("/admin/blogs", { authRequired: true }),
   createBlog: (payload) => request("/admin/blogs", { method: "POST", body: JSON.stringify(payload), authRequired: true }),
   updateBlog: (id, payload) => request(`/admin/blogs/${id}`, { method: "PUT", body: JSON.stringify(payload), authRequired: true }),
