@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, MapPin, Bookmark, ChevronDown } from 'lucide-react';
+import { Play, MapPin, Bookmark, ChevronDown, CheckCircle2, Loader2 } from 'lucide-react';
 import { publicApi } from '../services/api';
 import { buildInternationalPhone, countryCodeOptions, normalizePhoneDigits } from '../utils/countryCodes';
 import { publicGoogleMapsEmbedUrl, publicMapLabel } from '../utils/googleMaps';
@@ -46,6 +46,7 @@ function isUploadedVideoUrl(url = "") {
 export default function PropertyInformation({ property }) {
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", homeLoan: false });
   const [message, setMessage] = useState("");
+  const [submitState, setSubmitState] = useState("idle");
   const [videoOpen, setVideoOpen] = useState(false);
   const broker = property?.broker || {};
   const contactName = broker.name || "Contact our property expert";
@@ -65,10 +66,14 @@ export default function PropertyInformation({ property }) {
   const hasPlayableVideo = Boolean(youtubeUrl || uploadedVideo);
   const description = property?.description?.trim()
     || "Experience premium real estate designed for modern living, strong connectivity, practical layouts, and verified Akshar Estate assistance from enquiry to closure.";
+  const isSubmitting = submitState === "submitting";
+  const isSubmitted = submitState === "submitted";
 
   const submit = async (event) => {
     event.preventDefault();
+    if (isSubmitting || isSubmitted) return;
     setMessage("");
+    setSubmitState("submitting");
     try {
       const propertyId = /^[a-f\d]{24}$/i.test(property?._id || "") ? property._id : undefined;
       await publicApi.createEnquiry({
@@ -84,9 +89,11 @@ export default function PropertyInformation({ property }) {
         source: "property-detail",
       });
       trackPropertyEvent("inquiry_form_submitted", property, { formType: "property-detail-sidebar" });
-      setMessage("Thanks. Our team will contact you shortly.");
+      setSubmitState("submitted");
+      setMessage("Enquiry sent successfully. Our team will contact you shortly.");
       setForm({ firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", homeLoan: false });
     } catch (error) {
+      setSubmitState("idle");
       setMessage(error.message || "Could not submit enquiry. Please try again.");
     }
   };
@@ -268,11 +275,11 @@ export default function PropertyInformation({ property }) {
               <h4 className="font-bold text-gray-900">Please share your Contact details</h4>
               
               <div className="flex gap-3">
-                <input name="firstName" value={form.firstName} onChange={update} placeholder="First Name*" className="w-1/2 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
-                <input name="lastName" value={form.lastName} onChange={update} placeholder="Last Name*" className="w-1/2 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
+                <input name="firstName" value={form.firstName} onChange={update} placeholder="First Name*" className="w-1/2 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none disabled:bg-slate-50 disabled:text-slate-400" disabled={isSubmitting || isSubmitted} required />
+                <input name="lastName" value={form.lastName} onChange={update} placeholder="Last Name*" className="w-1/2 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none disabled:bg-slate-50 disabled:text-slate-400" disabled={isSubmitting || isSubmitted} required />
               </div>
               
-              <input name="email" type="email" value={form.email} onChange={update} placeholder="E-mail*" className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
+              <input name="email" type="email" value={form.email} onChange={update} placeholder="E-mail*" className="w-full border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none disabled:bg-slate-50 disabled:text-slate-400" disabled={isSubmitting || isSubmitted} required />
               
               <div className="flex gap-2">
                 <div className="relative min-w-[96px]">
@@ -280,7 +287,8 @@ export default function PropertyInformation({ property }) {
                     name="countryCode"
                     value={form.countryCode}
                     onChange={update}
-                    className="h-full w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-3 pr-7 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500"
+                    className="h-full w-full appearance-none rounded-lg border border-gray-200 bg-white px-3 py-3 pr-7 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+                    disabled={isSubmitting || isSubmitted}
                     aria-label="Country code"
                   >
                     {countryCodeOptions.map((option) => (
@@ -289,37 +297,54 @@ export default function PropertyInformation({ property }) {
                   </select>
                   <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 </div>
-                <input name="phone" value={form.phone} onChange={update} placeholder="Phone number*" className="flex-1 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none" required />
+                <input name="phone" value={form.phone} onChange={update} placeholder="Phone number*" className="flex-1 border border-gray-200 rounded-lg p-3 text-sm focus:border-blue-500 outline-none disabled:bg-slate-50 disabled:text-slate-400" disabled={isSubmitting || isSubmitted} required />
               </div>
 
               {/* T&C */}
               <div className="pt-4 space-y-4">
                 <h5 className="font-bold text-[15px]">Terms and Conditions</h5>
                 <label className="flex gap-3 cursor-pointer group">
-                  <input type="checkbox" className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" defaultChecked />
+                  <input type="checkbox" className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-70" defaultChecked disabled={isSubmitting || isSubmitted} />
                   <span className="text-[12px] text-gray-500 leading-tight">
                     I agree to be contacted by the Akshar Estate brokerage team via WhatsApp, SMS, phone, or email.
                   </span>
                 </label>
                 <label className="flex gap-3 cursor-pointer group">
-                  <input name="homeLoan" type="checkbox" checked={form.homeLoan} onChange={update} className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <input name="homeLoan" type="checkbox" checked={form.homeLoan} onChange={update} className="mt-1 w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-70" disabled={isSubmitting || isSubmitted} />
                   <span className="text-[12px] text-gray-500 leading-tight">
                     I am interested in Home loans
                   </span>
                 </label>
               </div>
 
-              <button className="w-full bg-[#2563eb] text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-100">
-                Request Broker Callback
+              <button
+                type="submit"
+                disabled={isSubmitting || isSubmitted}
+                className={`flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-bold text-white shadow-lg transition ${
+                  isSubmitted
+                    ? "bg-emerald-600 shadow-emerald-100"
+                    : "bg-[#2563eb] shadow-blue-100 hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+                }`}
+              >
+                {isSubmitting && <Loader2 className="h-5 w-5 animate-spin" />}
+                {isSubmitted && <CheckCircle2 className="h-5 w-5" />}
+                {isSubmitting ? "Sending Enquiry..." : isSubmitted ? "Enquiry Sent" : "Request Broker Callback"}
               </button>
-              {message && <p className="rounded-xl bg-blue-50 px-4 py-3 text-xs font-semibold text-blue-700">{message}</p>}
+              {message && (
+                <p className={`flex items-start gap-2 rounded-xl px-4 py-3 text-xs font-semibold ${
+                  isSubmitted ? "bg-emerald-50 text-emerald-700" : "bg-blue-50 text-blue-700"
+                }`}>
+                  {isSubmitted && <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />}
+                  <span>{message}</span>
+                </p>
+              )}
 
               <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                 <div className="text-[13px] leading-tight">
                   <span className="font-bold text-gray-900">Still Deciding?</span><br />
                   <span className="text-gray-400">Shortlist this property for now & easily come back to it later.</span>
                 </div>
-                <button className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
+                <button type="button" className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition">
                   <Bookmark className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
