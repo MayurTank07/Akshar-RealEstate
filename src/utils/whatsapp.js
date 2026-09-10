@@ -104,23 +104,6 @@ function propertyHighlights(property) {
   return Array.from(new Set(items)).slice(0, 5).join(" • ") || "Verified Listing";
 }
 
-function absoluteUrl(value, baseUrl = "") {
-  const text = String(value || "").trim();
-  if (!text) return "";
-  if (/^https?:\/\//i.test(text)) return text;
-  if (!baseUrl || !text.startsWith("/")) return text;
-  try {
-    return new URL(text, baseUrl).toString();
-  } catch {
-    return text;
-  }
-}
-
-function propertyMainPhoto(property, baseUrl = "") {
-  const image = [property?.image, ...(property?.gallery || []), ...(property?.images || [])].filter(Boolean)[0] || "";
-  return absoluteUrl(image, baseUrl);
-}
-
 export function propertyWhatsAppNumber(property) {
   const broker = property?.broker || {};
   if (broker.hasDirectContact === false) return "";
@@ -160,7 +143,6 @@ export function propertyWhatsAppMessage(property, options = {}) {
 
 export function propertyWhatsAppShareMessage(property, options = {}) {
   const pageUrl = options.url || "";
-  const mainPhoto = propertyMainPhoto(property, options.baseUrl || pageUrl);
   const broker = property?.broker || {};
   const label = displayPropertyCode(property?.propertyCode, property?.propertyId || property?.title || "this property");
   const title = property?.title || `${propertyConfiguration(property)} Property`;
@@ -189,7 +171,6 @@ export function propertyWhatsAppShareMessage(property, options = {}) {
     "",
     "View complete property details, photos, location and enquiry options:",
     pageUrl,
-    mainPhoto ? `Main photo: ${mainPhoto}` : "",
     "",
     "For further details, price discussion or to schedule a site visit, please contact:",
     contactLines.join("\n"),

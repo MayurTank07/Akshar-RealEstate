@@ -26,6 +26,20 @@ function lifecycleLabel(property) {
   return property?.propertyStatus || (status ? status.charAt(0).toUpperCase() + status.slice(1) : "Ready");
 }
 
+function shareFileName(title = "property") {
+  const slug = String(title || "property").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return `${slug || "property"}-akshar-estate.jpg`;
+}
+
+async function imageShareFile(imageUrl, title) {
+  if (!imageUrl || typeof File === "undefined") return null;
+  const response = await fetch(imageUrl, { mode: "cors" });
+  if (!response.ok) return null;
+  const blob = await response.blob();
+  if (!blob.type.startsWith("image/")) return null;
+  return new File([blob], shareFileName(title), { type: blob.type || "image/jpeg" });
+}
+
 const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => {
   const [selectedImage, setSelectedImage] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
@@ -61,8 +75,30 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
   const shareMessage = propertyWhatsAppShareMessage(property, { url: shareUrl });
   const whatsappShareLink = generateWhatsAppShareLink(shareMessage);
 
+  const shareWithMedia = async (shareMethod) => {
+    try {
+      const file = await imageShareFile(activeImage, title);
+      if (file && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title,
+          text: shareMessage,
+        });
+        trackPropertyEvent("property_shared", property, { shareMethod });
+        setShareOpen(false);
+        return true;
+      }
+    } catch {
+      // Some browsers/apps block cross-origin image sharing or file handoff.
+    }
+    return false;
+  };
+
   const handleNativeShare = async () => {
     try {
+      if (navigator.share && await shareWithMedia("native-media")) {
+        return;
+      }
       if (navigator.share) {
         await navigator.share({ title, text: shareMessage, url: shareUrl });
         trackPropertyEvent("property_shared", property, { shareMethod: "native" });
@@ -77,7 +113,10 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
     }
   };
 
-  const handleWhatsAppShare = () => {
+  const handleWhatsAppShare = async () => {
+    if (navigator.share && await shareWithMedia("whatsapp-media")) {
+      return;
+    }
     window.open(whatsappShareLink, "_blank", "noopener,noreferrer");
     trackPropertyEvent("property_shared", property, { shareMethod: "whatsapp" });
     setShareOpen(false);
@@ -152,7 +191,7 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-black text-slate-950">Share Property</p>
-                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">Send a ready property summary with photos link, price, area and contact details.</p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">Share the property photo as media with price, area and contact details.</p>
                       </div>
                       <button type="button" onClick={() => setShareOpen(false)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close share options">
                         <X size={16} />
