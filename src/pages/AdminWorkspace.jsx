@@ -2085,6 +2085,9 @@ function PropertyModal({ property, onClose, onSaved }) {
   const [fieldErrors, setFieldErrors] = useState({});
   const [pendingFiles, setPendingFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadingPropertyVideo, setUploadingPropertyVideo] = useState(false);
+  const [propertyVideoStatus, setPropertyVideoStatus] = useState("");
+  const [propertyVideoError, setPropertyVideoError] = useState("");
   const [dealModalOpen, setDealModalOpen] = useState(false);
   const [propertyCodeTouched, setPropertyCodeTouched] = useState(Boolean(initialPropertyCode));
   const [propertyCodeLoading, setPropertyCodeLoading] = useState(false);
@@ -2289,6 +2292,10 @@ function PropertyModal({ property, onClose, onSaved }) {
       return next;
     });
     if (name === "propertyCode") setPropertyCodeTouched(true);
+    if (name === "videoUrl") {
+      setPropertyVideoError("");
+      setPropertyVideoStatus("");
+    }
     const rawValue = name === "propertyCode" ? value.toUpperCase() : value;
     const nextValue = type === "checkbox" ? checked : PROPERTY_NUMBER_FIELDS.has(name) ? (rawValue === "" ? null : Number(rawValue)) : rawValue;
     updatePath(name, nextValue);
@@ -2380,6 +2387,58 @@ function PropertyModal({ property, onClose, onSaved }) {
       if (match) URL.revokeObjectURL(match.preview);
       return current.filter((item) => item.id !== id);
     });
+  };
+
+  const handlePropertyVideoFile = async (file) => {
+    if (!file) return;
+    setPropertyVideoError("");
+    setPropertyVideoStatus("");
+    if (!file.type?.startsWith("video/")) {
+      setPropertyVideoError("Please select a valid video file.");
+      return;
+    }
+    if (file.size > PROPERTY_VIDEO_MAX_BYTES) {
+      setPropertyVideoError("Video is too large. Maximum allowed size is 100MB.");
+      return;
+    }
+    setUploadingPropertyVideo(true);
+    try {
+      const previousUpload = isLocalHomeVideo(form.videoUrl) ? form.videoUrl : "";
+      const response = await staffApi.uploadPropertyVideo(file);
+      const uploaded = response.data || {};
+      const videoUrl = uploaded.url || uploaded.filePath || "";
+      if (!videoUrl) throw new Error("Upload completed, but no playable video URL was returned.");
+      if (previousUpload && previousUpload !== videoUrl) {
+        await staffApi.deletePropertyVideoUpload(previousUpload);
+      }
+      setForm((current) => ({ ...current, videoUrl }));
+      setPropertyVideoStatus(`${uploaded.filename || file.name} uploaded. Save the property to publish this video.`);
+    } catch (err) {
+      setPropertyVideoError(err.message || "Unable to upload video.");
+    } finally {
+      setUploadingPropertyVideo(false);
+    }
+  };
+
+  const deletePropertyVideo = async () => {
+    const currentVideo = String(form.videoUrl || "").trim();
+    if (!currentVideo) return;
+    setPropertyVideoError("");
+    setPropertyVideoStatus("");
+    setUploadingPropertyVideo(true);
+    try {
+      if (isLocalHomeVideo(currentVideo)) {
+        await staffApi.deletePropertyVideoUpload(currentVideo);
+        setPropertyVideoStatus("Uploaded video deleted from backend. Save the property to remove it from the public page.");
+      } else {
+        setPropertyVideoStatus("Video link cleared. Save the property to remove it from the public page.");
+      }
+      setForm((current) => ({ ...current, videoUrl: "" }));
+    } catch (err) {
+      setPropertyVideoError(err.message || "Unable to delete uploaded video.");
+    } finally {
+      setUploadingPropertyVideo(false);
+    }
   };
 
   const restorePropertyDraft = useCallback((draftPayload = {}) => {
@@ -2774,12 +2833,51 @@ function PropertyModal({ property, onClose, onSaved }) {
           )}
 
           {sectionEnabled("media") && (
-          <FormSection title="Media Gallery" subtitle="Upload/select multiple images, preview them, and reorder the public gallery.">
+          <FormSection title="Media Gallery" subtitle="Upload/select multiple images, add a YouTube link, or upload a property walkthrough video.">
             <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
               <div>
                 <Field label="Primary Image URL" name="image" value={form.image} onChange={update} error={fieldErrors.image} placeholder="Optional if selecting image files" />
-                <div className="mt-4">
-                  <Field label="Video URL" name="videoUrl" value={form.videoUrl} onChange={update} placeholder="YouTube, Instagram, or hosted walkthrough URL" helperText="Optional. Add a property walkthrough without leaving the gallery workflow." />
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <Field label="YouTube / Video URL" name="videoUrl" value={form.videoUrl} onChange={update} placeholder="https://youtube.com/watch?v=..." helperText="Paste a YouTube link, or upload from device on the right." />
+                  <div>
+                    <span className="wf-label">Upload From Device</span>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <label className={`wf-btn wf-btn-secondary w-full justify-center ${uploadingPropertyVideo || uploading ? "pointer-events-none opacity-60" : "cursor-pointer"}`}>
+                        <Upload size={16} />
+                        {uploadingPropertyVideo ? "Working..." : form.videoUrl && isLocalHomeVideo(form.videoUrl) ? "Edit / Replace Video" : "Choose Video"}
+                        <input
+                          type="file"
+                          accept={PROPERTY_VIDEO_ACCEPT}
+                          className="hidden"
+                          disabled={uploadingPropertyVideo || uploading}
+                          onChange={(event) => { handlePropertyVideoFile(event.target.files?.[0]); event.target.value = ""; }}
+                        />
+                      </label>
+                      {form.videoUrl && (
+                        <button
+                          type="button"
+                          onClick={deletePropertyVideo}
+                          disabled={uploadingPropertyVideo || uploading}
+                          className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-100 bg-white px-4 py-3 text-sm font-bold text-red-600 transition hover:bg-red-50 disabled:pointer-events-none disabled:opacity-60"
+                        >
+                          <Trash2 size={16} />
+                          {isLocalHomeVideo(form.videoUrl) ? "Delete Uploaded Video" : "Clear Video Link"}
+                        </button>
+                      )}
+                      <p className="mt-2 text-xs font-semibold text-slate-500">MP4, WebM, MOV, M4V up to 100MB.</p>
+                    </div>
+                  </div>
+                  {(propertyVideoError || propertyVideoStatus) && (
+                    <div className={`md:col-span-2 rounded-xl border px-4 py-3 text-sm font-bold ${propertyVideoError ? "border-red-100 bg-red-50 text-red-700" : "border-emerald-100 bg-emerald-50 text-emerald-700"}`}>
+                      {propertyVideoError || propertyVideoStatus}
+                    </div>
+                  )}
+                  {form.videoUrl && !/^https?:\/\/(www\.)?(youtube\.com|youtu\.be|m\.youtube\.com)\//i.test(form.videoUrl) && (
+                    <div className="md:col-span-2">
+                      <span className="wf-label">Video Preview</span>
+                      <video src={form.videoUrl} controls preload="metadata" className="h-64 w-full rounded-xl bg-slate-950 object-contain" />
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 rounded-2xl border border-dashed border-slate-200 p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -6579,6 +6677,8 @@ function SettingsSection() {
 
 const HOME_VIDEO_MAX_BYTES = 100 * 1024 * 1024;
 const HOME_VIDEO_ACCEPT = ".mp4,.webm,.mov,.m4v,video/mp4,video/webm,video/quicktime";
+const PROPERTY_VIDEO_MAX_BYTES = HOME_VIDEO_MAX_BYTES;
+const PROPERTY_VIDEO_ACCEPT = HOME_VIDEO_ACCEPT;
 
 function isLocalHomeVideo(value = "") {
   try {

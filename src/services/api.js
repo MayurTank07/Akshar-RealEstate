@@ -195,6 +195,12 @@ export const staffApi = {
     formData.append("video", file);
     return request("/admin/uploads/home-video", { method: "POST", body: formData, authRequired: true });
   },
+  uploadPropertyVideo: (file) => {
+    const formData = new FormData();
+    formData.append("video", file);
+    return request("/admin/uploads/property-video", { method: "POST", body: formData, authRequired: true });
+  },
+  deletePropertyVideoUpload: (filePath) => request("/admin/uploads/property-video", { method: "DELETE", body: JSON.stringify({ filePath }), authRequired: true }),
   deleteHomeVideoUpload: (filePath) => request("/admin/uploads/home-video", { method: "DELETE", body: JSON.stringify({ filePath }), authRequired: true }),
   blogs: () => request("/admin/blogs", { authRequired: true }),
   createBlog: (payload) => request("/admin/blogs", { method: "POST", body: JSON.stringify(payload), authRequired: true }),

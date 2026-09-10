@@ -11,9 +11,42 @@ function telHref(phoneNumber = "") {
   return normalized ? `tel:${normalized}` : "";
 }
 
+function youtubeVideoId(url = "") {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "");
+    if (host === "youtu.be") return parsed.pathname.split("/").filter(Boolean)[0] || "";
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (parsed.pathname.startsWith("/shorts/") || parsed.pathname.startsWith("/embed/")) return parsed.pathname.split("/").filter(Boolean)[1] || "";
+      return parsed.searchParams.get("v") || "";
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
+function youtubeEmbedUrl(url = "") {
+  const id = youtubeVideoId(url);
+  return id ? `https://www.youtube.com/embed/${id}` : "";
+}
+
+function isUploadedVideoUrl(url = "") {
+  const value = String(url || "").trim();
+  if (!value) return false;
+  if (youtubeVideoId(value)) return false;
+  try {
+    const parsed = new URL(value);
+    return /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(parsed.pathname) || parsed.pathname.startsWith("/uploads/videos/");
+  } catch {
+    return /\.(mp4|webm|mov|m4v)(\?.*)?$/i.test(value) || value.startsWith("/uploads/videos/");
+  }
+}
+
 export default function PropertyInformation({ property }) {
   const [form, setForm] = useState({ firstName: "", lastName: "", email: "", countryCode: "+91", phone: "", homeLoan: false });
   const [message, setMessage] = useState("");
+  const [videoOpen, setVideoOpen] = useState(false);
   const broker = property?.broker || {};
   const contactName = broker.name || "Contact our property expert";
   const contactPhone = broker.phone || "";
@@ -26,6 +59,10 @@ export default function PropertyInformation({ property }) {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
   const [formTracked, setFormTracked] = useState(false);
+  const videoUrl = String(property?.videoUrl || "").trim();
+  const youtubeUrl = youtubeEmbedUrl(videoUrl);
+  const uploadedVideo = isUploadedVideoUrl(videoUrl);
+  const hasPlayableVideo = Boolean(youtubeUrl || uploadedVideo);
   const description = property?.description?.trim()
     || "Experience premium real estate designed for modern living, strong connectivity, practical layouts, and verified Akshar Estate assistance from enquiry to closure.";
 
@@ -73,36 +110,61 @@ export default function PropertyInformation({ property }) {
             </p>
           </section>
 
-          {/* Video Tour */}
-          <section>
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Video Tour</h2>
-            <button
-              type="button"
-              onClick={() => property?.videoUrl && window.open(property.videoUrl, "_blank", "noopener,noreferrer")}
-              className="relative block w-full overflow-hidden rounded-2xl text-left shadow-lg group"
-            >
-              <img
-                {...responsiveImageProps(videoThumb, {
-                  alt: propertyImageAlt(property, 0).replace(/^Exterior view/, "Video tour preview"),
-                  width: 1200,
-                  height: 700,
-                  widths: [480, 768, 1024, 1200],
-                  sizes: "(max-width: 1024px) 100vw, 720px",
-                  className: "h-[350px] w-full object-cover",
-                })}
-              />
-              <div className="absolute inset-0 bg-black/20 flex items-center justify-center transition-bg group-hover:bg-black/30">
-                <div className="w-16 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-xl">
-                  <Play className="w-6 h-6 text-white fill-current" />
+          {hasPlayableVideo && (
+            <section>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Video Tour</h2>
+              {videoOpen ? (
+                <div className="akshar-video-player overflow-hidden rounded-2xl bg-black shadow-lg">
+                  {youtubeUrl ? (
+                    <iframe
+                      title={`${property?.title || "Property"} video tour`}
+                      src={`${youtubeUrl}?autoplay=1&rel=0`}
+                      className="aspect-video w-full border-0 bg-black"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      src={videoUrl}
+                      controls
+                      autoPlay
+                      playsInline
+                      preload="metadata"
+                      className="aspect-video w-full bg-black object-contain"
+                    />
+                  )}
                 </div>
-                <div className="absolute top-8 w-full text-center">
-                   <h3 className="text-white text-4xl font-black uppercase tracking-tighter drop-shadow-lg">
-                    {property?.title || "Property Tour"}
-                   </h3>
-                </div>
-              </div>
-            </button>
-          </section>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setVideoOpen(true)}
+                  className="relative block w-full overflow-hidden rounded-2xl text-left shadow-lg group"
+                  aria-label={`Play ${property?.title || "property"} video tour`}
+                >
+                  <img
+                    {...responsiveImageProps(videoThumb, {
+                      alt: propertyImageAlt(property, 0).replace(/^Exterior view/, "Video tour preview"),
+                      width: 1200,
+                      height: 700,
+                      widths: [480, 768, 1024, 1200],
+                      sizes: "(max-width: 1024px) 100vw, 720px",
+                      className: "h-[350px] w-full object-cover",
+                    })}
+                  />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center transition-bg group-hover:bg-black/30">
+                    <div className="w-16 h-12 bg-red-600 rounded-xl flex items-center justify-center shadow-xl">
+                      <Play className="w-6 h-6 text-white fill-current" />
+                    </div>
+                    <div className="absolute top-8 w-full px-4 text-center">
+                       <h3 className="text-white text-3xl font-black uppercase tracking-normal drop-shadow-lg sm:text-4xl">
+                        {property?.title || "Property Tour"}
+                       </h3>
+                    </div>
+                  </div>
+                </button>
+              )}
+            </section>
+          )}
 
           {/* Map View */}
           <section>
