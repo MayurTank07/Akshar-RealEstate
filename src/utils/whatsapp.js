@@ -23,6 +23,11 @@ export function generateWhatsAppLink(phoneNumber, message = DEFAULT_WHATSAPP_MES
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
 
+export function generateWhatsAppShareLink(message = "") {
+  const text = String(message || DEFAULT_WHATSAPP_MESSAGE).trim();
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
 export function normalizeEnquirerName(value = "") {
   return String(value || "").replace(/\s+/g, " ").trim();
 }
@@ -72,6 +77,50 @@ function propertyConfiguration(property) {
   return "Not specified";
 }
 
+function propertyArea(property) {
+  if (property?.area) return property.area;
+  if (property?.measurement?.value) return `${property.measurement.value} ${property.measurement.unit || "sq.ft"}`;
+  if (property?.plotArea) return `${property.plotArea} sq.ft`;
+  if (property?.landArea) return property.landArea;
+  if (property?.sqft) return `${property.sqft} sq.ft`;
+  return "Not specified";
+}
+
+function propertyLocationLabel(property) {
+  const map = property?.map || {};
+  const locality = property?.location || map.area || "";
+  const city = property?.city || map.city || "";
+  const state = map.state || property?.state || "Gujarat";
+  const location = [locality, city && city !== locality ? city : "", state].filter(Boolean).join(", ");
+  return location || "Gujarat";
+}
+
+function propertyHighlights(property) {
+  const items = [
+    ...(property?.highlights || []),
+    ...(property?.features || []),
+    ...(property?.amenities || []),
+  ].filter(Boolean);
+  return Array.from(new Set(items)).slice(0, 5).join(" • ") || "Verified Listing";
+}
+
+function absoluteUrl(value, baseUrl = "") {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (/^https?:\/\//i.test(text)) return text;
+  if (!baseUrl || !text.startsWith("/")) return text;
+  try {
+    return new URL(text, baseUrl).toString();
+  } catch {
+    return text;
+  }
+}
+
+function propertyMainPhoto(property, baseUrl = "") {
+  const image = [property?.image, ...(property?.gallery || []), ...(property?.images || [])].filter(Boolean)[0] || "";
+  return absoluteUrl(image, baseUrl);
+}
+
 export function propertyWhatsAppNumber(property) {
   const broker = property?.broker || {};
   if (broker.hasDirectContact === false) return "";
@@ -107,4 +156,45 @@ export function propertyWhatsAppMessage(property, options = {}) {
     "",
     "Thank you.",
   ].join("\n");
+}
+
+export function propertyWhatsAppShareMessage(property, options = {}) {
+  const pageUrl = options.url || "";
+  const mainPhoto = propertyMainPhoto(property, options.baseUrl || pageUrl);
+  const broker = property?.broker || {};
+  const label = displayPropertyCode(property?.propertyCode, property?.propertyId || property?.title || "this property");
+  const title = property?.title || `${propertyConfiguration(property)} Property`;
+  const brokerName = broker.name || "Akshar Estate Team";
+  const brokerPhone = broker.phone || broker.whatsapp || "";
+  const contactLines = [
+    brokerName,
+    broker.designation || "",
+    brokerPhone ? `Call/WhatsApp: ${brokerPhone}` : "",
+  ].filter(Boolean);
+
+  return [
+    `${title} - ${property?.city || property?.location || "Gujarat"}`,
+    "",
+    "Dear Sir/Ma'am,",
+    "",
+    "We are pleased to share a verified property listing from Akshar Estate - The Property HUB.",
+    "",
+    `Location: ${propertyLocationLabel(property)}`,
+    `Area: ${propertyArea(property)}`,
+    `Price: ${propertyPrice(property)}`,
+    `Property ID: ${label}`,
+    "",
+    "Key Highlights:",
+    propertyHighlights(property),
+    "",
+    "View complete property details, photos, location and enquiry options:",
+    pageUrl,
+    mainPhoto ? `Main photo: ${mainPhoto}` : "",
+    "",
+    "For further details, price discussion or to schedule a site visit, please contact:",
+    contactLines.join("\n"),
+    "",
+    "Akshar Estate - The Property HUB",
+    "Trusted Property Advisory & Verified Listings",
+  ].filter((line) => line !== undefined && line !== null).join("\n");
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  MapPin, MessageCircle, Phone, ChevronRight, ShieldCheck, Share2
+import {
+  Check, Copy, MapPin, MessageCircle, Phone, ChevronRight, ShieldCheck, Share2, X
 } from 'lucide-react';
 
 import Navbar from '../components/PricingNavbar';
@@ -10,6 +10,7 @@ import { supportsRooms } from '../utils/propertyTypeRules';
 import useAuth from '../contexts/useAuth';
 import { PROPERTY_IMAGE_FALLBACK, propertyImageAlt, responsiveImageProps } from '../utils/imageSeo';
 import { trackPropertyEvent } from '../utils/analytics';
+import { generateWhatsAppShareLink, propertyWhatsAppShareMessage } from '../utils/whatsapp';
 
 function telHref(phoneNumber = "") {
   const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
@@ -27,6 +28,8 @@ function lifecycleLabel(property) {
 
 const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => {
   const [selectedImage, setSelectedImage] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,19 +57,38 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
     onWhatsAppEnquiry?.();
   };
 
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/property/${property?.slug || property?._id || ""}`;
+  const shareUrl = `${window.location.origin}/property/${property?.slug || property?._id || ""}`;
+  const shareMessage = propertyWhatsAppShareMessage(property, { url: shareUrl });
+  const whatsappShareLink = generateWhatsAppShareLink(shareMessage);
+
+  const handleNativeShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title, text: propertyLocation, url: shareUrl });
+        await navigator.share({ title, text: shareMessage, url: shareUrl });
         trackPropertyEvent("property_shared", property, { shareMethod: "native" });
       } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
+        await navigator.clipboard.writeText(shareMessage);
         trackPropertyEvent("property_shared", property, { shareMethod: "clipboard" });
+        setShareCopied(true);
+        window.setTimeout(() => setShareCopied(false), 1800);
       }
     } catch {
       // Visitor cancelled or the browser blocked sharing.
     }
+  };
+
+  const handleWhatsAppShare = () => {
+    window.open(whatsappShareLink, "_blank", "noopener,noreferrer");
+    trackPropertyEvent("property_shared", property, { shareMethod: "whatsapp" });
+    setShareOpen(false);
+  };
+
+  const copyShareMessage = async () => {
+    if (!navigator.clipboard) return;
+    await navigator.clipboard.writeText(shareMessage);
+    trackPropertyEvent("property_shared", property, { shareMethod: "clipboard" });
+    setShareCopied(true);
+    window.setTimeout(() => setShareCopied(false), 1800);
   };
 
   const title = property?.title || "Property";
@@ -115,13 +137,42 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
               >
                 <MessageCircle size={18} /> WhatsApp
               </button>
-              <button
-                type="button"
-                onClick={handleShare}
-                className="wf-btn w-full bg-slate-900 text-white hover:bg-slate-800 md:w-auto"
-              >
-                <Share2 size={18} /> Share
-              </button>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShareOpen((current) => !current)}
+                  className="wf-btn w-full bg-slate-900 text-white hover:bg-slate-800 md:w-auto"
+                  aria-expanded={shareOpen}
+                  aria-haspopup="dialog"
+                >
+                  <Share2 size={18} /> Share
+                </button>
+                {shareOpen && (
+                  <div className="absolute right-0 z-50 mt-3 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-2xl">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black text-slate-950">Share Property</p>
+                        <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">Send a ready property summary with photos link, price, area and contact details.</p>
+                      </div>
+                      <button type="button" onClick={() => setShareOpen(false)} className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="Close share options">
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <div className="mt-4 grid gap-2">
+                      <button type="button" onClick={handleWhatsAppShare} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#1ebe5d]">
+                        <MessageCircle size={17} /> Share on WhatsApp
+                      </button>
+                      <button type="button" onClick={handleNativeShare} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
+                        <Share2 size={17} /> Native Share
+                      </button>
+                      <button type="button" onClick={copyShareMessage} className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50">
+                        {shareCopied ? <Check size={17} /> : <Copy size={17} />}
+                        {shareCopied ? "Copied" : "Copy Details"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               <button 
                 onClick={handleCall}
                 disabled={!callAvailable}
