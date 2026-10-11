@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { BUSINESS_INFO } from "../src/config/businessInfo.js";
 import { SITE_ORIGIN } from "../src/config/locationLandingPages.js";
-import { buildBreadcrumbSchema, schemaScriptContent } from "../src/utils/structuredData.js";
+import { buildBreadcrumbSchema, buildBusinessSchemas, schemaScriptContent } from "../src/utils/structuredData.js";
 
 const PUBLIC_PAGES = {
   "/": {
@@ -10,6 +10,7 @@ const PUBLIC_PAGES = {
     description: "Find verified property in Ahmedabad and Gandhinagar with Akshar Estate: flats, plots, shops, offices, houses and commercial real estate leads.",
     h1: "Akshar Estate The Property HUB",
     body: "Find verified residential, commercial, rental and land opportunities across Ahmedabad, Gandhinagar and nearby Gujarat property markets.",
+    answer: "Akshar Estate The Property HUB is a Gandhinagar-based real estate agency helping buyers, sellers, renters and investors find verified flats, plots, land, shops, offices and new project opportunities across Gandhinagar, Ahmedabad and nearby Gujarat markets.",
     links: [
       ["/properties-for-sale/ahmedabad", "Property in Ahmedabad"],
       ["/properties-for-sale/gandhinagar", "Properties for sale in Gandhinagar"],
@@ -24,6 +25,7 @@ const PUBLIC_PAGES = {
     description: "Browse verified flats, plots, shops, offices, houses and commercial property in Ahmedabad, Gandhinagar and nearby Akshar Estate locations.",
     h1: "Properties for Sale and Rent in Gujarat",
     body: "Browse active Akshar Estate listings by location, property type, BHK, price and availability.",
+    answer: "Use Akshar Estate to compare active property listings with photos, price, area, locality, property code, supervisor contact and site-visit support before shortlisting.",
     links: [
       ["/properties-for-sale/gandhinagar", "Properties for sale in Gandhinagar"],
       ["/properties-for-sale/ahmedabad", "Properties for sale in Ahmedabad"],
@@ -35,6 +37,7 @@ const PUBLIC_PAGES = {
     description: "Explore new project property options across Gandhinagar, Ahmedabad and nearby Gujarat locations with Akshar Estate.",
     h1: "New Property Projects in Gujarat",
     body: "Track new project opportunities and contact Akshar Estate for verified project details.",
+    answer: "Akshar Estate helps buyers review new project options by location, possession status, amenities, pricing, documentation and site-visit availability.",
     links: [["/properties", "Browse all properties"]],
   },
   "/about": {
@@ -42,6 +45,7 @@ const PUBLIC_PAGES = {
     description: "Learn about Akshar Estate The Property HUB, a Gandhinagar-based real estate team serving buyers, sellers and investors across Gujarat.",
     h1: "About Akshar Estate The Property HUB",
     body: "Akshar Estate supports property buyers, sellers, renters and investors with verified real estate opportunities across Gujarat.",
+    answer: "Akshar Estate The Property HUB is a local real estate team in Gandhinagar serving property buyers, sellers, renters and investors across Gandhinagar, Ahmedabad and nearby Gujarat locations.",
     links: [["/contact", "Contact Akshar Estate"], ["/properties", "Browse properties"]],
   },
   "/services": {
@@ -49,6 +53,7 @@ const PUBLIC_PAGES = {
     description: "Akshar Estate offers buying, selling, rental, investment and supervisor-assisted real estate services in Ahmedabad, Gandhinagar and Gujarat.",
     h1: "Real Estate Services",
     body: "Get support for buying, selling, renting and evaluating real estate opportunities across Gandhinagar, Ahmedabad and nearby markets.",
+    answer: "Akshar Estate provides property buying, selling, rental, commercial property, plot and land, investment and site-visit coordination services in Gandhinagar, Ahmedabad and nearby Gujarat markets.",
     links: [["/contact", "Ask for property assistance"], ["/properties-for-sale/gandhinagar", "Gandhinagar properties"]],
   },
   "/contact": {
@@ -56,6 +61,7 @@ const PUBLIC_PAGES = {
     description: "Contact Akshar Estate for verified property options, WhatsApp enquiries, supervisor details and real estate guidance in Ahmedabad and Gandhinagar.",
     h1: "Contact Akshar Estate",
     body: `${BUSINESS_INFO.name} can help with property enquiries across Gandhinagar, Ahmedabad and nearby Gujarat locations.`,
+    answer: `Contact ${BUSINESS_INFO.name} by phone, email or website enquiry for verified property options, seller support, commercial property enquiries and supervised site visits in Gandhinagar and Ahmedabad.`,
     links: [["/properties", "Browse properties"], ["/properties-for-sale/gandhinagar", "Gandhinagar properties"]],
   },
   "/privacy-policy": {
@@ -63,6 +69,7 @@ const PUBLIC_PAGES = {
     description: "Read the Akshar Estate privacy policy for website users, property enquiries and communication handling.",
     h1: "Privacy Policy",
     body: "Akshar Estate handles website and enquiry information according to its privacy policy.",
+    answer: "The Akshar Estate privacy policy explains how website, enquiry and communication information is handled for property users.",
     links: [["/contact", "Contact Akshar Estate"]],
   },
   "/terms-of-service": {
@@ -70,6 +77,7 @@ const PUBLIC_PAGES = {
     description: "Read the Akshar Estate website terms for property browsing, enquiries and use of the platform.",
     h1: "Terms of Service",
     body: "These terms apply to use of the Akshar Estate website and property enquiry features.",
+    answer: "The Akshar Estate terms apply to website browsing, property enquiries, user submissions and platform communication.",
     links: [["/contact", "Contact Akshar Estate"]],
   },
 };
@@ -143,6 +151,39 @@ function linkList(links = []) {
     : "";
 }
 
+function answerBlock(page) {
+  return `
+      <section aria-label="Direct answer">
+        <h2>Quick Answer</h2>
+        <p><strong>${escapeHtml(page.answer || page.body)}</strong></p>
+      </section>`;
+}
+
+function serviceClusterLinks(pathname) {
+  const links = [
+    ["/properties-for-sale/gandhinagar", "Verified property in Gandhinagar"],
+    ["/properties-for-sale/ahmedabad", "Verified property in Ahmedabad"],
+    ["/properties-for-sale/gandhinagar/kudasan", "Kudasan property guide"],
+    ["/properties-for-sale/gandhinagar/palaj", "Palaj property guide"],
+    ["/properties-for-sale/gandhinagar/dhanap", "Dhanap property guide"],
+    ["/properties-for-sale/gandhinagar/gift-city", "GIFT City corridor property"],
+    ["/properties-for-sale/ahmedabad/shela", "Shela property guide"],
+    ["/commercial-property/sg-highway", "Commercial property on S.G. Highway"],
+    ["/plots-for-sale/palaj", "Plots for sale in Palaj"],
+    ["/contact", "Sell or list your property"],
+  ];
+  return links.filter(([href]) => href !== pathname);
+}
+
+function contentClusters(pathname) {
+  return `
+      <section aria-label="Property topic clusters">
+        <h2>Property Topic Clusters</h2>
+        <p>Explore Akshar Estate guides and active inventory by city, locality, property type and seller intent.</p>
+        ${linkList(serviceClusterLinks(pathname))}
+      </section>`;
+}
+
 function injectShell({ shell, pathname, title, description, robots, statusCode, pageBody, extraJsonLd = [] }) {
   const canonical = `${SITE_ORIGIN}${pathname}`;
   const head = [
@@ -179,7 +220,9 @@ function publicPage(shell, pathname, page) {
       <nav aria-label="Breadcrumb">${breadcrumbs.map((item, index) => `${index ? " / " : ""}<a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`).join("")}</nav>
       <h1>${escapeHtml(page.h1)}</h1>
       <p>${escapeHtml(page.body)}</p>
+      ${answerBlock(page)}
       ${linkList(page.links)}
+      ${contentClusters(pathname)}
     </main>`;
   return injectShell({
     shell,
@@ -191,6 +234,7 @@ function publicPage(shell, pathname, page) {
     pageBody: body,
     extraJsonLd: [
       jsonLd(buildBreadcrumbSchema(breadcrumbs), "akshar-schema-page-breadcrumb"),
+      jsonLd(buildBusinessSchemas({ path: pathname, pageName: page.h1, includeBreadcrumbs: false }), "akshar-schema-business-entity"),
       jsonLd({
         "@context": "https://schema.org",
         "@type": "WebPage",
@@ -198,6 +242,11 @@ function publicPage(shell, pathname, page) {
         description: page.description,
         url: `${SITE_ORIGIN}${pathname}`,
         publisher: { "@id": `${SITE_ORIGIN}/#organization` },
+        about: { "@id": `${SITE_ORIGIN}/#realestateagent` },
+        speakable: {
+          "@type": "SpeakableSpecification",
+          cssSelector: [".akshar-static-seo h1", ".akshar-static-seo section[aria-label='Direct answer']"],
+        },
       }, "akshar-schema-webpage"),
     ],
   });

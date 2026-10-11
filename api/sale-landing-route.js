@@ -196,6 +196,93 @@ function pageMetaDescription(page, count) {
   );
 }
 
+function pagePlace(page = {}) {
+  if (page.kind === "bhk") return `${page.localityName}, ${page.city}`;
+  if (page.kind === "property-type") return `${page.locationName}, ${page.city}`;
+  if (page.kind === "locality") return `${page.name}, ${page.city}`;
+  return page.name || page.city || "Gujarat";
+}
+
+function buyerIntentText(page = {}) {
+  const place = pagePlace(page);
+  if (page.kind === "bhk") {
+    return `${page.bhk} BHK buyers in ${place} usually compare usable carpet area, society quality, commute to work, parking, possession status and the final all-inclusive price before booking a visit.`;
+  }
+  if (page.kind === "property-type") {
+    if (page.prefix === "plots-for-sale") return `Plot buyers in ${place} should verify title clarity, road access, zoning, plot dimensions, water/electricity availability, boundary status and resale demand.`;
+    if (page.prefix === "commercial-property") return `Commercial property buyers in ${place} should compare frontage, footfall, parking, road width, signage visibility, ownership documents and tenant or business suitability.`;
+    if (page.prefix === "industrial-property") return `Industrial property buyers in ${place} should check road width, loading access, power load, zoning, water supply, labour access and logistics connectivity.`;
+  }
+  return `Property buyers in ${place} usually compare location strength, active inventory, price, area, nearby services, site access, documentation and Akshar Estate supervisor guidance before shortlisting.`;
+}
+
+function priceContextText(page = {}, listings = []) {
+  const prices = listings
+    .map((property) => Number(property.priceAmount || 0))
+    .filter((amount) => amount > 0)
+    .sort((a, b) => a - b);
+  if (prices.length >= 2) {
+    const formatter = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+    return `Current matching Akshar Estate listings in ${pagePlace(page)} range from ${formatter.format(prices[0])} to ${formatter.format(prices.at(-1))}. Confirm final price, payment terms and availability before a site visit.`;
+  }
+  if (prices.length === 1) {
+    const formatter = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+    return `The current matching Akshar Estate listing signal for ${pagePlace(page)} is around ${formatter.format(prices[0])}. Ask the team to confirm latest price and fresh alternatives.`;
+  }
+  return `Price movement in ${pagePlace(page)} depends on exact locality, road access, building age, project quality, plot dimensions, possession, documentation and negotiation room. Contact Akshar Estate for fresh inventory and current quote checks.`;
+}
+
+function documentChecklist(page = {}) {
+  const base = ["property title and ownership chain", "sale deed or allotment details", "approved plan or layout where applicable", "tax or maintenance dues", "identity and authority of seller", "latest availability and price confirmation"];
+  if (page.kind === "property-type" && page.prefix === "plots-for-sale") return [...base, "7/12 or land record extracts where applicable", "zoning and NA/NOC status", "road access proof"];
+  if (page.kind === "property-type" && page.prefix === "commercial-property") return [...base, "use permission", "parking rights", "frontage and signage permissions", "tenant or lease terms if pre-leased"];
+  return [...base, "RERA or project details where applicable", "society NOC where needed", "loan and possession documents"];
+}
+
+function answerSummary(page = {}, listings = []) {
+  const count = listings.length;
+  const place = pagePlace(page);
+  const inventoryText = count ? `${count} active matching Akshar Estate ${count === 1 ? "listing" : "listings"}` : "fresh inventory support from Akshar Estate";
+  return `${page.h1} is best evaluated through ${inventoryText}, locality context, document checks, supervisor contact and a confirmed site visit. Akshar Estate helps buyers compare verified options in ${place}.`;
+}
+
+function buildAnswerBlock(page, listings) {
+  return `
+      <section aria-label="Direct answer">
+        <h2>Quick Answer</h2>
+        <p><strong>${escapeHtml(answerSummary(page, listings))}</strong></p>
+      </section>`;
+}
+
+function buildDepthSections(page, listings) {
+  return `
+      <section><h2>Buyer Intent</h2><p>${escapeHtml(buyerIntentText(page))}</p></section>
+      <section><h2>Price Guidance</h2><p>${escapeHtml(priceContextText(page, listings))}</p></section>
+      <section><h2>Documents to Check</h2>${plainList(documentChecklist(page))}</section>
+      <section><h2>Site Visit Guidance</h2><p>Before visiting property in ${escapeHtml(pagePlace(page))}, share your budget, preferred property type, timeline and visit slot with Akshar Estate. The team can confirm availability, supervisor contact, meeting point and comparable nearby options.</p></section>`;
+}
+
+function contentClusterLinks(page) {
+  const core = [
+    { label: "Gandhinagar property guide", href: "/properties-for-sale/gandhinagar" },
+    { label: "Ahmedabad property guide", href: "/properties-for-sale/ahmedabad" },
+    { label: "Kudasan property guide", href: "/properties-for-sale/gandhinagar/kudasan" },
+    { label: "Palaj property guide", href: "/properties-for-sale/gandhinagar/palaj" },
+    { label: "Dhanap land and property guide", href: "/properties-for-sale/gandhinagar/dhanap" },
+    { label: "GIFT City corridor property guide", href: "/properties-for-sale/gandhinagar/gift-city" },
+    { label: "Shela property guide", href: "/properties-for-sale/ahmedabad/shela" },
+    { label: "Ahmedabad West property guide", href: "/properties-for-sale/ahmedabad-west" },
+    { label: "Commercial property on S.G. Highway", href: "/commercial-property/sg-highway" },
+    { label: "Plots for sale in Palaj", href: "/plots-for-sale/palaj" },
+    { label: "Sell or list your property", href: "/contact" },
+  ];
+  return core.filter((item) => item.href !== page.path);
+}
+
+function buildContentClusters(page) {
+  return `<section><h2>Related Property Guides</h2><p>Continue research with nearby locality, property type and seller-intent pages from Akshar Estate.</p>${linkList(contentClusterLinks(page))}</section>`;
+}
+
 function redirect(res, location) {
   res.writeHead(301, {
     Location: location,
@@ -215,6 +302,12 @@ function linkList(items) {
   const links = items.filter(Boolean);
   if (!links.length) return "";
   return `<ul>${links.map((item) => `<li><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`;
+}
+
+function plainList(items) {
+  const values = items.filter(Boolean);
+  if (!values.length) return "";
+  return `<ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
 }
 
 function breadcrumbItems(page) {
@@ -348,23 +441,28 @@ function nearbyHref(page, name) {
 
 function buildFaqs(page) {
   const faqs = [
+    [`Is ${pagePlace(page)} a good location for property buyers?`, buyerIntentText(page)],
     [`Are there properties for sale in ${page.name}?`, `Yes. Active inventory is shown on this page when available, and empty or thin pages are kept noindex until useful listings exist.`],
+    [`What should I check before buying property in ${page.name}?`, `Check ${documentChecklist(page).slice(0, 5).join(", ")} and latest availability before making a decision.`],
     [`Which property types are available in ${page.name}?`, `The property type filters on this page are generated from live Akshar Estate inventory for this location.`],
-    [`How do I contact a supervisor for ${page.name}?`, "Use the contact CTA to reach Akshar Estate. Individual property pages show the assigned supervisor name, phone number and company."],
+    [`How do I book a site visit in ${page.name}?`, "Use the contact CTA or open an individual property page. Akshar Estate can confirm availability, supervisor contact and visit timing."],
     [`What nearby areas should I compare with ${page.name}?`, `Common nearby areas include ${(page.nearbyAreas || []).slice(0, 4).join(", ") || "nearby localities in Gujarat"}.`],
   ];
   return `<section><h2>FAQs</h2>${faqs.map(([question, answer]) => `<details><summary>${escapeHtml(question)}</summary><p>${escapeHtml(answer)}</p></details>`).join("")}</section>`;
 }
 
 function buildFaqSchema(page) {
+  const questions = [
+    [`Is ${pagePlace(page)} a good location for property buyers?`, buyerIntentText(page)],
+    [`Are there properties for sale in ${page.name}?`, `Active inventory is shown when available, and empty or thin pages are noindex until useful listings exist.`],
+    [`What should I check before buying property in ${page.name}?`, `Check ${documentChecklist(page).slice(0, 6).join(", ")} before shortlisting.`],
+    [`Which areas are near ${page.name}?`, `Nearby areas include ${(page.nearbyAreas || []).join(", ") || "connected Gujarat localities"}.`],
+    [`How can I contact Akshar Estate for ${page.name}?`, "Use the contact CTA or open an individual property page for assigned supervisor contact details."],
+  ];
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [
-      [`Are there properties for sale in ${page.name}?`, `Active inventory is shown when available, and empty or thin pages are noindex until useful listings exist.`],
-      [`Which areas are near ${page.name}?`, `Nearby areas include ${(page.nearbyAreas || []).join(", ") || "connected Gujarat localities"}.`],
-      [`How can I contact Akshar Estate for ${page.name}?`, "Use the contact CTA or open an individual property page for assigned supervisor contact details."],
-    ].map(([name, text]) => ({ "@type": "Question", name, acceptedAnswer: { "@type": "Answer", text } })),
+    mainEntity: questions.map(([name, text]) => ({ "@type": "Question", name, acceptedAnswer: { "@type": "Answer", text } })),
   };
 }
 
@@ -408,13 +506,16 @@ function injectHtml(shell, page, context) {
         <p>${escapeHtml(allListings.length ? `${allListings.length} active matching listings found.` : "No active matching listings are available right now.")}</p>
         ${filtered ? "<p>This filtered view is noindex and points canonical signals to the main location page.</p>" : ""}
       </header>
+      ${buildAnswerBlock(page, allListings)}
       ${buildFilterLinks(page, propertyTypes, bhkOptions)}
       <section><h2>Local Property Listings</h2>${buildListings(visibleListings)}${buildPagination(page, currentPage, totalPages)}</section>
       ${page.regionSlug ? `<section><h2>Parent Region</h2>${linkList([{ label: `Properties for sale in ${page.regionName || page.city || page.name}`, href: `/properties-for-sale/${page.regionSlug}` }])}</section>` : ""}
       <section><h2>Genuine Locality Introduction</h2><p>${escapeHtml(page.intro)}</p></section>
+      ${buildDepthSections(page, allListings)}
       <section><h2>Nearby Areas</h2>${linkList(buildNearbyLinks(page))}</section>
       <section><h2>Important Landmarks</h2>${linkList((page.landmarks || []).map((name) => ({ label: `Properties near ${name}`, href: page.path })))}</section>
       <section><h2>Connectivity Information</h2><p>${escapeHtml(page.connectivity)}</p></section>
+      ${buildContentClusters(page)}
       <section><h2>Internal Links</h2>${linkList([
         { label: "All properties", href: "/properties" },
         { label: `Properties for sale in ${page.city || page.name}`, href: `/properties-for-sale/${page.regionSlug || slugifyLocation(page.city || page.name)}` },

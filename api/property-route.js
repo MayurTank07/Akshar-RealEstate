@@ -393,6 +393,44 @@ function linkList(items) {
   return `<ul>${links.map((item) => `<li><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`;
 }
 
+function plainList(items) {
+  const values = items.filter(Boolean);
+  if (!values.length) return "";
+  return `<ul>${values.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+
+function propertyAnswer(property) {
+  const kind = propertyKind(property);
+  const action = listingAction(property).toLowerCase();
+  const location = propertyLocation(property) || "Gujarat";
+  const price = priceLabel(property);
+  const area = primaryAreaLabel(property);
+  const facts = [price && `priced at ${price}`, area && `with ${area}`].filter(Boolean).join(" ");
+  return `${titleCase(kind)} for ${action} in ${location}${facts ? ` ${facts}` : ""} is an Akshar Estate verified listing. Buyers should confirm current availability, documents, site visit timing and supervisor contact before shortlisting.`;
+}
+
+function propertyDocumentChecklist(property) {
+  const kind = propertyKind(property).toLowerCase();
+  const base = ["current availability and quoted price", "seller ownership and authority", "title chain or allotment details", "tax, maintenance and society dues", "approved plan or project details where applicable"];
+  if (/plot|land|farm/.test(kind)) return [...base, "land record extracts where applicable", "zoning or NA/NOC status", "road access and boundary details"];
+  if (/shop|office|showroom|commercial|warehouse|industrial/.test(kind)) return [...base, "use permission", "frontage and signage rights", "parking and loading access", "tenant or lease terms if pre-leased"];
+  return [...base, "RERA or project details where applicable", "society NOC if required", "loan and possession documents"];
+}
+
+function propertyContentClusterLinks(property) {
+  const city = property.city || "";
+  const locality = property.locationMaster?.name || property.location || "";
+  return [
+    city && { label: `Property guide for ${city}`, href: cityLandingHref(city) },
+    locality && { label: `Property guide for ${locality}`, href: localityLandingHref(city, locality) },
+    { label: "Gandhinagar property guide", href: "/properties-for-sale/gandhinagar" },
+    { label: "Ahmedabad property guide", href: "/properties-for-sale/ahmedabad" },
+    { label: "Commercial property guide", href: "/commercial-property/sg-highway" },
+    { label: "Plot and land guide", href: "/plots-for-sale/palaj" },
+    { label: "Sell or list your property", href: "/contact" },
+  ].filter(Boolean);
+}
+
 function imageAttributes(image, {
   width = 1200,
   height = 800,
@@ -544,7 +582,10 @@ function buildInitialPropertyPage(property, related = {}) {
         </header>
         ${lifecycleNotice}
         ${images.length ? `<figure><img ${imageAttributes(images[0], { width: 1600, height: 1000, widths: [640, 960, 1280, 1600], sizes: "(max-width: 768px) 100vw, 1120px", loading: "eager", fetchPriority: "high" })} style="width:100%;height:auto;border-radius:12px" /><figcaption>${escapeHtml(images[0].alt)}</figcaption></figure>` : ""}
+        ${section("Quick Answer", `<p><strong>${escapeHtml(propertyAnswer(property))}</strong></p>`)}
         ${section("Property Overview", `<p>${escapeHtml(description)}</p>${listingFacts}`)}
+        ${section("Documents to Check", plainList(propertyDocumentChecklist(property)))}
+        ${section("Site Visit Guidance", `<p>Share your budget, preferred timing and requirement with Akshar Estate before visiting. The team can confirm current availability, supervisor contact, meeting point, exact address guidance and similar nearby options.</p>`)}
         ${plotDetails}
         ${section("Price", `<p>${escapeHtml(price || property.price || "Price on request")}</p>`)}
         ${section("Carpet Area", `<p>${escapeHtml(formatArea(property.carpetArea, "carpet area") || "Available on request")}</p>`)}
@@ -571,6 +612,7 @@ function buildInitialPropertyPage(property, related = {}) {
         ${section("Same Property Type", linkList(links.similar) || "<p>Same property type listings will appear here as inventory updates.</p>")}
         ${section("Similar Price Range", linkList(links.similarPrice) || "<p>Similar price range listings will appear here as inventory updates.</p>")}
         ${section("Related Property Guides", linkList(links.relatedBlogs) || "<p>Related Akshar Estate property guides will appear here after editorial review.</p>")}
+        ${section("Property Research Clusters", linkList(propertyContentClusterLinks(property)))}
         ${section("Internal Links", linkList(links.core))}
         ${images.length > 1 ? section("Property Images", `<ul>${images.slice(1).map((image) => `<li><img ${imageAttributes(image, { width: 320, height: 220, widths: [160, 240, 320], sizes: "240px" })} style="max-width:240px;height:auto" /></li>`).join("")}</ul>`) : ""}
       </article>

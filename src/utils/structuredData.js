@@ -107,7 +107,25 @@ export function businessIdentity(contact = {}) {
     areaServed: [
       { "@type": "City", name: "Ahmedabad" },
       { "@type": "City", name: "Gandhinagar" },
+      { "@type": "Place", name: "Kudasan" },
+      { "@type": "Place", name: "Sargasan" },
+      { "@type": "Place", name: "Palaj" },
+      { "@type": "Place", name: "Dhanap" },
+      { "@type": "Place", name: "Shela" },
+      { "@type": "Place", name: "GIFT City" },
+      { "@type": "AdministrativeArea", name: "North Gujarat" },
+      { "@type": "AdministrativeArea", name: "Central Gujarat" },
       { "@type": "AdministrativeArea", name: "Gujarat" },
+    ],
+    knowsAbout: [
+      "verified property listings",
+      "Gandhinagar real estate",
+      "Ahmedabad real estate",
+      "residential flats",
+      "commercial property",
+      "plots and land",
+      "property selling assistance",
+      "site visit coordination",
     ],
     geo: lat && lng ? { "@type": "GeoCoordinates", latitude: Number(lat), longitude: Number(lng) } : undefined,
     contactPoint: [{
@@ -119,6 +137,28 @@ export function businessIdentity(contact = {}) {
     }],
   };
   return pruneSchema(identity);
+}
+
+function serviceCatalog() {
+  return [
+    ["Property buying assistance", "Shortlist verified flats, bungalows, plots, shops, offices and land in Gandhinagar, Ahmedabad and nearby Gujarat locations."],
+    ["Property selling assistance", "Help property owners position listings, capture enquiries and coordinate qualified buyer visits."],
+    ["Commercial property consulting", "Support for shops, offices, showrooms, warehouses and investment-ready commercial property."],
+    ["Plot and land advisory", "Local guidance for plot, agriculture land and investment land enquiries with site visit and document-check support."],
+    ["Rental assistance", "Broker-assisted rental matching for residential and commercial requirements."],
+    ["Site visit coordination", "WhatsApp and phone support for arranging supervised property visits."],
+  ].map(([name, description]) => ({
+    "@type": "Service",
+    name,
+    description,
+    provider: { "@id": `${SITE_ORIGIN}/#realestateagent` },
+    areaServed: [
+      { "@type": "City", name: "Gandhinagar" },
+      { "@type": "City", name: "Ahmedabad" },
+      { "@type": "AdministrativeArea", name: "Gujarat" },
+    ],
+    serviceType: name,
+  }));
 }
 
 export function buildBreadcrumbSchema(items = [], siteOrigin = SITE_ORIGIN) {
@@ -158,16 +198,24 @@ export function buildBusinessSchemas({ path = "/", pageName = BUSINESS_INFO.name
       address: identity.address,
       sameAs: identity.sameAs,
       contactPoint: identity.contactPoint,
+      areaServed: identity.areaServed,
+      knowsAbout: identity.knowsAbout,
     },
     {
       ...identity,
       "@type": "LocalBusiness",
       "@id": `${SITE_ORIGIN}/#localbusiness`,
+      priceRange: "Varies by property",
     },
     {
       ...identity,
       "@type": "RealEstateAgent",
       "@id": `${SITE_ORIGIN}/#realestateagent`,
+      priceRange: "Varies by property",
+      makesOffer: serviceCatalog().map((service) => ({
+        "@type": "Offer",
+        itemOffered: service,
+      })),
     },
     {
       "@type": "WebSite",
@@ -175,6 +223,30 @@ export function buildBusinessSchemas({ path = "/", pageName = BUSINESS_INFO.name
       name: BUSINESS_INFO.name,
       url: SITE_ORIGIN,
       publisher: { "@id": `${SITE_ORIGIN}/#organization` },
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${SITE_ORIGIN}/properties?query={search_term_string}`,
+        "query-input": "required name=search_term_string",
+      },
+    },
+    {
+      "@type": "WebPage",
+      "@id": `${url}#webpage`,
+      name: pageName,
+      url,
+      isPartOf: { "@id": `${SITE_ORIGIN}/#website` },
+      about: { "@id": `${SITE_ORIGIN}/#realestateagent` },
+      primaryImageOfPage: identity.image,
+    },
+    {
+      "@type": "ItemList",
+      "@id": `${SITE_ORIGIN}/#services`,
+      name: "Akshar Estate real estate services",
+      itemListElement: serviceCatalog().map((service, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        item: service,
+      })),
     },
     includeBreadcrumbs && {
       "@type": "BreadcrumbList",
@@ -342,6 +414,7 @@ export function buildPropertyJsonLd(property = {}, { url = "", breadcrumbs = [] 
     description: propertyDescription(property),
     url: canonical,
     image: propertyImages(property),
+    provider: { "@id": `${SITE_ORIGIN}/#realestateagent` },
     address: propertyAddress(property),
     geo: propertyGeo(property),
     floorSize: floorSize(property),
@@ -379,6 +452,22 @@ export function buildPropertyJsonLd(property = {}, { url = "", breadcrumbs = [] 
       "@type": "RealEstateAgent",
       "@id": `${SITE_ORIGIN}/#realestateagent`,
     },
+    {
+      "@type": "WebPage",
+      "@id": `${canonical}#webpage`,
+      name: propertyTitle(property),
+      description: propertyDescription(property),
+      url: canonical,
+      about: { "@id": `${canonical}#property` },
+      isPartOf: { "@id": `${SITE_ORIGIN}/#website` },
+      speakable: {
+        "@type": "SpeakableSpecification",
+        cssSelector: [
+          ".akshar-property-seo h1",
+          ".akshar-property-seo section",
+        ],
+      },
+    },
     realEstateNode,
     breadcrumbs.length ? {
       ...schemaNode(buildBreadcrumbSchema(breadcrumbs)),
@@ -407,6 +496,19 @@ export function buildCollectionPageJsonLd(page = {}, listings = [], { breadcrumb
         about: {
           "@type": "Thing",
           name: page.name,
+        },
+        provider: { "@id": `${SITE_ORIGIN}/#realestateagent` },
+        areaServed: [
+          page.city && { "@type": "City", name: page.city },
+          page.name && { "@type": "Place", name: page.name },
+          { "@type": "AdministrativeArea", name: "Gujarat" },
+        ].filter(Boolean),
+        speakable: {
+          "@type": "SpeakableSpecification",
+          cssSelector: [
+            ".akshar-location-seo h1",
+            ".akshar-location-seo section[aria-label='Direct answer']",
+          ],
         },
         mainEntity: {
           "@type": "ItemList",
