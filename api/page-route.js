@@ -135,6 +135,7 @@ function stripStaticSeo(html) {
 
 function normalizedPath(req) {
   const rawPath = Array.isArray(req.query?.path) ? req.query.path[0] : req.query?.path || "";
+  if (rawPath === "__root") return "/";
   const pathFromQuery = rawPath ? `/${String(rawPath).replace(/^\/+|\/+$/g, "")}` : "";
   const url = new URL(req.url || "/", SITE_ORIGIN);
   const pathFromUrl = url.pathname.replace(/\/+$/g, "") || "/";
