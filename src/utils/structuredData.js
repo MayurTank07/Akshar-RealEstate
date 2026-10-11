@@ -487,6 +487,12 @@ export function buildCollectionPageJsonLd(page = {}, listings = [], { breadcrumb
     "@context": "https://schema.org",
     "@graph": [
       {
+        ...businessIdentity(),
+        "@type": "RealEstateAgent",
+        "@id": `${SITE_ORIGIN}/#realestateagent`,
+        priceRange: "Varies by property",
+      },
+      {
         "@type": "CollectionPage",
         "@id": `${url}#collection`,
         name: page.h1 || page.title || page.name,
