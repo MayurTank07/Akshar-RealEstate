@@ -336,6 +336,10 @@ function localMarketContext(property) {
   if (key.includes("palaj")) {
     return "Palaj is a Gandhinagar growth pocket for buyers comparing plotted and residential options near IIT Gandhinagar-side movement, Dhanap, Pethapur, Kudasan and city access roads.";
   }
+  if (key.includes("dhanap")) return "Dhanap is a Gandhinagar village where land buyers should compare the exact survey parcel, approach road, land records and access to the capital city.";
+  if (key.includes("dashela")) return "Dashela is in Gandhinagar district. Agricultural land buyers should verify the village record, parcel boundaries, road access and permitted use for this specific holding.";
+  if (key.includes("jhakhora")) return "Jhakhora is in Gandhinagar district. Compare the exact land parcel, approach road and title documents before treating it as a farmhouse or investment option.";
+  if (key.includes("viramgam")) return "Viramgam buyers should confirm the exact project location, plot boundaries, infrastructure status and travel time to their regular destinations.";
   if (key.includes("kudasan")) {
     return "Kudasan is preferred for apartment and commercial demand between Gandhinagar, GIFT City, Sargasan and Infocity-side routes.";
   }
@@ -357,9 +361,6 @@ function generatedPropertyDescription(property) {
   const location = propertyLocation(property) || "Gujarat";
   const price = priceLabel(property);
   const area = primaryAreaLabel(property);
-  const mediaLabel = propertyImages(property).some((image) => image.url !== PROPERTY_IMAGE_FALLBACK)
-    ? "uploaded property photos"
-    : "a placeholder image while fresh listing photos are updated";
   const facts = [
     area && `a listed area of ${area}`,
     price && `a quoted price of ${price}`,
@@ -369,12 +370,12 @@ function generatedPropertyDescription(property) {
   const factSentence = facts.length
     ? ` The listing includes ${facts.join(", ")}.`
     : " The Akshar Estate team can confirm current price, exact area, possession and site details on enquiry.";
-  return `${titleCase(kind)} for ${action} in ${location} is an active Akshar Estate listing for buyers comparing verified options in this micro-market.${factSentence} ${localMarketContext(property)} The page includes ${mediaLabel}, canonical property details, contact options and links to similar active properties.`;
+  return `${titleCase(kind)} for ${action} in ${location}.${factSentence} ${localMarketContext(property)} Ask Akshar Estate to confirm availability and arrange a site visit.`;
 }
 
 function publicDescription(property) {
   const saved = cleanPropertyText(property.description);
-  if (saved.length >= 80) return saved;
+  if (saved.length >= 80 && !/thoughtfully presented|https?:\/\/|verified Ahmedabad market guidance/i.test(saved)) return saved;
   return generatedPropertyDescription(property);
 }
 
@@ -412,7 +413,7 @@ function propertyAnswer(property) {
   const price = priceLabel(property);
   const area = primaryAreaLabel(property);
   const facts = [price && `priced at ${price}`, area && `with ${area}`].filter(Boolean).join(" ");
-  return `${titleCase(kind)} for ${action} in ${location}${facts ? ` ${facts}` : ""} is an Akshar Estate verified listing. Buyers should confirm current availability, documents, site visit timing and supervisor contact before shortlisting.`;
+  return `${titleCase(kind)} for ${action} in ${location}${facts ? ` ${facts}` : ""} is listed by Akshar Estate. Confirm current availability, documents and site visit timing before shortlisting.`;
 }
 
 function propertyDocumentChecklist(property) {
@@ -426,13 +427,18 @@ function propertyDocumentChecklist(property) {
 function propertyContentClusterLinks(property) {
   const city = property.city || "";
   const locality = property.locationMaster?.name || property.location || "";
+  const citySlug = slugifyLocation(city);
+  const type = slugifyLocation(property.type || property.propertyType || "");
+  const categoryLinks = [
+    /agricult|farm/.test(type) && getPropertyTypeIntentPage("agricultural-land-for-sale", citySlug),
+    /plot/.test(type) && getPropertyTypeIntentPage("plots-for-sale", citySlug),
+    /flat|apartment/.test(type) && getPropertyTypeIntentPage("flats-for-sale", citySlug),
+    Number(property.bhk || property.beds) === 2 && getPropertyTypeIntentPage("2-bhk-flats-for-sale", citySlug),
+  ].filter(Boolean).map((page) => ({ label: page.h1, href: page.path }));
   return [
+    ...categoryLinks,
     city && { label: `Property guide for ${city}`, href: cityLandingHref(city) },
     locality && { label: `Property guide for ${locality}`, href: localityLandingHref(city, locality) },
-    { label: "Gandhinagar property guide", href: "/properties-for-sale/gandhinagar" },
-    { label: "Ahmedabad property guide", href: "/properties-for-sale/ahmedabad" },
-    { label: "Commercial property guide", href: "/commercial-property/sg-highway" },
-    { label: "Plot and land guide", href: "/plots-for-sale/palaj" },
     { label: "Sell or list your property", href: "/contact" },
   ].filter(Boolean);
 }
@@ -486,15 +492,20 @@ function propertyTypeHref(property, city, locality) {
   const type = property.type || property.propertyType || "";
   const normalizedType = slugifyLocation(type);
   const locationSlug = slugifyLocation(locality || city);
-  const prefix = /plot|land/.test(normalizedType)
-    ? "plots-for-sale"
+  const citySlug = slugifyLocation(city);
+  const prefix = /agricult|farm/.test(normalizedType)
+    ? "agricultural-land-for-sale"
+    : /plot/.test(normalizedType)
+      ? "plots-for-sale"
+      : /flat|apartment/.test(normalizedType)
+        ? "flats-for-sale"
     : /commercial|office|shop|retail/.test(normalizedType)
       ? "commercial-property"
       : /industrial|warehouse|factory/.test(normalizedType)
         ? "industrial-property"
         : "";
   if (!prefix) return localityLandingHref(city, locality);
-  return getPropertyTypeIntentPage(prefix, locationSlug)?.path || localityLandingHref(city, locality);
+  return getPropertyTypeIntentPage(prefix, locationSlug)?.path || getPropertyTypeIntentPage(prefix, citySlug)?.path || localityLandingHref(city, locality);
 }
 
 function buildInternalLinks(property, related = {}) {
@@ -582,7 +593,7 @@ function buildInitialPropertyPage(property, related = {}) {
       </nav>
       <article>
         <header>
-          <p style="margin:0 0 8px;color:#2563eb;font-weight:700">Akshar Estate: The Property Hub verified listing</p>
+          <p style="margin:0 0 8px;color:#2563eb;font-weight:700">Akshar Estate: The Property Hub listing</p>
           <h1 style="font-size:32px;line-height:1.2;margin:0 0 12px">${escapeHtml(title)}</h1>
           <p>${escapeHtml(propertyLocation(property))}</p>
         </header>

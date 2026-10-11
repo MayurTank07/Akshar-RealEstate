@@ -5,6 +5,7 @@ import { buildInternationalPhone, countryCodeOptions, normalizePhoneDigits } fro
 import { publicGoogleMapsEmbedUrl, publicMapLabel } from '../utils/googleMaps';
 import { PROPERTY_IMAGE_FALLBACK, propertyImageAlt, responsiveImageProps } from '../utils/imageSeo';
 import { trackPropertyEvent } from '../utils/analytics';
+import { formatINR } from '../utils/currency';
 
 function telHref(phoneNumber = "") {
   const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
@@ -64,8 +65,10 @@ export default function PropertyInformation({ property }) {
   const youtubeUrl = youtubeEmbedUrl(videoUrl);
   const uploadedVideo = isUploadedVideoUrl(videoUrl);
   const hasPlayableVideo = Boolean(youtubeUrl || uploadedVideo);
-  const description = property?.description?.trim()
-    || "Experience premium real estate designed for modern living, strong connectivity, practical layouts, and verified Akshar Estate assistance from enquiry to closure.";
+  const savedDescription = String(property?.description || "").trim();
+  const description = savedDescription && !/thoughtfully presented|https?:\/\/|verified Ahmedabad market guidance/i.test(savedDescription)
+    ? savedDescription
+    : `${property?.bhk ? `${property.bhk} BHK ` : ""}${property?.type || "Property"} in ${/^https?:\/\//i.test(String(property?.location || "")) ? property?.city || "Gujarat" : [property?.location, property?.city].filter((value, index, parts) => value && parts.indexOf(value) === index).join(", ") || "Gujarat"}${property?.area ? ` with ${property.area} listed area` : ""}${Number(property?.priceAmount || property?.price || 0) ? `, asking ${formatINR(property.priceAmount || property.price)}` : ""}. Confirm availability, documents and site details before arranging a visit.`;
   const isSubmitting = submitState === "submitting";
   const isSubmitted = submitState === "submitted";
 

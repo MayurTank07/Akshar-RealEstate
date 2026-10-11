@@ -19,6 +19,58 @@ import {
 import { sanitizePublicProperty } from "../utils/propertyData";
 import { syncPropertySeo } from "../utils/propertySeo";
 import { trackPropertyEvent } from "../utils/analytics";
+import { formatINR } from "../utils/currency";
+import { getPropertyTypeIntentPage, getSaleLandingPage, slugifyLocation } from "../config/locationLandingPages";
+
+function PropertyResearch({ property }) {
+  const city = String(property.city || "").trim();
+  const rawLocality = String(property.locationMaster?.name || property.location || "").trim();
+  const locality = /^https?:\/\//i.test(rawLocality) ? city : rawLocality;
+  const place = locality && locality.toLowerCase() !== city.toLowerCase() ? `${locality}, ${city}` : city || locality || "Gujarat";
+  const type = String(property.type || property.propertyType || "Property").trim();
+  const typeSlug = slugifyLocation(type);
+  const bhk = Number(property.bhk || property.beds || 0);
+  const kind = bhk && /flat|apartment/.test(typeSlug) ? `${bhk} BHK ${type}` : type;
+  const action = /rent|lease/i.test(String(property.listingType || property.dealType || "")) ? "rent" : "sale";
+  const area = property.area || property.landArea || property.measurement?.value && `${property.measurement.value} ${property.measurement.unit || "sq.ft"}`;
+  const price = Number(property.priceAmount || property.price || 0);
+  const citySlug = slugifyLocation(city);
+  const prefix = /agricult|farm/.test(typeSlug) ? "agricultural-land-for-sale" : /plot/.test(typeSlug) ? "plots-for-sale" : /flat|apartment/.test(typeSlug) ? "flats-for-sale" : "";
+  const categoryPage = prefix && getPropertyTypeIntentPage(prefix, citySlug);
+  const bhkPage = bhk === 2 && getPropertyTypeIntentPage("2-bhk-flats-for-sale", citySlug);
+  const localityPage = getSaleLandingPage(citySlug, slugifyLocation(locality));
+  const cityPage = getSaleLandingPage(citySlug);
+  const isLand = /agricult|farm|plot|land/.test(typeSlug);
+  const documents = isLand
+    ? ["Seller ownership and title chain", "Survey number and land record extracts where applicable", "Land use and NA or zoning permission", "Road access, boundaries and encumbrances"]
+    : ["Seller ownership and title chain", "Approved plan and RERA details where applicable", "Carpet area, parking and possession terms", "Society dues and loan or encumbrance status"];
+
+  return (
+    <section className="mx-auto max-w-7xl px-4 py-8 text-slate-800 sm:px-6 lg:px-8">
+      <h2 className="text-xl font-bold text-slate-950">Property at a glance</h2>
+      <p className="mt-3 max-w-3xl leading-7">
+        {kind} for {action} in {place}{area ? `, ${area}` : ""}{price ? `, listed at ${formatINR(price)}` : ""}.
+        {property.propertyCode ? ` Reference ${property.propertyCode}.` : ""} Confirm price, availability and exact site details with Akshar Estate before visiting.
+      </p>
+      <div className="mt-7 grid gap-8 md:grid-cols-2">
+        <div>
+          <h3 className="font-bold text-slate-950">Before you visit</h3>
+          <p className="mt-2 leading-7">Ask for the exact address, current asking price, site access and a confirmed visit slot. Compare the property with other listings in {city || "the area"} before deciding.</p>
+        </div>
+        <div>
+          <h3 className="font-bold text-slate-950">Documents to check</h3>
+          <ul className="mt-2 list-disc space-y-1 pl-5 leading-7">{documents.map((item) => <li key={item}>{item}</li>)}</ul>
+        </div>
+      </div>
+      <nav aria-label="Explore related properties" className="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold text-blue-700">
+        {categoryPage && <Link to={categoryPage.path}>{categoryPage.h1}</Link>}
+        {bhkPage && <Link to={bhkPage.path}>{bhkPage.h1}</Link>}
+        {localityPage && localityPage.path !== cityPage?.path && <Link to={localityPage.path}>Properties in {locality}</Link>}
+        {cityPage && <Link to={cityPage.path}>Properties in {city}</Link>}
+      </nav>
+    </section>
+  );
+}
 
 export default function PropertyDetails() {
   const location = useLocation();
@@ -159,6 +211,8 @@ export default function PropertyDetails() {
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section from componetswest */}
       <Hero property={property} whatsappAvailable={whatsappAvailable} onWhatsAppEnquiry={requestWhatsAppEnquiry} />
+
+      <PropertyResearch property={property} />
 
       {/* Map Form Section from componetswest */}
       <MapForm property={property} />

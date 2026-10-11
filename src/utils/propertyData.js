@@ -71,11 +71,15 @@ export function sanitizePublicProperty(property) {
 export function normalizeProperty(property, source = "pricing") {
   property = sanitizePublicProperty(property);
   const city = getPropertyCity(property);
+  const areaText = String(property.area || "");
+  const areaSqft = /(?:sq\.?\s*ft|square\s*feet|sqft)/i.test(areaText)
+    ? Number.parseFloat(areaText.replace(/,/g, "")) || 0
+    : 0;
   return {
     ...property,
     city,
     type: property.type || "Apartments",
-    sqft: property.sqft || Number.parseInt(String(property.area || "").replace(/[^\d]/g, ""), 10) || 0,
+    sqft: property.sqft || areaSqft,
     area: property.area || (property.sqft ? `${property.sqft} sq.ft` : ""),
     badge: property.badge || property.tag || "Featured",
     badgeColor:

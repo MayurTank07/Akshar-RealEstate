@@ -523,7 +523,7 @@ export function buildCollectionPageJsonLd(page = {}, listings = [], { breadcrumb
             "@type": "ListItem",
             position: index + 1,
             url: absoluteUrl(property.slug ? `/property/${property.slug}` : "/properties"),
-            name: property.title || property.seoTitle,
+            name: `${propertyKind(property)} for ${listingAction(property)} in ${propertyLocation(property) || page.city || "Gujarat"}`,
           })),
         },
       },

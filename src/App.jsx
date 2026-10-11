@@ -58,6 +58,9 @@ function App() {
               <Route path="/properties-for-sale/:region/:locality" element={<LocationLanding />} />
               <Route path="/properties-for-sale/:region/:locality/:intent" element={<LocationLanding />} />
               <Route path="/plots-for-sale/:typeLocation" element={<LocationLanding typePrefix="plots-for-sale" />} />
+              <Route path="/agricultural-land-for-sale/:typeLocation" element={<LocationLanding typePrefix="agricultural-land-for-sale" />} />
+              <Route path="/flats-for-sale/:typeLocation" element={<LocationLanding typePrefix="flats-for-sale" />} />
+              <Route path="/2-bhk-flats-for-sale/:typeLocation" element={<LocationLanding typePrefix="2-bhk-flats-for-sale" />} />
               <Route path="/commercial-property/:typeLocation" element={<LocationLanding typePrefix="commercial-property" />} />
               <Route path="/industrial-property/:typeLocation" element={<LocationLanding typePrefix="industrial-property" />} />
               <Route path="/blog" element={<BlogList />} />

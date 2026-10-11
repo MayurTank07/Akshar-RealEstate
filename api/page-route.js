@@ -170,6 +170,12 @@ function answerBlock(page) {
 
 function serviceClusterLinks(pathname) {
   const links = [
+    ["/agricultural-land-for-sale/gandhinagar", "Agricultural land for sale in Gandhinagar"],
+    ["/plots-for-sale/ahmedabad", "Plots for sale in Ahmedabad"],
+    ["/plots-for-sale/gandhinagar", "Plots for sale in Gandhinagar"],
+    ["/flats-for-sale/ahmedabad", "Flats for sale in Ahmedabad"],
+    ["/flats-for-sale/gandhinagar", "Flats for sale in Gandhinagar"],
+    ["/2-bhk-flats-for-sale/gandhinagar", "2 BHK flats for sale in Gandhinagar"],
     ["/properties-for-sale/gandhinagar", "Verified property in Gandhinagar"],
     ["/properties-for-sale/ahmedabad", "Verified property in Ahmedabad"],
     ["/properties-for-sale/gandhinagar/kudasan", "Kudasan property guide"],

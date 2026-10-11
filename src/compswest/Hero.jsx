@@ -35,7 +35,7 @@ function optionValues(options = {}) {
 }
 
 function uniqueSorted(...groups) {
-  return [...new Set(groups.flat().filter(Boolean).map(String))].sort((a, b) => a.localeCompare(b));
+  return [...new Set(groups.flat().filter(Boolean).map(String).filter((value) => !/^https?:\/\//i.test(value)))].sort((a, b) => a.localeCompare(b));
 }
 
 function propertyDealText(property = {}) {
@@ -78,7 +78,7 @@ function safeSearchQuery(value = "") {
     .slice(0, 120);
 }
 
-export default function PricingPage({ category, type, city: selectedCity, filters }) {
+export default function PricingPage({ category, type, city: selectedCity, filters, pageTitle = "", intentPage = null, intro = null }) {
   const { category: routeCategory, slug } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -181,6 +181,15 @@ export default function PricingPage({ category, type, city: selectedCity, filter
     const dealMode = queryDealMode(query, searchType);
 
     const nextListings = listings.filter((item) => {
+      if (intentPage?.kind === "property-type") {
+        const itemType = String(item.type || item.propertyType || "").toLowerCase();
+        const typeMatches = intentPage.typeMatchers.some((matcher) => itemType.includes(String(matcher).toLowerCase()));
+        const placeMatches = intentPage.cityWide
+          ? String(item.city || "").toLowerCase() === intentPage.city.toLowerCase()
+          : String(item.location || "").toLowerCase().includes(intentPage.locationName.toLowerCase());
+        const ambiguousPlot = intentPage.prefix === "plots-for-sale" && /agricult|farm/i.test(`${item.category || ""} ${item.title || ""}`);
+        if (!typeMatches || !placeMatches || ambiguousPlot || intentPage.bhk && Number(item.bhk || item.beds || 0) !== intentPage.bhk) return false;
+      }
       const matchesType = activeType === "All" || String(item.type || "").toLowerCase() === String(activeType || "").toLowerCase();
       const itemCity = String(item.city || item.location || "");
       const itemLocation = String(item.location || "");
@@ -206,7 +215,7 @@ export default function PricingPage({ category, type, city: selectedCity, filter
     });
     if (query.trim()) return rankedPropertySearch(nextListings, query);
     return sortProperties(nextListings, "latest").map((p, i) => ({ property: p, rank: 0, index: i }));
-  }, [activeCity, activeType, advancedFilters, listings, newProjectOnly, priceRange, query, searchType]);
+  }, [activeCity, activeType, advancedFilters, intentPage, listings, newProjectOnly, priceRange, query, searchType]);
 
   const filteredListings = useMemo(() => rankedItems.map((r) => r.property), [rankedItems]);
   const groupedResults = useMemo(() => (query.trim() ? groupSearchResults(rankedItems, query) : null), [rankedItems, query]);
@@ -322,6 +331,8 @@ export default function PricingPage({ category, type, city: selectedCity, filter
         properties={listings}
       />
 
+      {intro}
+
       <main className="wf-container py-8 xl:w-[calc(100%-3rem)] xl:max-w-[96rem]">
 
         <div className="mb-6 flex gap-3 overflow-x-auto pb-2 wf-scrollbar-none">
@@ -393,6 +404,7 @@ export default function PricingPage({ category, type, city: selectedCity, filter
             isPropertySaved={isPropertySaved}
             resetFilters={resetFilters}
             searchType={searchType}
+            pageTitle={pageTitle}
           />
         </div>
 
@@ -423,6 +435,7 @@ export default function PricingPage({ category, type, city: selectedCity, filter
               isPropertySaved={isPropertySaved}
               resetFilters={resetFilters}
               searchType={searchType}
+              pageTitle={pageTitle}
             />
           </div>
         </div>
@@ -509,7 +522,7 @@ function FilterSection({ children, title }) {
   );
 }
 
-function PropertyResults({ activeCity, activeType, desktop = false, filteredListings, groupedResults, loading = false, error = "", query, handlePropertyClick, handleSaveClick, isPropertySaved, resetFilters, searchType }) {
+function PropertyResults({ activeCity, activeType, desktop = false, filteredListings, groupedResults, loading = false, error = "", query, handlePropertyClick, handleSaveClick, isPropertySaved, resetFilters, searchType, pageTitle = "" }) {
   const hasQuery = Boolean(query?.trim());
   const newProjectMode = searchType === "New Projects";
 
@@ -563,9 +576,9 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
           <div className="mb-4 flex items-center text-[11px] text-gray-400"><MapPin className="mr-1 h-3 w-3" /> {item.location}</div>
           <div className="mb-4 inline-flex w-fit rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-slate-500">{item.type}</div>
           <div className="mb-6 flex justify-start gap-5 text-[11px] text-gray-500">
-            <div className="flex items-center gap-1"><Bed className="h-3.5 w-3.5" /> {item.beds}</div>
-            <div className="flex items-center gap-1"><Bath className="h-3.5 w-3.5" /> {item.baths}</div>
-            <div className="flex min-w-0 items-center gap-1"><Maximize className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{item.sqft || item.area} {item.sqft ? "sq.ft" : ""}</span></div>
+            {Number(item.beds) > 0 && <div className="flex items-center gap-1"><Bed className="h-3.5 w-3.5" /> {item.beds}</div>}
+            {Number(item.baths) > 0 && <div className="flex items-center gap-1"><Bath className="h-3.5 w-3.5" /> {item.baths}</div>}
+            {(item.area || item.sqft) && <div className="flex min-w-0 items-center gap-1"><Maximize className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">{item.area || `${item.sqft} sq.ft`}</span></div>}
           </div>
           <div className="flex items-end justify-between xl:mt-auto">
             <div>
@@ -627,7 +640,7 @@ function PropertyResults({ activeCity, activeType, desktop = false, filteredList
                 {newProjectMode ? "New Projects" : activeCity === "All" ? `${searchType} properties` : `${searchType} in ${activeCity}`}
               </p>
               <h1 className="mt-1 text-3xl font-extrabold text-slate-950">
-                {filteredListings.length} {newProjectMode ? "New Projects Found" : desktop ? "Properties Found" : "Matching Properties"}
+                {pageTitle || `${filteredListings.length} ${newProjectMode ? "New Projects Found" : desktop ? "Properties Found" : "Matching Properties"}`}
               </h1>
             </>
           )}

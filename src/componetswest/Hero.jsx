@@ -131,12 +131,17 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
   };
 
   const title = property?.title || "Property";
-  const propertyLocation = property?.location || property?.city || "";
+  const propertyLocation = /^https?:\/\//i.test(String(property?.location || "")) ? property?.city || "Gujarat" : property?.location || property?.city || "";
   const price = property?.priceAmount || property?.price ? formatINR(property.priceAmount || property.price) : "Price on request";
   const measurement = property?.measurement;
   const unit = measurement?.unit;
   const area = property?.area || (measurement?.value ? `${measurement.value} ${unit || "sqft"}` : property?.sqft ? `${property.sqft} sq.ft` : "");
   const propertyType = supportsRooms(property) && property?.beds ? `${property.beds} BHK` : property?.type || property?.category || "Property";
+  const headingPlace = propertyLocation && property?.city && propertyLocation.toLowerCase() !== property.city.toLowerCase()
+    ? `${propertyLocation}, ${property.city}` : propertyLocation || property?.city || "Gujarat";
+  const headingType = property?.bhk && /flat|apartment/i.test(property?.type || "") ? `${property.bhk} BHK ${property.type}` : property?.type || "Property";
+  const headingAction = /rent|lease/i.test(String(property?.listingType || property?.dealType || "")) ? "rent" : "sale";
+  const heading = `${headingType} for ${headingAction} in ${headingPlace}`;
   const propertyStatus = lifecycleLabel(property);
   const lifecycleStatus = String(property?.status || "").trim().toLowerCase();
   const investmentMetric = property?.roi || (property?.isPreLeased ? "Pre-Leased" : "Verified");
@@ -154,8 +159,8 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
               <span>Properties</span> <ChevronRight size={12} />
               <span className="text-gray-400">{title}</span>
             </nav>
-            <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">{title}</h1>
-            <p className="mt-1 text-sm font-semibold text-blue-600">Verified Akshar Estate The Property HUB Listing</p>
+            <h1 className="text-3xl font-extrabold text-slate-950 sm:text-4xl">{heading}</h1>
+            <p className="mt-1 text-sm font-semibold text-blue-600">Akshar Estate The Property HUB listing</p>
             <div className="mt-2 flex items-center text-sm text-slate-500">
               <MapPin size={14} className="mr-1" />
               {propertyLocation}

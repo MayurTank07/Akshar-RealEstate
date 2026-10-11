@@ -13,6 +13,15 @@ const priorityLocations = [
   ["Dhanap", "/properties-for-sale/gandhinagar/dhanap"],
 ];
 
+const prioritySearches = [
+  ["Agricultural land in Gandhinagar", "/agricultural-land-for-sale/gandhinagar"],
+  ["Plots in Ahmedabad", "/plots-for-sale/ahmedabad"],
+  ["Plots in Gandhinagar", "/plots-for-sale/gandhinagar"],
+  ["Flats in Ahmedabad", "/flats-for-sale/ahmedabad"],
+  ["Flats in Gandhinagar", "/flats-for-sale/gandhinagar"],
+  ["2 BHK flats in Gandhinagar", "/2-bhk-flats-for-sale/gandhinagar"],
+];
+
 export default function PriorityLocationLinks() {
   return (
     <section className="bg-white px-4 py-10 sm:px-6 lg:px-8">
@@ -34,6 +43,14 @@ export default function PriorityLocationLinks() {
               className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-800 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700"
             >
               Properties for sale in {name}
+            </Link>
+          ))}
+        </div>
+        <h3 className="mt-8 mb-4 text-lg font-bold text-slate-950">Browse by property type</h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {prioritySearches.map(([name, href]) => (
+            <Link key={href} to={href} className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 transition hover:border-emerald-300 hover:text-emerald-800">
+              {name}
             </Link>
           ))}
         </div>

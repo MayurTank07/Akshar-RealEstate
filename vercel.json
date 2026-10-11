@@ -90,6 +90,30 @@
       "destination": "/api/sale-landing-route?prefix=plots-for-sale&typeLocation=:typeLocation"
     },
     {
+      "source": "/agricultural-land-for-sale/:typeLocation/",
+      "destination": "/api/sale-landing-route?prefix=agricultural-land-for-sale&typeLocation=:typeLocation&slash=1"
+    },
+    {
+      "source": "/agricultural-land-for-sale/:typeLocation",
+      "destination": "/api/sale-landing-route?prefix=agricultural-land-for-sale&typeLocation=:typeLocation"
+    },
+    {
+      "source": "/flats-for-sale/:typeLocation/",
+      "destination": "/api/sale-landing-route?prefix=flats-for-sale&typeLocation=:typeLocation&slash=1"
+    },
+    {
+      "source": "/flats-for-sale/:typeLocation",
+      "destination": "/api/sale-landing-route?prefix=flats-for-sale&typeLocation=:typeLocation"
+    },
+    {
+      "source": "/2-bhk-flats-for-sale/:typeLocation/",
+      "destination": "/api/sale-landing-route?prefix=2-bhk-flats-for-sale&typeLocation=:typeLocation&slash=1"
+    },
+    {
+      "source": "/2-bhk-flats-for-sale/:typeLocation",
+      "destination": "/api/sale-landing-route?prefix=2-bhk-flats-for-sale&typeLocation=:typeLocation"
+    },
+    {
       "source": "/commercial-property/:typeLocation/",
       "destination": "/api/sale-landing-route?prefix=commercial-property&typeLocation=:typeLocation&slash=1"
     },

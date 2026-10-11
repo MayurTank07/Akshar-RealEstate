@@ -77,28 +77,16 @@ function storedMetaDescription(property) {
 }
 
 export function buildPropertySeo(property) {
-  const title = property.title || "Verified Property";
   const type = propertyType(property);
   const location = propertyLocation(property);
-  const dealType = property.dealType || "Buy";
+  const action = /rent|lease/i.test(String(property.listingType || property.dealType || "")) ? "Rent" : "Sale";
   const canonical = property.canonicalUrl || `${window.location.origin}/property/${property.slug || property._id || property.id || ""}`;
-  const metaTitle = compact(storedSeoTitle(property) || `${compact(title, 32)} | ${type} in ${compact(location, 24)} | Ahmedabad Broker`, 68);
+  const metaTitle = compact(storedSeoTitle(property) || `${property.bhk ? `${property.bhk} BHK ` : ""}${type} for ${action} in ${location} | Akshar Estate`, 68);
   const metaDescription = compact(storedMetaDescription(property) ||
-    generatedMetaDescription(property, { title, type, location }),
+    generatedMetaDescription(property, { title: `${type} for ${action.toLowerCase()}`, type, location }),
     160
   );
-  const keywords = [
-    title,
-    `${type} in Ahmedabad`,
-    `${dealType} property in Ahmedabad`,
-    "Ahmedabad real estate broker",
-    "flats shops offices villas plots in Ahmedabad",
-    "broker-assisted property deals Ahmedabad",
-    property.location,
-    property.topProject,
-    property.developerName || property.topDeveloper,
-  ].filter(Boolean).join(", ");
-  return { title: metaTitle, description: metaDescription, keywords, canonical };
+  return { title: metaTitle, description: metaDescription, canonical };
 }
 
 function metaTag(attributes) {
@@ -124,7 +112,7 @@ function schemaTag(id, schema) {
 function clearPropertySeo() {
   document.querySelectorAll("[data-akshar-property-seo='true']").forEach((element) => {
     if (element.dataset.aksharPropertySeoOriginal !== undefined) {
-      element.setAttribute("content", element.dataset.aksharPropertySeoOriginal);
+      element.setAttribute(element.tagName === "LINK" ? "href" : "content", element.dataset.aksharPropertySeoOriginal);
       delete element.dataset.aksharPropertySeo;
       delete element.dataset.aksharPropertySeoOriginal;
     } else {
@@ -140,7 +128,7 @@ export function syncPropertySeo(property) {
   const seo = buildPropertySeo(property);
   document.title = seo.title;
   metaTag({ name: "description", content: seo.description });
-  metaTag({ name: "keywords", content: seo.keywords });
+  metaTag({ name: "robots", content: property.isIndexable === false || /draft|inactive|deleted|pending/i.test(String(property.status || "")) ? "noindex,follow" : "index,follow,max-image-preview:large" });
   metaTag({ property: "og:title", content: seo.title });
   metaTag({ property: "og:description", content: seo.description });
   metaTag({ property: "og:type", content: "product" });
@@ -150,7 +138,10 @@ export function syncPropertySeo(property) {
   metaTag({ name: "twitter:title", content: seo.title });
   metaTag({ name: "twitter:description", content: seo.description });
 
-  const canonical = document.createElement("link");
+  const canonical = document.querySelector('link[rel="canonical"]') || document.createElement("link");
+  if (canonical.isConnected && canonical.dataset.aksharPropertySeoOriginal === undefined) {
+    canonical.dataset.aksharPropertySeoOriginal = canonical.getAttribute("href") || "";
+  }
   canonical.rel = "canonical";
   canonical.href = seo.canonical;
   canonical.dataset.aksharPropertySeo = "true";

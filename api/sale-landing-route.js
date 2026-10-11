@@ -20,7 +20,7 @@ const INDEXABLE_PROPERTY_STATUSES = ["active", "published", "available", "reserv
 const PROPERTY_FETCH_LIMIT = 100;
 const MAX_PROPERTY_PAGES = 25;
 const SALE_PATH_RE = /^\/properties-for-sale\/([^/?#]+)(?:\/([^/?#]+))?(?:\/([^/?#]+))?\/?/i;
-const TYPE_PATH_RE = /^\/(plots-for-sale|commercial-property|industrial-property)\/([^/?#]+)\/?/i;
+const TYPE_PATH_RE = /^\/(agricultural-land-for-sale|plots-for-sale|flats-for-sale|2-bhk-flats-for-sale|commercial-property|industrial-property)\/([^/?#]+)\/?/i;
 
 function firstQueryValue(value) {
   return Array.isArray(value) ? value[0] : value;
@@ -115,7 +115,12 @@ function propertyMatchesPage(property, page) {
   const locationSlug = slugifyLocation(property.locationMaster?.name || property.location || property.map?.area || "");
   const citySlug = slugifyLocation(property.city || property.map?.city || "");
   if (page.kind === "bhk") return pageLocationSlugs(page, page.localitySlug).some((slug) => slugContainsLocation(locationSlug, slug)) && propertyBhk(property) === Number(page.bhk);
-  if (page.kind === "property-type") return pageLocationSlugs(page, page.locationSlug).some((slug) => slugContainsLocation(locationSlug, slug)) && typeMatchesIntent(property, page);
+  if (page.kind === "property-type") {
+    const placeMatches = page.cityWide
+      ? citySlug === slugifyLocation(page.city)
+      : pageLocationSlugs(page, page.locationSlug).some((slug) => slugContainsLocation(locationSlug, slug));
+    return placeMatches && typeMatchesIntent(property, page) && (!page.bhk || propertyBhk(property) === page.bhk);
+  }
   if (page.kind === "locality") return pageLocationSlugs(page, page.slug).some((slug) => slugContainsLocation(locationSlug, slug));
   if (page.locations?.length) {
     const allowed = page.locations.map(slugifyLocation);
@@ -136,11 +141,8 @@ function typeMatchesIntent(property = {}, page = {}) {
   const haystack = [
     property.type,
     property.propertyType,
-    property.category,
-    property.title,
-    property.description,
-    ...(property.propertyTags || []),
   ].join(" ").toLowerCase();
+  if (page.prefix === "plots-for-sale" && /agricult|farm/i.test(`${property.category || ""} ${property.title || ""}`)) return false;
   return (page.typeMatchers || []).some((matcher) => haystack.includes(String(matcher).toLowerCase()));
 }
 
@@ -198,8 +200,11 @@ function uniqueValues(items, selector) {
 }
 
 function pageMetaDescription(page, count) {
+  if (page.kind === "property-type") {
+    return compact(`${page.h1}. Compare ${count} current Akshar Estate ${count === 1 ? "listing" : "listings"}, asking prices, area, location and site visit details.`, 160);
+  }
   return compact(
-    `${count ? `Explore ${count} verified properties` : "Explore verified property options"} for sale in ${page.name}. Compare local listings, property types, BHK options, nearby areas, landmarks and supervisor contact with Akshar Estate.`,
+    `${count ? `Explore ${count} current properties` : "Explore property options"} for sale in ${page.name}. Compare local listings, property types, BHK options, nearby areas, landmarks and supervisor contact with Akshar Estate.`,
     160
   );
 }
@@ -217,7 +222,9 @@ function buyerIntentText(page = {}) {
     return `${page.bhk} BHK buyers in ${place} usually compare usable carpet area, society quality, commute to work, parking, possession status and the final all-inclusive price before booking a visit.`;
   }
   if (page.kind === "property-type") {
+    if (page.prefix === "agricultural-land-for-sale") return `Agricultural land buyers in ${place} should confirm the survey number, 7/12 extract, ownership chain, access road, land use and any eligibility or transfer restrictions with a qualified local professional.`;
     if (page.prefix === "plots-for-sale") return `Plot buyers in ${place} should verify title clarity, road access, zoning, plot dimensions, water/electricity availability, boundary status and resale demand.`;
+    if (page.prefix === "flats-for-sale" || page.prefix === "2-bhk-flats-for-sale") return `Flat buyers in ${place} should compare carpet area, total purchase cost, project approvals, parking, possession, society charges and everyday commute.`;
     if (page.prefix === "commercial-property") return `Commercial property buyers in ${place} should compare frontage, footfall, parking, road width, signage visibility, ownership documents and tenant or business suitability.`;
     if (page.prefix === "industrial-property") return `Industrial property buyers in ${place} should check road width, loading access, power load, zoning, water supply, labour access and logistics connectivity.`;
   }
@@ -243,6 +250,7 @@ function priceContextText(page = {}, listings = []) {
 function documentChecklist(page = {}) {
   const base = ["property title and ownership chain", "sale deed or allotment details", "approved plan or layout where applicable", "tax or maintenance dues", "identity and authority of seller", "latest availability and price confirmation"];
   if (page.kind === "property-type" && page.prefix === "plots-for-sale") return [...base, "7/12 or land record extracts where applicable", "zoning and NA/NOC status", "road access proof"];
+  if (page.kind === "property-type" && page.prefix === "agricultural-land-for-sale") return [...base, "survey number and 7/12 land record", "zoning and transfer eligibility", "road access and boundaries"];
   if (page.kind === "property-type" && page.prefix === "commercial-property") return [...base, "use permission", "parking rights", "frontage and signage permissions", "tenant or lease terms if pre-leased"];
   return [...base, "RERA or project details where applicable", "society NOC where needed", "loan and possession documents"];
 }
@@ -251,7 +259,7 @@ function answerSummary(page = {}, listings = []) {
   const count = listings.length;
   const place = pagePlace(page);
   const inventoryText = count ? `${count} active matching Akshar Estate ${count === 1 ? "listing" : "listings"}` : "fresh inventory support from Akshar Estate";
-  return `${page.h1} is best evaluated through ${inventoryText}, locality context, document checks, supervisor contact and a confirmed site visit. Akshar Estate helps buyers compare verified options in ${place}.`;
+  return `${page.h1} can be evaluated through ${inventoryText}, locality context, document checks and a confirmed site visit. Akshar Estate helps buyers compare current options in ${place}.`;
 }
 
 function buildAnswerBlock(page, listings) {
@@ -272,6 +280,12 @@ function buildDepthSections(page, listings) {
 
 function contentClusterLinks(page) {
   const core = [
+    { label: "Agricultural land in Gandhinagar", href: "/agricultural-land-for-sale/gandhinagar" },
+    { label: "Plots in Ahmedabad", href: "/plots-for-sale/ahmedabad" },
+    { label: "Plots in Gandhinagar", href: "/plots-for-sale/gandhinagar" },
+    { label: "Flats in Ahmedabad", href: "/flats-for-sale/ahmedabad" },
+    { label: "Flats in Gandhinagar", href: "/flats-for-sale/gandhinagar" },
+    { label: "2 BHK flats in Gandhinagar", href: "/2-bhk-flats-for-sale/gandhinagar" },
     { label: "Gandhinagar property guide", href: "/properties-for-sale/gandhinagar" },
     { label: "Ahmedabad property guide", href: "/properties-for-sale/ahmedabad" },
     { label: "Kudasan property guide", href: "/properties-for-sale/gandhinagar/kudasan" },
@@ -358,10 +372,18 @@ function cleanBhkFilterLink(page, bhk) {
 
 function cleanTypeFilterLink(page, type) {
   const label = type;
-  const locationSlug = page.localitySlug || page.locationSlug || slugifyLocation(page.name || page.locationName || "");
+  const locationSlug = page.localitySlug || page.locationSlug || slugifyLocation(page.city || page.name || "");
   const normalizedType = slugifyLocation(type);
-  if (/plot|land/.test(normalizedType)) {
+  if (/agricult|farm/.test(normalizedType)) {
+    const clean = getPropertyTypeIntentPage("agricultural-land-for-sale", slugifyLocation(page.city));
+    if (clean) return { label, href: clean.path };
+  }
+  if (/plot/.test(normalizedType)) {
     const clean = getPropertyTypeIntentPage("plots-for-sale", locationSlug);
+    if (clean) return { label, href: clean.path };
+  }
+  if (/flat|apartment/.test(normalizedType)) {
+    const clean = getPropertyTypeIntentPage("flats-for-sale", slugifyLocation(page.city));
     if (clean) return { label, href: clean.path };
   }
   if (/commercial|office|shop|retail/.test(normalizedType)) {
@@ -384,8 +406,12 @@ function cleanIntentFromQuery({ locationParam = "", bhkParam = "", typeParam = "
   }
   if (locationSlug && typeParam) {
     const normalizedType = slugifyLocation(typeParam);
-    const prefix = /plot|land/.test(normalizedType)
-      ? "plots-for-sale"
+    const prefix = /agricult|farm/.test(normalizedType)
+      ? "agricultural-land-for-sale"
+      : /plot/.test(normalizedType)
+        ? "plots-for-sale"
+        : /flat|apartment/.test(normalizedType)
+          ? "flats-for-sale"
       : /commercial|office|shop|retail/.test(normalizedType)
         ? "commercial-property"
         : /industrial|warehouse|factory/.test(normalizedType)
@@ -407,7 +433,7 @@ function buildListings(listings) {
     <li>
       <article>
         <img ${propertyImageAttributes(property)} style="max-width:280px;height:auto" />
-        <h3><a href="${escapeHtml(propertyLink(property))}">${escapeHtml(property.title || `${propertyType(property)} in ${property.location || property.city}`)}</a></h3>
+        <h3><a href="${escapeHtml(propertyLink(property))}">${escapeHtml(`${propertyBhk(property) ? `${propertyBhk(property)} BHK ` : ""}${propertyType(property)} for sale in ${[property.location, property.city].filter((value, index, values) => value && values.indexOf(value) === index).join(", ") || "Gujarat"}`)}</a></h3>
         <p>${escapeHtml([formatPrice(property), propertyArea(property), property.location, property.city].filter(Boolean).join(" | "))}</p>
       </article>
     </li>`).join("")}</ol>`;

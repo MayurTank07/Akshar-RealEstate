@@ -78,10 +78,6 @@ function propertyText(property = {}) {
   return [
     property.type,
     property.propertyType,
-    property.category,
-    property.title,
-    property.description,
-    ...(property.propertyTags || []),
   ].join(" ").toLowerCase();
 }
 
@@ -111,7 +107,11 @@ function propertyMatchesPage(property, page) {
   if (page.kind === "region") return citySlug === slugifyLocation(page.city || page.name);
   if (page.kind === "bhk") return pageLocationSlugs(page, page.localitySlug).some((slug) => slugContainsLocation(locationSlug, slug)) && propertyBhk(property) === Number(page.bhk);
   if (page.kind === "property-type") {
-    return pageLocationSlugs(page, page.locationSlug).some((slug) => slugContainsLocation(locationSlug, slug)) &&
+    const placeMatches = page.cityWide
+      ? citySlug === slugifyLocation(page.city)
+      : pageLocationSlugs(page, page.locationSlug).some((slug) => slugContainsLocation(locationSlug, slug));
+    const ambiguousPlot = page.prefix === "plots-for-sale" && /agricult|farm/i.test(`${property.category || ""} ${property.title || ""}`);
+    return placeMatches && !ambiguousPlot && (!page.bhk || propertyBhk(property) === page.bhk) &&
       (page.typeMatchers || []).some((matcher) => propertyText(property).includes(String(matcher).toLowerCase()));
   }
   return false;
