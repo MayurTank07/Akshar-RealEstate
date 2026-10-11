@@ -65,6 +65,14 @@ function stripStaticSeo(html) {
     .replace(/<noscript>[\s\S]*?<\/noscript>\s*/gi, "");
 }
 
+function replaceRoot(html, body) {
+  const root = `<div id="root">${body}</div>`;
+  if (/<div id="root">[\s\S]*?<\/div>\s*(?=<script|<noscript|<\/body>)/i.test(html)) {
+    return html.replace(/<div id="root">[\s\S]*?<\/div>\s*(?=<script|<noscript|<\/body>)/i, root);
+  }
+  return html.replace("</body>", `${root}</body>`);
+}
+
 async function fetchPublicProperties() {
   const properties = [];
   for (let page = 1; page <= MAX_PROPERTY_PAGES; page += 1) {
@@ -526,10 +534,10 @@ function injectHtml(shell, page, context) {
       <section><h2>Contact Akshar Estate</h2><p>Speak with Akshar Estate for verified property options, supervisor contact and fresh inventory in ${escapeHtml(page.name)}.</p><p><a href="/contact">Contact Akshar Estate for ${escapeHtml(page.name)} property enquiries</a></p></section>
     </main>`;
 
-  return stripStaticSeo(shell)
+  const html = stripStaticSeo(shell)
     .replace(/<html([^>]*)>/i, '<html lang="en-IN">')
-    .replace("</head>", `    ${head}\n  </head>`)
-    .replace('<div id="root"></div>', `<div id="root">${body}</div>`);
+    .replace("</head>", `    ${head}\n  </head>`);
+  return replaceRoot(html, body);
 }
 
 export default async function handler(req, res) {

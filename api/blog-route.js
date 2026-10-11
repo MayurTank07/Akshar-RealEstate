@@ -53,6 +53,14 @@ function stripStaticSeo(html) {
     .replace(/<noscript>[\s\S]*?<\/noscript>\s*/gi, "");
 }
 
+function replaceRoot(html, body) {
+  const root = `<div id="root">${body}</div>`;
+  if (/<div id="root">[\s\S]*?<\/div>\s*(?=<script|<noscript|<\/body>)/i.test(html)) {
+    return html.replace(/<div id="root">[\s\S]*?<\/div>\s*(?=<script|<noscript|<\/body>)/i, root);
+  }
+  return html.replace("</body>", `${root}</body>`);
+}
+
 async function fetchBlog(slug) {
   const response = await fetch(`${API_BASE_URL}/public/blogs/${encodeURIComponent(slug)}`);
   if (!response.ok) return null;
@@ -137,10 +145,10 @@ function injectBlogHtml(shell, blog) {
     jsonLdScript(buildBreadcrumbSchema(breadcrumbs), "akshar-schema-blog-breadcrumb"),
     jsonLdScript(buildBlogPostingJsonLd(blog, { url }), "akshar-schema-blog-post"),
   ].join("\n    ");
-  return stripStaticSeo(shell)
+  const html = stripStaticSeo(shell)
     .replace(/<html([^>]*)>/i, '<html lang="en-IN">')
-    .replace("</head>", `    ${head}\n  </head>`)
-    .replace('<div id="root"></div>', `<div id="root">${buildBlogPage(blog)}</div>`);
+    .replace("</head>", `    ${head}\n  </head>`);
+  return replaceRoot(html, buildBlogPage(blog));
 }
 
 function redirect(res, location) {

@@ -146,6 +146,14 @@ function stripStaticSeo(html) {
     .replace(/<noscript>[\s\S]*?<\/noscript>\s*/gi, "");
 }
 
+function replaceRoot(html, body) {
+  const root = `<div id="root">${body}</div>`;
+  if (/<div id="root">[\s\S]*?<\/div>\s*(?=<script|<noscript|<\/body>)/i.test(html)) {
+    return html.replace(/<div id="root">[\s\S]*?<\/div>\s*(?=<script|<noscript|<\/body>)/i, root);
+  }
+  return html.replace("</body>", `${root}</body>`);
+}
+
 function buildPropertyMeta(property, slug) {
   const title = compact(storedSeoTitle(property) || propertyPageTitle(property), 70);
   const description = propertyMetaDescription(property);
@@ -183,9 +191,7 @@ function injectPropertyMeta(html, property, slug, related = {}) {
     ? withoutTitle.replace("</head>", `    ${meta}\n  </head>`)
     : `${meta}\n${withoutTitle}`;
   const initialPage = buildInitialPropertyPage(property, related);
-  return withMeta.includes('<div id="root"></div>')
-    ? withMeta.replace('<div id="root"></div>', `<div id="root">${initialPage}</div>`)
-    : withMeta.replace("</body>", `<div id="root">${initialPage}</div></body>`);
+  return replaceRoot(withMeta, initialPage);
 }
 
 function jsonLdScript(data, id) {

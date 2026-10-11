@@ -133,6 +133,14 @@ function stripStaticSeo(html) {
     .replace(/<noscript>[\s\S]*?<\/noscript>\s*/gi, "");
 }
 
+function replaceRoot(html, body) {
+  const root = `<div id="root">${body}</div>`;
+  if (/<div id="root">[\s\S]*?<\/div>\s*(?=<script|<noscript|<\/body>)/i.test(html)) {
+    return html.replace(/<div id="root">[\s\S]*?<\/div>\s*(?=<script|<noscript|<\/body>)/i, root);
+  }
+  return html.replace("</body>", `${root}</body>`);
+}
+
 function normalizedPath(req) {
   const rawPath = Array.isArray(req.query?.path) ? req.query.path[0] : req.query?.path || "";
   if (rawPath === "__root") return "/";
@@ -207,8 +215,8 @@ function injectShell({ shell, pathname, title, description, robots, statusCode, 
   const html = stripStaticSeo(shell)
     .replace(/<html([^>]*)>/i, '<html lang="en-IN">')
     .replace("</head>", `    ${head}\n  </head>`)
-    .replace('<div id="root"></div>', `<div id="root">${pageBody}</div>`);
-  return { statusCode, html };
+    ;
+  return { statusCode, html: replaceRoot(html, pageBody) };
 }
 
 function publicPage(shell, pathname, page) {
