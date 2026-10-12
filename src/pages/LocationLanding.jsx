@@ -55,10 +55,6 @@ export default function LocationLanding({ typePrefix = "" }) {
         page.regionName && { label: page.regionName, href: `/properties-for-sale/${page.regionSlug}` },
         { label: page.name },
       ]} />
-      <section className="mt-6 max-w-4xl text-slate-800">
-        <h2 className="text-lg font-bold text-slate-950">At a glance</h2>
-        <p className="mt-2 leading-7">{page.intro}</p>
-      </section>
     </div>
   );
 
