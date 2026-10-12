@@ -72,6 +72,7 @@ test("a listing marked noindex stays out of the sitemap", async () => {
   assert.match(page.body, /<meta name="robots" content="noindex,follow"/);
   assert.match(page.body, /6 vigha/);
   assert.doesNotMatch(page.body, /Property Topic Clusters/);
+  assert.doesNotMatch(page.body, /Quick Answer|Documents to Check|Site Visit Guidance|Property Research Clusters/);
 
   const sitemap = await render(sitemapRoute, "/sitemap-properties.xml");
   assert.equal(sitemap.status, 200);
