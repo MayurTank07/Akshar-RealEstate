@@ -5,9 +5,6 @@ import Footer from "../components/Footer";
 export default function NewProjects() {
   return (
     <div>
-      <div className="mx-auto max-w-7xl px-4 pt-28 sm:px-6 lg:px-8">
-        <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "New Projects" }]} />
-      </div>
       <Hero
         category="New Projects"
         type="All"
@@ -20,6 +17,11 @@ export default function NewProjects() {
           newProject: true,
           intentLabel: "New Projects",
         }}
+        intro={(
+          <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+            <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "New Projects" }]} />
+          </div>
+        )}
       />
       <Footer />
     </div>
