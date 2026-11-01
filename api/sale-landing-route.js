@@ -11,6 +11,7 @@ import {
 import { THUMBNAIL_IMAGE_FALLBACK, imageSrcSet, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildCollectionPageJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
 import { isEditoriallyIndexableBlog } from "../src/utils/blogEditorial.js";
+import { seoGuidesForPath } from "../src/config/seoGuides.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -89,11 +90,16 @@ async function fetchPublicProperties() {
 }
 
 async function fetchPublicBlogs(page) {
+  const guides = seoGuidesForPath(page.path);
   const location = page.localityName || page.name || page.city || "";
-  const response = await fetch(`${API_BASE_URL}/public/blogs?location=${encodeURIComponent(location)}&limit=4`);
-  if (!response.ok) return [];
-  const body = await response.json();
-  return Array.isArray(body?.data) ? body.data.filter(isEditoriallyIndexableBlog) : [];
+  try {
+    const response = await fetch(`${API_BASE_URL}/public/blogs?location=${encodeURIComponent(location)}&limit=4`);
+    if (!response.ok) return guides;
+    const body = await response.json();
+    return [...guides, ...(Array.isArray(body?.data) ? body.data.filter(isEditoriallyIndexableBlog) : [])];
+  } catch {
+    return guides;
+  }
 }
 
 function propertyLocationText(property = {}) {
@@ -588,6 +594,7 @@ function injectHtml(shell, page, context) {
         <h1>${escapeHtml(page.h1)}</h1>
         <p>${escapeHtml(page.intro)}</p>
         <p>${escapeHtml(allListings.length ? `${allListings.length} active matching listings found.` : "No active matching listings are available right now.")}</p>
+        <p><a href="tel:+919998040233">Call Akshar Estate about ${escapeHtml(page.name)}</a> · <a href="https://wa.me/919998040233?text=Hello%20Akshar%20Estate%2C%20I%20would%20like%20details%20about%20properties%20for%20sale.">WhatsApp for current availability</a></p>
         ${filtered ? "<p>This filtered view is noindex and points canonical signals to the main location page.</p>" : ""}
       </header>
       ${buildAnswerBlock(page, allListings)}

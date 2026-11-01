@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { PROPERTY_IMAGE_FALLBACK, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildBlogPostingJsonLd, buildBreadcrumbSchema, schemaScriptContent } from "../src/utils/structuredData.js";
-import { activeBlogLocationLinks, isEditoriallyIndexableBlog, relevantPropertyLinksForBlog } from "../src/utils/blogEditorial.js";
+import { activeBlogLocationLinks, isEditoriallyIndexableBlog, isMeaningfulBlogDate, relevantPropertyLinksForBlog } from "../src/utils/blogEditorial.js";
+import { getSeoGuide } from "../src/config/seoGuides.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -63,6 +64,8 @@ function replaceRoot(html, body) {
 }
 
 async function fetchBlog(slug) {
+  const guide = getSeoGuide(slug);
+  if (guide) return guide;
   const response = await fetch(`${API_BASE_URL}/public/blogs/${encodeURIComponent(slug)}`);
   if (!response.ok) return null;
   const body = await response.json();
@@ -74,7 +77,7 @@ function jsonLdScript(data, id) {
 }
 
 function formatDate(value) {
-  if (!value) return "";
+  if (!isMeaningfulBlogDate(value)) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", year: "numeric" }).format(date);
@@ -105,7 +108,8 @@ function buildBlogPage(blog) {
           ${blog.excerpt ? `<p>${escapeHtml(blog.excerpt)}</p>` : ""}
         </header>
         ${blog.featuredImage ? `<img src="${escapeHtml(optimizedImageUrl(blog.featuredImage, { width: 1200, height: 675 }))}" width="1200" height="675" loading="eager" alt="${escapeHtml(`${blog.title} featured image`)}" style="width:100%;height:auto;border-radius:12px" />` : ""}
-        <section><h2>Guide Details</h2><div style="white-space:pre-line">${escapeHtml(blog.body)}</div></section>
+        ${blog.sections ? blog.sections.map((section) => `<section><h2>${escapeHtml(section.heading)}</h2><p>${escapeHtml(section.text)}</p></section>`).join("") : `<section><h2>Guide Details</h2><div style="white-space:pre-line">${escapeHtml(blog.body)}</div></section>`}
+        ${blog.faqs ? `<section><h2>Common Questions</h2>${blog.faqs.map(([question, answer]) => `<details><summary>${escapeHtml(question)}</summary><p>${escapeHtml(answer)}</p></details>`).join("")}</section>` : ""}
         <section><h2>Explore Active Property Pages</h2>${linkList(relevantPropertyLinksForBlog(blog).map(([label, href]) => ({ label, href })))}</section>
         <section><h2>Related Property Locations</h2>${linkList(activeBlogLocationLinks(blog).map(([label, href]) => ({ label, href })))}</section>
       </article>

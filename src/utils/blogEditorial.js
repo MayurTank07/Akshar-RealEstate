@@ -10,6 +10,12 @@ export function isEditoriallyIndexableBlog(blog = {}) {
   );
 }
 
+export function isMeaningfulBlogDate(value) {
+  if (!value) return false;
+  const date = new Date(value);
+  return !Number.isNaN(date.getTime()) && date.getUTCFullYear() >= 2000;
+}
+
 const GUIDE_LINKS = {
   "property-registration-checklist-gujarat": [
     ["Agricultural land for sale in Gandhinagar", "/agricultural-land-for-sale/gandhinagar"],
@@ -33,6 +39,9 @@ const GUIDE_LINKS = {
 };
 
 export function relevantPropertyLinksForBlog(blog = {}) {
+  if (Array.isArray(blog.relatedPaths)) {
+    return blog.relatedPaths.map((href) => [`Explore ${href.split("/").filter(Boolean).join(" ").replace(/-/g, " ")}`, href]);
+  }
   return GUIDE_LINKS[blog.slug] || [];
 }
 

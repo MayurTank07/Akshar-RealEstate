@@ -4,27 +4,27 @@ import Breadcrumbs from "../components/Breadcrumbs";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { publicApi } from "../services/api";
-import { isEditoriallyIndexableBlog } from "../utils/blogEditorial";
+import { isEditoriallyIndexableBlog, isMeaningfulBlogDate } from "../utils/blogEditorial";
+import { SEO_GUIDES, getSeoGuide } from "../config/seoGuides";
 
 function formatDate(value) {
-  if (!value) return "Draft date pending";
+  if (!isMeaningfulBlogDate(value)) return "";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Draft date pending";
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", year: "numeric" }).format(date);
 }
 
 export default function BlogList() {
-  const [blogs, setBlogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [blogs, setBlogs] = useState(SEO_GUIDES);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
     publicApi.blogs({ limit: 24 })
       .then((response) => {
-        if (active) setBlogs(Array.isArray(response.data) ? response.data.filter(isEditoriallyIndexableBlog) : []);
+        if (active) setBlogs([...SEO_GUIDES, ...(Array.isArray(response.data) ? response.data.filter((blog) => isEditoriallyIndexableBlog(blog) && !getSeoGuide(blog.slug)) : [])]);
       })
       .catch(() => {
-        if (active) setBlogs([]);
+        if (active) setBlogs(SEO_GUIDES);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -63,7 +63,7 @@ export default function BlogList() {
                 </Link>
               </h2>
               <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{blog.excerpt}</p>
-              <p className="mt-4 text-xs font-bold text-slate-400">Published {formatDate(blog.publishedAt)}</p>
+              {formatDate(blog.publishedAt) && <p className="mt-4 text-xs font-bold text-slate-400">Published {formatDate(blog.publishedAt)}</p>}
               <Link to={`/blog/${blog.slug}`} className="mt-5 inline-flex text-sm font-extrabold text-blue-700 transition hover:text-blue-900">
                 {blog.title}
               </Link>

@@ -128,6 +128,10 @@ export default function Hero() {
               </span>
             ))}
           </div>
+          <div className="mt-5 flex flex-wrap gap-3 text-sm font-bold">
+            <a href="tel:+919998040233" className="rounded-xl bg-white px-4 py-2.5 text-blue-900 transition hover:bg-blue-50">Call about land & plots</a>
+            <a href="https://wa.me/919998040233?text=Hello%20Akshar%20Estate%2C%20I%20am%20interested%20in%20land%20or%20plots%20for%20sale." className="rounded-xl border border-white/70 px-4 py-2.5 text-white transition hover:bg-white/15">WhatsApp Akshar Estate</a>
+          </div>
         </div>
 
         <form

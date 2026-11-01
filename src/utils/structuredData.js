@@ -1,5 +1,6 @@
 import { BUSINESS_INFO, SITE_ORIGIN } from "../config/businessInfo.js";
 import { priorityPropertySeo } from "../config/priorityPropertySeo.js";
+import { isMeaningfulBlogDate } from "./blogEditorial.js";
 
 export function compactText(value, limit = 180) {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
@@ -575,8 +576,8 @@ export function buildBlogPostingJsonLd(blog = {}, { url = "" } = {}) {
     headline: blog.title,
     description: blog.metaDescription || blog.excerpt,
     image: absoluteUrl(blog.featuredImage),
-    datePublished: blog.publishedAt,
-    dateModified: blog.updatedAt || blog.publishedAt,
+    datePublished: isMeaningfulBlogDate(blog.publishedAt) ? blog.publishedAt : undefined,
+    dateModified: isMeaningfulBlogDate(blog.updatedAt) ? blog.updatedAt : isMeaningfulBlogDate(blog.publishedAt) ? blog.publishedAt : undefined,
     author: {
       "@type": "Organization",
       name: blog.author || BUSINESS_INFO.name,

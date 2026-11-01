@@ -4,6 +4,7 @@ import Hero from "../compswest/Hero";
 import Breadcrumbs from "../components/Breadcrumbs";
 import Footer from "../components/Footer";
 import { getBhkIntentPage, getPropertyTypeIntentPage, getSaleLandingPage, landingStateForPage } from "../config/locationLandingPages";
+import { seoGuidesForPath } from "../config/seoGuides";
 
 export default function LocationLanding({ typePrefix = "" }) {
   const { region, locality, intent, typeLocation } = useParams();
@@ -67,6 +68,7 @@ export default function LocationLanding({ typePrefix = "" }) {
         {page.connectivity && <p className="mt-3 max-w-4xl leading-7">{page.connectivity}</p>}
         <p className="mt-4 max-w-4xl leading-7">Confirm the latest availability, asking price, title documents, permitted use and site access with Akshar Estate before arranging a visit.</p>
       </section>
+      {seoGuidesForPath(page.path).length > 0 && <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8"><h2 className="text-2xl font-bold text-slate-950">Buyer guides for this area</h2><div className="mt-4 flex flex-wrap gap-3">{seoGuidesForPath(page.path).map((guide) => <Link key={guide.slug} to={`/blog/${guide.slug}`} className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 font-semibold text-blue-700 hover:bg-blue-100">{guide.title}</Link>)}</div></section>}
       <nav aria-label="Related property searches" className="mx-auto flex max-w-7xl flex-wrap gap-x-5 gap-y-2 px-4 py-8 text-sm font-semibold text-blue-700 sm:px-6 lg:px-8">
         <Link to="/agricultural-land-for-sale/gandhinagar">Agricultural land in Gandhinagar</Link>
         <Link to="/agricultural-land-for-sale/viramgam">Agricultural land in Viramgam</Link>

@@ -5,6 +5,7 @@ import {
   slugifyLocation,
 } from "../src/config/locationLandingPages.js";
 import { isEditoriallyIndexableBlog } from "../src/utils/blogEditorial.js";
+import { SEO_GUIDES } from "../src/config/seoGuides.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -18,6 +19,7 @@ const STATIC_PAGES = [
   { path: "/about", lastmod: "2026-08-17" },
   { path: "/services", lastmod: "2026-08-17" },
   { path: "/contact", lastmod: "2026-08-17" },
+  { path: "/blog", lastmod: "2026-11-01" },
 ];
 
 const SITEMAP_FILES = [
@@ -183,7 +185,7 @@ function propertyTypeEntries(properties) {
 }
 
 function blogEntries(blogs) {
-  return blogs
+  return [...SEO_GUIDES, ...blogs]
     .filter(isEditoriallyIndexableBlog)
     .map((blog) => ({
       path: `/blog/${blog.slug}`,
@@ -231,7 +233,7 @@ function requestedSitemap(req) {
 export default async function handler(req, res) {
   const file = requestedSitemap(req);
   const [properties, blogs] = await Promise.all([fetchPublicProperties(), fetchPublicBlogs()]);
-  const blogLastmod = blogs.map((blog) => blog.updatedAt || blog.publishedAt).filter(Boolean).sort().at(-1);
+  const blogLastmod = [...SEO_GUIDES, ...blogs].map((blog) => blog.updatedAt || blog.publishedAt).filter(Boolean).sort().at(-1);
   const lastmod = [newestLastmod(properties), blogLastmod, "2026-07-22"].filter(Boolean).sort().at(-1);
   const feeds = {
     "sitemap-pages.xml": pageEntries(),

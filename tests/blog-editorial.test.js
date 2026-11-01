@@ -3,6 +3,8 @@ import test from "node:test";
 import blogRoute from "../api/blog-route.js";
 import sitemapRoute from "../api/sitemap.js";
 import { activeBlogLocationLinks, isEditoriallyIndexableBlog, relevantPropertyLinksForBlog } from "../src/utils/blogEditorial.js";
+import pageRoute from "../api/page-route.js";
+import { SEO_GUIDES } from "../src/config/seoGuides.js";
 
 const draft = {
   slug: "2-bhk-vs-3-bhk-in-gandhinagar",
@@ -63,4 +65,20 @@ test("published plot guide links to active, relevant property pages", async () =
     "/properties-for-sale/ahmedabad/shela",
   ]);
   assert.ok(relevantPropertyLinksForBlog(published).length > 0);
+});
+
+test("five buyer guides have indexable pages, hub links and sitemap entries", async () => {
+  assert.equal(SEO_GUIDES.length, 5);
+  const hub = await render(pageRoute, "/blog");
+  const sitemap = await render(sitemapRoute, "/sitemap-blog.xml");
+  assert.match(hub.body, /<meta name="robots" content="index,follow/);
+  for (const guide of SEO_GUIDES) {
+    const page = await render(blogRoute, `/blog/${guide.slug}`);
+    assert.equal(page.status, 200);
+    assert.match(page.body, /<meta name="robots" content="index,follow/);
+    assert.match(page.body, /Common Questions/);
+    assert.match(page.body, new RegExp(`href="${guide.relatedPaths[0]}"`));
+    assert.ok(hub.body.includes(`/blog/${guide.slug}`));
+    assert.ok(sitemap.body.includes(`/blog/${guide.slug}`));
+  }
 });

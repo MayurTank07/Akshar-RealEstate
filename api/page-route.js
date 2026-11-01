@@ -3,6 +3,7 @@ import path from "node:path";
 import { BUSINESS_INFO } from "../src/config/businessInfo.js";
 import { SITE_ORIGIN } from "../src/config/locationLandingPages.js";
 import { buildBreadcrumbSchema, buildBusinessSchemas, schemaScriptContent } from "../src/utils/structuredData.js";
+import { SEO_GUIDES } from "../src/config/seoGuides.js";
 
 const PUBLIC_PAGES = {
   "/": {
@@ -67,6 +68,14 @@ const PUBLIC_PAGES = {
     answer: `Contact ${BUSINESS_INFO.name} by phone, email or website enquiry for verified property options, seller support, commercial property enquiries and supervised site visits in Gandhinagar and Ahmedabad.`,
     links: [["/properties", "Browse properties"], ["/properties-for-sale/gandhinagar", "Gandhinagar properties"]],
   },
+  "/blog": {
+    title: "Gandhinagar and Ahmedabad Property Buyer Guides | Akshar Estate",
+    description: "Read Akshar Estate guides to buying flats, plots, agricultural land and other property in Gandhinagar and Ahmedabad.",
+    h1: "Property Buyer Guides",
+    body: "Explore practical local guides on property types, costs, documents, site visits and current sale listings.",
+    answer: "Akshar Estate property guides help buyers compare homes, plots and land in Gandhinagar and Ahmedabad using location, total cost, documents and site access.",
+    links: SEO_GUIDES.map((guide) => [`/blog/${guide.slug}`, guide.title]),
+  },
   "/privacy-policy": {
     title: "Privacy Policy | Akshar Estate",
     description: "Read the Akshar Estate privacy policy for website users, property enquiries and communication handling.",
@@ -101,9 +110,7 @@ const PRIVATE_PAGES = {
   "/enquiry": ["Property Enquiry | Akshar Estate", "Enquiry form pages are noindex and available to users."],
 };
 
-const NOINDEX_FOLLOW_PAGES = {
-  "/blog": ["Property Guides | Akshar Estate", "The blog index is noindex until published editorial guides are available."],
-};
+const NOINDEX_FOLLOW_PAGES = {};
 
 function readIndexHtml() {
   const candidates = [
@@ -243,6 +250,7 @@ function publicPage(shell, pathname, page) {
       <h1>${escapeHtml(page.h1)}</h1>
       <p>${escapeHtml(page.body)}</p>
       ${answerBlock(page)}
+      <nav aria-label="Contact Akshar Estate"><a href="tel:+919998040233">Call Akshar Estate</a> <a href="https://wa.me/919998040233?text=Hello%20Akshar%20Estate%2C%20I%20would%20like%20property%20details.">WhatsApp Akshar Estate</a></nav>
       ${linkList(page.links)}
       ${contentClusters(pathname)}
     </main>`;
