@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import test from "node:test";
 import propertyRoute from "../api/property-route.js";
 import saleLandingRoute from "../api/sale-landing-route.js";
@@ -34,6 +35,12 @@ globalThis.fetch = async (input) => {
 };
 
 test.after(() => { globalThis.fetch = originalFetch; });
+
+test("homepage fallback has one sale-focused H1", () => {
+  const shell = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.equal((shell.match(/<h1>/g) || []).length, 1);
+  assert.match(shell, /<h1>Agricultural Land, Plots &amp; Properties for Sale in Gujarat<\/h1>/);
+});
 
 test("property-type landing state leaves inventory matching to the page intent", () => {
   for (const [prefix, location] of [

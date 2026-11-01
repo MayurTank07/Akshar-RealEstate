@@ -6,9 +6,9 @@ import { buildBreadcrumbSchema, buildBusinessSchemas, schemaScriptContent } from
 
 const PUBLIC_PAGES = {
   "/": {
-    title: "Akshar Estate | Real Estate in Ahmedabad and Gandhinagar",
-    description: "Find verified property in Ahmedabad and Gandhinagar with Akshar Estate: flats, plots, shops, offices, houses and commercial real estate leads.",
-    h1: "Akshar Estate The Property HUB",
+    title: "Agricultural Land, Plots & Properties for Sale in Gujarat | Akshar Estate",
+    description: "Explore verified agricultural land, residential plots and sale properties in Gandhinagar, Ahmedabad and nearby Gujarat locations with Akshar Estate.",
+    h1: "Agricultural Land, Plots & Properties for Sale in Gujarat",
     body: "Find verified agricultural land, plots, residential and commercial property across Ahmedabad, Gandhinagar and nearby Gujarat markets.",
     answer: "Akshar Estate The Property HUB is a Gandhinagar-based real estate agency helping buyers, sellers and investors compare verified agricultural land, plots, flats, commercial property and new projects across Gandhinagar, Ahmedabad and nearby Gujarat markets.",
     links: [
