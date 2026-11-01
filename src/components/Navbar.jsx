@@ -34,10 +34,10 @@ export default function Navbar() {
   const navItems = [
     { title: "For Buyers", key: "buyers" },
     { title: "For Sellers", key: "sellers" },
-    { title: "For Rentals", key: "rentals" },
     { title: "New Projects", key: "new-projects", path: "/new-projects" },
     { title: "Services", key: "services", path: "/services" },
     { title: "About Us", key: "about", path: "/about" },
+    { title: "For Rentals", key: "rentals" },
   ];
 
   useEffect(() => {

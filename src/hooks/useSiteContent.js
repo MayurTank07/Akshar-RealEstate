@@ -4,8 +4,8 @@ import { defaultAboutContent, defaultContactContent, defaultHomeSectionsContent,
 
 const defaults = {
   siteName: "Akshar Estate The Property HUB",
-  heroTitle: "We Turn Spaces into Places You Call Home",
-  heroSubtitle: "Discover verified homes, apartments, and investment-ready properties across Ahmedabad, Surat, Vadodara, and nearby Gujarat cities.",
+  heroTitle: "Agricultural Land, Plots & Properties for Sale in Gujarat",
+  heroSubtitle: "Explore verified agricultural land, residential plots and sale properties in Gandhinagar, Ahmedabad and nearby Gujarat locations.",
   navbarAreas: defaultNavbarAreas,
   navbarTopLists: defaultTopLists,
   aboutContent: defaultAboutContent,
@@ -17,6 +17,14 @@ const defaults = {
 
 let cachedContent = null;
 let contentPromise = null;
+
+function migrateLegacyHeroCopy(content) {
+  return {
+    ...content,
+    heroTitle: content.heroTitle === "We Turn Spaces into Places You Call Home" ? defaults.heroTitle : content.heroTitle,
+    heroSubtitle: /^Discover verified homes, apartments, and investment-ready properties across /i.test(content.heroSubtitle || "") ? defaults.heroSubtitle : content.heroSubtitle,
+  };
+}
 
 export default function useSiteContent() {
   const [content, setContent] = useState(cachedContent || defaults);
@@ -34,7 +42,7 @@ export default function useSiteContent() {
     contentPromise ||= publicApi
       .content()
       .then((response) => {
-        cachedContent = response.data.reduce((acc, item) => ({ ...acc, [item.key]: item.value }), defaults);
+        cachedContent = migrateLegacyHeroCopy(response.data.reduce((acc, item) => ({ ...acc, [item.key]: item.value }), defaults));
         return cachedContent;
       })
       .catch(() => defaults)

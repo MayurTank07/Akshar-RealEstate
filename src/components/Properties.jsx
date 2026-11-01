@@ -35,7 +35,8 @@ export default function Properties() {
     };
   }, []);
 
-  const recentlyAdded = [...properties]
+  const saleProperties = properties.filter((property) => !/rent|lease/i.test(String(property.listingType || "")));
+  const recentlyAdded = [...saleProperties]
     .filter((property) => PUBLIC_LISTING_STATUSES.includes(String(property.status || "active").toLowerCase()))
     .sort((a, b) => {
       const aTime = new Date(a.createdAt || a.updatedAt || 0).getTime();
@@ -49,19 +50,19 @@ export default function Properties() {
       title: "New Projects",
       eyebrow: "Fresh launches",
       description: "Newly built and newly launched projects marked by the Akshar Estate team.",
-      items: properties.filter((property) => property.isNewProject),
+      items: saleProperties.filter((property) => property.isNewProject),
     },
     {
       title: "Featured Properties",
       eyebrow: "Curated picks",
-      description: "Premium homes selected for location, finish, and buyer interest.",
-      items: properties.filter((property) => property.featured || property.tag === "Featured" || property.badge === "Featured"),
+      description: "Selected sale properties with useful location and property details.",
+      items: saleProperties.filter((property) => property.featured || property.tag === "Featured" || property.badge === "Featured"),
     },
     {
       title: "Popular Properties",
       eyebrow: "High demand",
-      description: "Homes getting strong attention across Akshar Estate The Property HUB searches.",
-      items: properties.filter((property) => property.tag === "Hot"),
+      description: "Sale properties getting strong attention across Akshar Estate searches.",
+      items: saleProperties.filter((property) => property.tag === "Hot"),
     },
   ];
 
@@ -87,7 +88,7 @@ export default function Properties() {
               Featured Collection
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">
-              Available Residences
+              Land, Plots & Sale Properties
             </h2>
             <p className="mt-3 text-base leading-relaxed text-slate-600">
               Browse curated Gujarat properties by freshness, editorial selection, and buyer demand.

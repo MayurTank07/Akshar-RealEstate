@@ -9,11 +9,11 @@ import { responsiveImageProps } from "../utils/imageSeo";
 const RECENT_KEY = "akshar_recent_searches";
 const MAX_RECENT = 5;
 const POPULAR_SEARCHES = [
-  "2 BHK in Surat",
-  "3 BHK in Ahmedabad",
-  "Villa in Vadodara",
-  "Flat for Rent in Surat",
-  "Commercial Space",
+  "Agricultural land in Viramgam",
+  "Agricultural land in Gandhinagar",
+  "Plots in Ahmedabad",
+  "Plots in Palaj",
+  "Property for sale in Gandhinagar",
 ];
 
 function getRecent() {
@@ -38,8 +38,8 @@ export default function Hero() {
   const inputRef = useRef(null);
 
   const localities = ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Anand"];
-  const tabs = ["Buy", "Rent", "Sell", "Pre Leased", "Barter", "ROI", "New Projects"];
-  const highlights = ["Verified homes", "Gujarat focused", "Expert guidance"];
+  const tabs = ["Buy", "Sell", "New Projects", "Rent", "Pre Leased", "Barter", "ROI"];
+  const highlights = ["Agricultural land", "Residential plots", "Verified sale listings"];
 
   useEffect(() => {
     publicApi.properties({ limit: 100, sort: "createdAt", order: "desc" }).then((r) => { if (r.data?.length) setProperties(r.data); }).catch(() => {});
@@ -163,7 +163,7 @@ export default function Hero() {
                     if (e.key === "Enter") { e.preventDefault(); doSearch(); }
                     if (e.key === "Escape") setShowDropdown(false);
                   }}
-                  placeholder="2 BHK in Surat, Villa, Commercial..."
+                  placeholder="Agricultural land in Viramgam, plots in Palaj..."
                   className="min-h-0 w-full border-0 bg-transparent p-0 text-sm font-medium text-slate-700 outline-none placeholder:text-slate-400 sm:text-base"
                   autoComplete="off"
                 />
