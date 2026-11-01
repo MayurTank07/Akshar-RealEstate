@@ -18,9 +18,21 @@ const defaults = {
 let cachedContent = null;
 let contentPromise = null;
 
-function migrateLegacyHeroCopy(content) {
+export function migrateLegacySiteContent(content) {
+  const contact = content.contactContent || {};
+  const legacyAddress = "4/1, 4Th Floor, B.K.Complex, Above Kotak Mahindra Bank, Opp, Canara Bank, Gh Road, Sector 16, Gandhinagar : 382016 Gujarat India";
+  const migratedContact = {
+    ...contact,
+    address: contact.address === legacyAddress ? defaultContactContent.address : contact.address,
+    officeTiming: contact.officeTiming === "Mon - Sat, 10:00 AM to 7:00 PM" ? defaultContactContent.officeTiming : contact.officeTiming,
+    ...(contact.location ? { location: {
+      ...contact.location,
+      address: contact.location.address === legacyAddress ? defaultContactContent.location.address : contact.location.address,
+    } } : {}),
+  };
   return {
     ...content,
+    contactContent: { ...defaultContactContent, ...migratedContact },
     heroTitle: content.heroTitle === "We Turn Spaces into Places You Call Home" ? defaults.heroTitle : content.heroTitle,
     heroSubtitle: /^Discover verified homes, apartments, and investment-ready properties across /i.test(content.heroSubtitle || "") ? defaults.heroSubtitle : content.heroSubtitle,
   };
@@ -42,7 +54,7 @@ export default function useSiteContent() {
     contentPromise ||= publicApi
       .content()
       .then((response) => {
-        cachedContent = migrateLegacyHeroCopy(response.data.reduce((acc, item) => ({ ...acc, [item.key]: item.value }), defaults));
+        cachedContent = migrateLegacySiteContent(response.data.reduce((acc, item) => ({ ...acc, [item.key]: item.value }), defaults));
         return cachedContent;
       })
       .catch(() => defaults)

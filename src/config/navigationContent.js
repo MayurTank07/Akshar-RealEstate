@@ -62,7 +62,7 @@ export const defaultContactContent = {
   phone: "+91 9998040233",
   secondaryPhone: "",
   email: "aksharestate2006@gmail.com",
-  address: "4/1, 4Th Floor, B.K.Complex, Above Kotak Mahindra Bank, Opp, Canara Bank, Gh Road, Sector 16, Gandhinagar : 382016 Gujarat India",
+  address: "4/1, 4th Floor, B K Complex, Plot No. 319, Behind Kotak Mahindra Bank, Opposite Canara Bank, GH Road, Sector 16, Gandhinagar, Gujarat 382016, India",
   footerDescription: "Your trusted Gujarat partner for verified Residential, commercial and Industrial spaces, Agriculture Land, Residential Plots, Investment, ROI, Pre Launch, Barter Property and real estate guidance.",
   footerCopyright: "2026 Akshar Estate The Property HUB. All rights reserved.",
   whatsapp: "+91 9998040233",
@@ -73,7 +73,7 @@ export const defaultContactContent = {
     position: "bottom-right",
     displayOn: "all",
   },
-  officeTiming: "Mon - Sat, 10:00 AM to 7:00 PM",
+  officeTiming: "Mon–Sat, 10:00 AM to 7:00 PM; Sunday closed",
   mapEmbed: "",
   mapLink: "",
   socials: {
@@ -84,7 +84,7 @@ export const defaultContactContent = {
     x: "",
   },
   location: {
-    address: "4/1, 4Th Floor, B.K.Complex, Above Kotak Mahindra Bank, Opp, Canara Bank, Gh Road, Sector 16, Gandhinagar : 382016 Gujarat India",
+    address: "4/1, 4th Floor, B K Complex, Plot No. 319, Behind Kotak Mahindra Bank, Opposite Canara Bank, GH Road, Sector 16, Gandhinagar, Gujarat 382016, India",
     area: "Sector 16",
     city: "Gandhinagar",
     state: "Gujarat",

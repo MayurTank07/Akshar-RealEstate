@@ -10,7 +10,7 @@ export const BUSINESS_INFO = {
   phone: "+91 9998040233",
   email: "aksharestate2006@gmail.com",
   address: {
-    streetAddress: "4/1, 4Th Floor, B.K.Complex, Above Kotak Mahindra Bank, Opp, Canara Bank, Gh Road, Sector 16",
+    streetAddress: "4/1, 4th Floor, B K Complex, Plot No. 319, Behind Kotak Mahindra Bank, Opposite Canara Bank, GH Road, Sector 16",
     addressLocality: "Gandhinagar",
     addressRegion: "Gujarat",
     postalCode: "382016",
