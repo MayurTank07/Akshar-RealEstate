@@ -8,7 +8,7 @@ import { getPropertyTypeIntentPage, landingStateForPage } from "../src/config/lo
 import { priorityPropertySeo } from "../src/config/priorityPropertySeo.js";
 
 const listings = [
-  { _id: "0".repeat(24), propertyCode: "AETP-AHMD-0068", slug: "agriculture-land-for-sale-viramgam-ahmedabad-0068", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Ahmedabad", location: "Viramgam", area: "2000 sq-yard", priceAmount: 4500000, status: "active", isIndexable: true },
+  { _id: "0".repeat(24), propertyCode: "AETP-AHMD-0068", slug: "agriculture-land-for-sale-viramgam-viramgam-0068", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Ahmedabad", location: "Viramgam", area: "2000 sq-yard", priceAmount: 4500000, status: "active", isIndexable: true },
   { _id: "1".repeat(24), propertyCode: "AETP-GNR-0029", slug: "agriculture-land-for-sale-dashela-gandhinagar-0029", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Gandhinagar", location: "Dashela", area: "6 vigha", priceAmount: 240000000, status: "active", isIndexable: true },
   { _id: "a".repeat(24), propertyCode: "AETP-AHMD-0069", slug: "plot-for-sale-ahmedabad-ahmedabad-0069", type: "Plot", title: "Plot for sale", city: "Ahmedabad", location: "Ahmedabad", area: "1360 sq-yard", priceAmount: 8500000, status: "active", isIndexable: true },
   { _id: "2".repeat(24), propertyCode: "AETP-GNR-0028", slug: "agriculture-land-for-sale-jhakhora-gandhinagar-0028", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Gandhinagar", location: "Jhakhora", area: "5.4 vigha", priceAmount: 110000000, status: "active", isIndexable: true },
@@ -17,9 +17,9 @@ const listings = [
   { _id: "d".repeat(24), propertyCode: "AETP-GNR-0060", slug: "2-bhk-apartments-for-sale-gandhinagar-gandhinagar-0060", type: "Apartments", title: "Apartment", city: "Gandhinagar", location: "Kudasan", bhk: 2, beds: 2, priceAmount: 9000000, status: "active", isIndexable: true },
   { _id: "e".repeat(24), propertyCode: "AETP-GNR-0025", slug: "plot-for-sale-palaj-gandhinagar-0025", type: "Plot", title: "Plot for sale", city: "Gandhinagar", location: "Palaj", priceAmount: 8500000, status: "active", isIndexable: true },
   { _id: "f".repeat(24), propertyCode: "AETP-GNR-0027", slug: "agriculture-land-for-sale-dhanap-gandhinagar-0027", type: "Agriculture land", title: "Agricultural land", city: "Gandhinagar", location: "Dhanap", area: "2 vigha", priceAmount: 90000000, status: "active", isIndexable: true },
-  { _id: "6".repeat(24), propertyCode: "AETP-GNR-0067", slug: "4-bhk-apartment-for-sale-palaj-gandhinagar-0067", type: "Apartment", title: "4 BHK apartment", city: "Gandhinagar", location: "Palaj", area: "345 sq-yard", bhk: 4, beds: 4, priceAmount: 12900000, status: "active", isIndexable: true },
-  { _id: "3".repeat(24), propertyCode: "AETP-GNR-0021", slug: "agriculture-land-for-sale-gandhinagar-gandhinagar-0021", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Gandhinagar", location: "Gandhinagar", area: "1.61 vigha", priceAmount: 28500000, status: "active", isIndexable: true },
-  { _id: "7".repeat(24), propertyCode: "AETP-VIRA-0072", slug: "plot-for-sale-viramgam-ahmedabad-0072", type: "Plot", title: "Plot for sale", city: "Ahmedabad", location: "Viramgam", area: "500 sq-yard", priceAmount: 1750000, status: "active", isIndexable: true },
+  { _id: "6".repeat(24), propertyCode: "AETP-GNR-0067", slug: "4-bhk-apartments-for-sale-palaj-gandhinagar-0067", type: "Apartment", title: "4 BHK apartment", city: "Gandhinagar", location: "Palaj", area: "345 sq-yard", bhk: 4, beds: 4, priceAmount: 12900000, status: "active", isIndexable: true },
+  { _id: "3".repeat(24), propertyCode: "AETP-GNR-0021", slug: "agriculture-land-for-sale-gandhinagar-0021", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Gandhinagar", location: "Gandhinagar", area: "1.61 vigha", priceAmount: 28500000, status: "active", isIndexable: true },
+  { _id: "7".repeat(24), propertyCode: "AETP-VIRA-0072", slug: "plot-for-sale-viramgam-viramgam-0072", type: "Plot", title: "Plot for sale", city: "Ahmedabad", location: "Viramgam", area: "500 sq-yard", priceAmount: 1750000, status: "active", isIndexable: true },
   { _id: "9".repeat(24), propertyCode: "AETP-TEST-9999", slug: "inactive-test-listing-9999", type: "Plot", title: "Inactive listing", city: "Ahmedabad", location: "Test", area: "100 sq-yard", priceAmount: 1000000, status: "active", isIndexable: false },
 ];
 
@@ -66,7 +66,7 @@ async function render(handler, url) {
     writeHead(status, headers) { this.statusCode = status; Object.assign(this.headers, headers); },
   };
   await handler({ url, query: {} }, res);
-  return { status: res.statusCode, body: chunks.join("") };
+  return { status: res.statusCode, headers: res.headers, body: chunks.join("") };
 }
 
 test("priority category routes show matching inventory and a single SEO root", async () => {
@@ -113,6 +113,20 @@ test("city pages summarize current inventory and link to active localities", asy
   assert.match(gandhinagar.body, /Current Gandhinagar Listing Mix/);
   assert.match(gandhinagar.body, /href="\/properties-for-sale\/gandhinagar\/palaj"/);
   assert.match(gandhinagar.body, /href="\/properties-for-sale\/gandhinagar\/dhanap"/);
+});
+
+test("old priority property slugs redirect to current live slugs", async () => {
+  const legacy = [
+    ["agriculture-land-for-sale-viramgam-ahmedabad-0068", "agriculture-land-for-sale-viramgam-viramgam-0068"],
+    ["4-bhk-apartment-for-sale-palaj-gandhinagar-0067", "4-bhk-apartments-for-sale-palaj-gandhinagar-0067"],
+    ["agriculture-land-for-sale-gandhinagar-gandhinagar-0021", "agriculture-land-for-sale-gandhinagar-0021"],
+    ["plot-for-sale-viramgam-ahmedabad-0072", "plot-for-sale-viramgam-viramgam-0072"],
+  ];
+  for (const [oldSlug, currentSlug] of legacy) {
+    const page = await render(propertyRoute, `/property/${oldSlug}`);
+    assert.equal(page.status, 301, oldSlug);
+    assert.equal(page.headers.Location, `/property/${currentSlug}`);
+  }
 });
 
 test("all nine priority listings have unique, indexable, answer-ready property pages", async () => {

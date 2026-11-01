@@ -13,6 +13,12 @@ const API_BASE_URL =
 const SITE_ORIGIN = (process.env.SITE_ORIGIN || process.env.FRONTEND_URL || "https://www.aksharestate.in").replace(/\/$/, "");
 const OBJECT_ID_RE = /^[a-f\d]{24}$/i;
 const PROPERTY_PATH_RE = /^\/property\/([^/?#]+)\/?/i;
+const LEGACY_PRIORITY_SLUG_CODES = {
+  "agriculture-land-for-sale-viramgam-ahmedabad-0068": "AETP-AHMD-0068",
+  "4-bhk-apartment-for-sale-palaj-gandhinagar-0067": "AETP-GNR-0067",
+  "agriculture-land-for-sale-gandhinagar-gandhinagar-0021": "AETP-GNR-0021",
+  "plot-for-sale-viramgam-ahmedabad-0072": "AETP-VIRA-0072",
+};
 
 function firstQueryValue(value) {
   return Array.isArray(value) ? value[0] : value;
@@ -69,6 +75,16 @@ async function fetchPropertyBySlug(slug) {
   if (!response.ok) return { property: null, status: response.status };
   const body = await response.json();
   return { property: body?.data || null, status: response.status };
+}
+
+async function currentPrioritySlugForLegacy(legacySlug) {
+  const code = LEGACY_PRIORITY_SLUG_CODES[legacySlug];
+  if (!code) return "";
+  const response = await fetch(`${API_BASE_URL}/public/properties?limit=100&page=1`);
+  if (!response.ok) return "";
+  const body = await response.json();
+  const property = (Array.isArray(body?.data) ? body.data : []).find((item) => item.propertyCode === code);
+  return property?.status === "active" && property.isIndexable !== false && !property.deletedAt ? property.slug || "" : "";
 }
 
 async function fetchPublicProperties(params = {}) {
@@ -711,6 +727,11 @@ export default async function handler(req, res) {
     }
     const property = result?.property;
     if (!property?.slug) {
+      const currentSlug = await currentPrioritySlugForLegacy(normalizedSlug);
+      if (currentSlug) {
+        redirect(res, canonicalPath(currentSlug));
+        return;
+      }
       notFound(res);
       return;
     }
