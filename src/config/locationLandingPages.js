@@ -129,7 +129,7 @@ const primaryRegions = [
 ];
 
 const localityDefinitions = [
-  ["gandhinagar", "Kudasan", "Gandhinagar", "A preferred apartment and commercial pocket between Gandhinagar and GIFT City, Kudasan is popular with buyers comparing new housing, office-side convenience, schools, retail access and daily services.", ["Sargasan", "Raysan", "GIFT City", "Vavol"], ["Kudasan Cross Road", "GIFT City Road", "Sargasan Circle"], "Kudasan connects quickly to GIFT City, Sargasan, Infocity, PDPU Road and Ahmedabad through SG Highway and capital-region roads."],
+  ["gandhinagar", "Kudasan", "Gandhinagar", "Compare active flats and other property for sale in Kudasan, a Gandhinagar locality between the capital city and GIFT City. Review asking price, usable area, parking, possession and access to daily services before a visit.", ["Sargasan", "Raysan", "GIFT City", "Vavol"], ["Kudasan Cross Road", "GIFT City Road", "Sargasan Circle"], "Kudasan connects to GIFT City, Sargasan, Infocity and Ahmedabad through GIFT City Road and SG Highway.", [], { title: "Flats & Properties for Sale in Kudasan, Gandhinagar | Akshar Estate", metaDescription: "Compare active flats and properties for sale in Kudasan, Gandhinagar. Check asking price, area, parking, possession and GIFT City-side access." }],
   ["gandhinagar", "Sargasan", "Gandhinagar", "A fast-growing Gandhinagar locality with apartment projects, retail activity and strong access to Kudasan, Raysan and GIFT City.", ["Kudasan", "Vavol", "Raysan", "Palaj"], ["Sargasan Cross Road", "GIFT City Road", "PDPU Road"], "Sargasan benefits from arterial roads toward GIFT City, Infocity, Gandhinagar city centre and Ahmedabad."],
   ["gandhinagar", "Vavol", "Gandhinagar", "A practical residential locality in Gandhinagar with family housing, plotted pockets and access to Sargasan and Pethapur.", ["Sargasan", "Pethapur", "Kudasan", "Randheja"], ["Vavol Road", "Pethapur Road", "Gandhinagar Sector Access"], "Vavol links with central Gandhinagar, Pethapur and the Sargasan-Kudasan corridor."],
   ["gandhinagar", "Pethapur", "Gandhinagar", "A traditional Gandhinagar-side locality with residential plots, independent homes and access toward Vavol and Randheja.", ["Vavol", "Randheja", "Mahudi Road", "Gandhinagar"], ["Pethapur Road", "Randheja Road", "Gandhinagar Sector Area"], "Pethapur connects with Gandhinagar city roads and north-side routes toward Randheja and Mahudi."],
@@ -196,7 +196,7 @@ const localityPages = localityDefinitions.map(([regionSlug, name, city, intro, n
     slug: slugifyLocation(name),
     name,
     city,
-    title: `Properties for Sale in ${name}, ${city} | Akshar Estate`,
+    title: pageOptions.title || `Properties for Sale in ${name}, ${city} | Akshar Estate`,
     h1: `Properties for Sale in ${name}, ${city}`,
     intro,
     nearbyAreas,
@@ -207,6 +207,7 @@ const localityPages = localityDefinitions.map(([regionSlug, name, city, intro, n
     rolloutPhase: pageOptions.rolloutPhase || null,
     verificationNote: pageOptions.verificationNote || "",
     duplicateOf: pageOptions.duplicateOf || "",
+    metaDescription: pageOptions.metaDescription || "",
   };
 });
 
@@ -261,9 +262,10 @@ const bhkIntentPages = [
     localityName: "Kudasan",
     city: "Gandhinagar",
     bhk: 2,
-    title: "2 BHK Properties for Sale in Kudasan, Gandhinagar | Akshar Estate",
+    title: "2 BHK Flats & Homes for Sale in Kudasan, Gandhinagar | Akshar Estate",
     h1: "2 BHK Properties for Sale in Kudasan, Gandhinagar",
-    intro: "Track 2 BHK property options in Kudasan with inventory-backed listings, GIFT City-side connectivity and verified supervisor contact when stock is available.",
+    intro: "Compare available 2 BHK flats and homes in Kudasan by usable area, asking price, parking, society facilities and possession status. Confirm GIFT City-side commute and total purchase cost before visiting.",
+    metaDescription: "Compare 2 BHK flats and homes for sale in Kudasan, Gandhinagar. Review price, area, parking, possession and GIFT City-side access before a visit.",
     demand: true,
     verified: true,
   },

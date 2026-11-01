@@ -161,12 +161,17 @@ function propertyLink(property = {}) {
   return property.slug ? `/property/${property.slug}` : "/properties";
 }
 
+function propertyPlaceParts(property = {}) {
+  const places = [property.location, property.city].filter(Boolean);
+  return places.filter((place, index) => places.findIndex((item) => String(item).toLowerCase() === String(place).toLowerCase()) === index);
+}
+
 function propertyImage(property = {}) {
   return property.image || property.gallery?.[0] || property.images?.[0] || THUMBNAIL_IMAGE_FALLBACK;
 }
 
 function propertyImageAlt(property = {}) {
-  const location = [property.location, property.city].filter(Boolean).join(" ");
+  const location = propertyPlaceParts(property).join(", ");
   return `Exterior view of ${propertyType(property).toLowerCase()} in ${location || "Gujarat"}`;
 }
 
@@ -186,10 +191,15 @@ function propertyImageAttributes(property = {}) {
 }
 
 function formatPrice(property = {}) {
+  const amount = Number(property.priceAmount || property.price || 0);
+  if (Number.isFinite(amount) && amount > 0) {
+    return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
+  }
   return property.price || "Price on request";
 }
 
 function propertyArea(property = {}) {
+  if (/(?:sq[-.\s]*(?:ft|feet|yard|yd|meter|metre|m)|vigha|bigha|acre|hectare|guntha)/i.test(String(property.area || ""))) return property.area;
   if (property.carpetArea) return `${property.carpetArea} sq.ft carpet area`;
   if (property.builtUpArea) return `${property.builtUpArea} sq.ft built-up area`;
   if (property.sqft) return `${property.sqft} sq.ft`;
@@ -200,9 +210,16 @@ function uniqueValues(items, selector) {
   return [...new Set(items.map(selector).filter(Boolean).map(String))].sort((a, b) => a.localeCompare(b));
 }
 
-function pageMetaDescription(page, count) {
+function pageMetaDescription(page, listings) {
+  const count = listings.length;
   if (page.kind === "property-type") {
+    if (count === 1 && propertyArea(listings[0]) !== "Area on request" && formatPrice(listings[0]) !== "Price on request") {
+      return compact(`${page.h1}: compare ${propertyArea(listings[0])} at ${formatPrice(listings[0])}. Check property details, documents and site visit options with Akshar Estate.`, 160);
+    }
     return compact(`${page.h1}. Compare ${count} current Akshar Estate ${count === 1 ? "listing" : "listings"}, asking prices, area, location and site visit details.`, 160);
+  }
+  if (page.kind === "bhk") {
+    return compact(`Compare ${count} active ${page.bhk} BHK ${count === 1 ? "property" : "properties"} for sale in ${page.localityName}, ${page.city}. Check price, area, parking, possession and visit details.`, 160);
   }
   return compact(
     `${count ? `Explore ${count} current properties` : "Explore property options"} for sale in ${page.name}. Compare local listings, property types, BHK options, nearby areas, landmarks and supervisor contact with Akshar Estate.`,
@@ -439,8 +456,8 @@ function buildListings(listings) {
     <li>
       <article>
         <img ${propertyImageAttributes(property)} style="max-width:280px;height:auto" />
-        <h3><a href="${escapeHtml(propertyLink(property))}">${escapeHtml(`${propertyBhk(property) ? `${propertyBhk(property)} BHK ` : ""}${propertyType(property)} for sale in ${[property.location, property.city].filter((value, index, values) => value && values.indexOf(value) === index).join(", ") || "Gujarat"}`)}</a></h3>
-        <p>${escapeHtml([formatPrice(property), propertyArea(property), property.location, property.city].filter(Boolean).join(" | "))}</p>
+        <h3><a href="${escapeHtml(propertyLink(property))}">${escapeHtml(`${propertyBhk(property) ? `${propertyBhk(property)} BHK ` : ""}${propertyType(property)} for sale in ${propertyPlaceParts(property).join(", ") || "Gujarat"}`)}</a></h3>
+        <p>${escapeHtml([formatPrice(property), propertyArea(property), ...propertyPlaceParts(property)].filter(Boolean).join(" | "))}</p>
       </article>
     </li>`).join("")}</ol>`;
 }
@@ -541,7 +558,7 @@ function jsonLd(data, id) {
 function injectHtml(shell, page, context) {
   const { allListings, visibleListings, propertyTypes, bhkOptions, currentPage, totalPages, filtered, shouldIndex, relatedBlogs = [] } = context;
   const title = page.title;
-  const description = page.metaDescription || pageMetaDescription(page, allListings.length);
+  const description = page.metaDescription || pageMetaDescription(page, allListings);
   const robots = shouldIndex ? "index,follow,max-image-preview:large" : "noindex,follow";
   const firstImage = propertyImage(allListings[0]);
   const head = [

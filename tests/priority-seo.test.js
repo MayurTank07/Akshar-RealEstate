@@ -8,18 +8,18 @@ import { getPropertyTypeIntentPage, landingStateForPage } from "../src/config/lo
 import { priorityPropertySeo } from "../src/config/priorityPropertySeo.js";
 
 const listings = [
-  { _id: "0".repeat(24), propertyCode: "AETP-AHMD-0068", slug: "agriculture-land-for-sale-viramgam-viramgam-0068", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Ahmedabad", location: "Viramgam", area: "2000 sq-yard", priceAmount: 4500000, status: "active", isIndexable: true },
+  { _id: "0".repeat(24), propertyCode: "AETP-AHMD-0068", slug: "agriculture-land-for-sale-viramgam-viramgam-0068", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Viramgam", location: "Viramgam", area: "2000 sq-yard", priceAmount: 4500000, status: "active", isIndexable: true },
   { _id: "1".repeat(24), propertyCode: "AETP-GNR-0029", slug: "agriculture-land-for-sale-dashela-gandhinagar-0029", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Gandhinagar", location: "Dashela", area: "6 vigha", priceAmount: 240000000, status: "active", isIndexable: true },
   { _id: "a".repeat(24), propertyCode: "AETP-AHMD-0069", slug: "plot-for-sale-ahmedabad-ahmedabad-0069", type: "Plot", title: "Plot for sale", city: "Ahmedabad", location: "Ahmedabad", area: "1360 sq-yard", priceAmount: 8500000, status: "active", isIndexable: true },
   { _id: "2".repeat(24), propertyCode: "AETP-GNR-0028", slug: "agriculture-land-for-sale-jhakhora-gandhinagar-0028", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Gandhinagar", location: "Jhakhora", area: "5.4 vigha", priceAmount: 110000000, status: "active", isIndexable: true },
   { _id: "b".repeat(24), propertyCode: "AETP-AHMD-0071", slug: "plot-for-sale-bakrol-ahmedabad-0071", type: "Plot", category: "Agriculture land for sale", title: "Agriculture land for sale", city: "Ahmedabad", location: "Bakrol", area: "300 sq-yard", priceAmount: 5000000, status: "active", isIndexable: true },
   { _id: "c".repeat(24), propertyCode: "AETP-AHMD-0059", slug: "2-bhk-apartments-for-sale-ahmedabad-ahmedabad-0059", type: "Apartments", title: "Apartment", city: "Ahmedabad", location: "Shela", bhk: 2, beds: 2, priceAmount: 8000000, status: "active", isIndexable: true },
-  { _id: "d".repeat(24), propertyCode: "AETP-GNR-0060", slug: "2-bhk-apartments-for-sale-gandhinagar-gandhinagar-0060", type: "Apartments", title: "Apartment", city: "Gandhinagar", location: "Kudasan", bhk: 2, beds: 2, priceAmount: 9000000, status: "active", isIndexable: true },
+  { _id: "d".repeat(24), propertyCode: "AETP-GNR-0060", slug: "2-bhk-apartments-for-sale-gandhinagar-gandhinagar-0060", type: "Apartments", title: "Apartment", city: "Gandhinagar", location: "Kudasan", bhk: 2, beds: 2, area: "170 Sqyd", builtUpArea: 12, priceAmount: 9000000, status: "active", isIndexable: true },
   { _id: "e".repeat(24), propertyCode: "AETP-GNR-0025", slug: "plot-for-sale-palaj-gandhinagar-0025", type: "Plot", title: "Plot for sale", city: "Gandhinagar", location: "Palaj", priceAmount: 8500000, status: "active", isIndexable: true },
   { _id: "f".repeat(24), propertyCode: "AETP-GNR-0027", slug: "agriculture-land-for-sale-dhanap-gandhinagar-0027", type: "Agriculture land", title: "Agricultural land", city: "Gandhinagar", location: "Dhanap", area: "2 vigha", priceAmount: 90000000, status: "active", isIndexable: true },
   { _id: "6".repeat(24), propertyCode: "AETP-GNR-0067", slug: "4-bhk-apartments-for-sale-palaj-gandhinagar-0067", type: "Apartment", title: "4 BHK apartment", city: "Gandhinagar", location: "Palaj", area: "345 sq-yard", bhk: 4, beds: 4, priceAmount: 12900000, status: "active", isIndexable: true },
   { _id: "3".repeat(24), propertyCode: "AETP-GNR-0021", slug: "agriculture-land-for-sale-gandhinagar-0021", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Gandhinagar", location: "Gandhinagar", area: "1.61 vigha", priceAmount: 28500000, status: "active", isIndexable: true },
-  { _id: "7".repeat(24), propertyCode: "AETP-VIRA-0072", slug: "plot-for-sale-viramgam-viramgam-0072", type: "Plot", title: "Plot for sale", city: "Ahmedabad", location: "Viramgam", area: "500 sq-yard", priceAmount: 1750000, status: "active", isIndexable: true },
+  { _id: "7".repeat(24), propertyCode: "AETP-VIRA-0072", slug: "plot-for-sale-viramgam-viramgam-0072", type: "Plot", title: "Plot for sale", city: "Viramgam", location: "Viramgam", area: "500 sq-yard", priceAmount: 1750000, status: "active", isIndexable: true },
   { _id: "9".repeat(24), propertyCode: "AETP-TEST-9999", slug: "inactive-test-listing-9999", type: "Plot", title: "Inactive listing", city: "Ahmedabad", location: "Test", area: "100 sq-yard", priceAmount: 1000000, status: "active", isIndexable: false },
 ];
 
@@ -113,6 +113,26 @@ test("city pages summarize current inventory and link to active localities", asy
   assert.match(gandhinagar.body, /Current Gandhinagar Listing Mix/);
   assert.match(gandhinagar.body, /href="\/properties-for-sale\/gandhinagar\/palaj"/);
   assert.match(gandhinagar.body, /href="\/properties-for-sale\/gandhinagar\/dhanap"/);
+});
+
+test("Kudasan pages answer the observed flat and 2 BHK search intent", async () => {
+  const locality = await render(saleLandingRoute, "/properties-for-sale/gandhinagar/kudasan");
+  const twoBhk = await render(saleLandingRoute, "/properties-for-sale/gandhinagar/kudasan/2-bhk");
+  assert.match(locality.body, /<title>Flats &amp; Properties for Sale in Kudasan, Gandhinagar/);
+  assert.match(locality.body, /parking, possession and GIFT City-side access/);
+  assert.match(twoBhk.body, /<title>2 BHK Flats &amp; Homes for Sale in Kudasan/);
+  assert.match(twoBhk.body, /usable area, asking price, parking/);
+  assert.match(twoBhk.body, /170 Sqyd/);
+  assert.doesNotMatch(twoBhk.body, /12 sq.ft built-up area/);
+  assert.match(twoBhk.body, /<meta name="robots" content="index,follow/);
+});
+
+test("single-listing plot pages show readable price and area in search copy", async () => {
+  const page = await render(saleLandingRoute, "/plots-for-sale/ahmedabad");
+  assert.match(page.body, /<meta name="description" content="Plots for Sale in Ahmedabad: compare 1360 sq-yard at ₹85,00,000/);
+  assert.match(page.body, /1360 sq-yard \| Ahmedabad/);
+  assert.doesNotMatch(page.body, /Ahmedabad \| Ahmedabad|Ahmedabad Ahmedabad/);
+  assert.doesNotMatch(page.body, /\| 8500000 \|/);
 });
 
 test("old priority property slugs redirect to current live slugs", async () => {
