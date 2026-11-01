@@ -1,4 +1,5 @@
 import { priorityPropertySeo } from "../config/priorityPropertySeo";
+import { Link } from "react-router-dom";
 
 const commonDocuments = [
   "Seller identity and authority to sell",
@@ -28,6 +29,7 @@ export default function PriorityPropertyDetails({ property }) {
       <div className="rounded-2xl border border-blue-100 bg-blue-50 p-6">
         <h2 className="text-xl font-bold text-slate-950">Quick Answer</h2>
         <p className="mt-3 leading-7">{seo.answer}</p>
+        <Link to={seo.landingPath} className="mt-4 inline-block font-semibold text-blue-700 hover:underline">Compare more properties in this location →</Link>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-6">

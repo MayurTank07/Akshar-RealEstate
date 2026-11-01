@@ -11,6 +11,7 @@ import useAuth from '../contexts/useAuth';
 import { PROPERTY_IMAGE_FALLBACK, propertyImageAlt, responsiveImageProps } from '../utils/imageSeo';
 import { trackPropertyEvent } from '../utils/analytics';
 import { generateWhatsAppShareLink, propertyWhatsAppShareMessage } from '../utils/whatsapp';
+import { priorityPropertySeo } from '../config/priorityPropertySeo';
 
 function telHref(phoneNumber = "") {
   const normalized = String(phoneNumber || "").replace(/[^\d+]/g, "");
@@ -141,7 +142,7 @@ const PropertyDetails = ({ property, whatsappAvailable, onWhatsAppEnquiry }) => 
     ? `${propertyLocation}, ${property.city}` : propertyLocation || property?.city || "Gujarat";
   const headingType = property?.bhk && /flat|apartment/i.test(property?.type || "") ? `${property.bhk} BHK ${property.type}` : property?.type || "Property";
   const headingAction = /rent|lease/i.test(String(property?.listingType || property?.dealType || "")) ? "rent" : "sale";
-  const heading = `${headingType} for ${headingAction} in ${headingPlace}`;
+  const heading = priorityPropertySeo(property)?.heading || `${headingType} for ${headingAction} in ${headingPlace}`;
   const propertyStatus = lifecycleLabel(property);
   const lifecycleStatus = String(property?.status || "").trim().toLowerCase();
   const investmentMetric = property?.roi || (property?.isPreLeased ? "Pre-Leased" : "Verified");

@@ -254,6 +254,8 @@ function isNoindexLifecycleStatus(status) {
 }
 
 function propertyPageTitle(property) {
+  const priorityHeading = priorityPropertySeo(property)?.heading;
+  if (priorityHeading) return priorityHeading;
   return `${propertyKind(property)} for ${listingAction(property)} in ${propertyLocation(property) || "Gujarat"}`;
 }
 

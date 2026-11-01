@@ -61,6 +61,12 @@ export default function LocationLanding({ typePrefix = "" }) {
   return (
     <div>
       <Hero key={page.path} category={state.category} type={state.type} city={state.city} filters={state.filters} pageTitle={page.h1} intentPage={page} intro={intro} />
+      <section className="mx-auto max-w-7xl px-4 py-8 text-slate-700 sm:px-6 lg:px-8" aria-label="Local property guidance">
+        <h2 className="text-2xl font-bold text-slate-950">About {page.name}</h2>
+        <p className="mt-3 max-w-4xl leading-7">{page.intro}</p>
+        {page.connectivity && <p className="mt-3 max-w-4xl leading-7">{page.connectivity}</p>}
+        <p className="mt-4 max-w-4xl leading-7">Confirm the latest availability, asking price, title documents, permitted use and site access with Akshar Estate before arranging a visit.</p>
+      </section>
       <nav aria-label="Related property searches" className="mx-auto flex max-w-7xl flex-wrap gap-x-5 gap-y-2 px-4 py-8 text-sm font-semibold text-blue-700 sm:px-6 lg:px-8">
         <Link to="/agricultural-land-for-sale/gandhinagar">Agricultural land in Gandhinagar</Link>
         <Link to="/agricultural-land-for-sale/viramgam">Agricultural land in Viramgam</Link>

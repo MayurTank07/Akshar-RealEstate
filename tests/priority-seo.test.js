@@ -4,6 +4,7 @@ import propertyRoute from "../api/property-route.js";
 import saleLandingRoute from "../api/sale-landing-route.js";
 import sitemapRoute from "../api/sitemap.js";
 import { getPropertyTypeIntentPage, landingStateForPage } from "../src/config/locationLandingPages.js";
+import { priorityPropertySeo } from "../src/config/priorityPropertySeo.js";
 
 const listings = [
   { _id: "0".repeat(24), propertyCode: "AETP-AHMD-0068", slug: "agriculture-land-for-sale-viramgam-ahmedabad-0068", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Ahmedabad", location: "Viramgam", area: "2000 sq-yard", priceAmount: 4500000, status: "active", isIndexable: true },
@@ -114,6 +115,7 @@ test("all nine priority listings have unique, indexable, answer-ready property p
     assert.match(page.body, /Frequently Asked Questions/, property.propertyCode);
     assert.match(page.body, /"@type":"FAQPage"/, property.propertyCode);
     assert.match(page.body, /"@type":"Offer"/, property.propertyCode);
+    assert.ok(page.body.includes(`<h1 style="font-size:32px;line-height:1.2;margin:0 0 12px">${priorityPropertySeo(property).heading}</h1>`), property.propertyCode);
     const title = page.body.match(/<title>(.*?)<\/title>/)?.[1];
     assert.ok(title, property.propertyCode);
     titles.add(title);
