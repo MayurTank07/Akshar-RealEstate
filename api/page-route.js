@@ -110,7 +110,12 @@ const PRIVATE_PAGES = {
   "/enquiry": ["Property Enquiry | Akshar Estate", "Enquiry form pages are noindex and available to users."],
 };
 
-const NOINDEX_FOLLOW_PAGES = {};
+const NOINDEX_FOLLOW_PAGES = {
+  "/review": [
+    "Share Your Experience | Akshar Estate",
+    "Rate your Akshar Estate experience by category, then share your own review on Google.",
+  ],
+};
 
 function readIndexHtml() {
   const candidates = [
