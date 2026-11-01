@@ -28,7 +28,6 @@ const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogDetails = lazy(() => import("./pages/BlogDetails"));
 const StaffLogin = lazy(() => import("./pages/StaffLogin"));
 const AdminWorkspace = lazy(() => import("./pages/AdminWorkspace"));
-const ReviewExperience = lazy(() => import("./pages/ReviewExperience"));
 
 function RouteFallback() {
   return <div className="min-h-screen bg-slate-50 pt-32 text-center text-sm font-bold text-slate-500">Loading...</div>;
@@ -82,7 +81,6 @@ function App() {
               <Route path="/about" element={<About />} />
               <Route path="/services" element={<ServicesPage />} />
               <Route path="/contact" element={<Contact />} />
-              <Route path="/review" element={<ReviewExperience />} />
               <Route path="/privacy-policy" element={<LegalPage type="privacy" />} />
               <Route path="/terms-of-service" element={<LegalPage type="terms" />} />
             </Routes>
