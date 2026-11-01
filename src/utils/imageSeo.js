@@ -29,6 +29,10 @@ function cloudinaryUrl(url, { width, height, crop = "fill", gravity = "auto", qu
     gravity && crop === "fill" && `g_${gravity}`,
   ].filter(Boolean).join(",");
   if (!transforms) return url;
+  // Stored API images can already include Cloudinary transformations. Replace
+  // those before applying the requested size so thumbnails do not stack crops.
+  const uploadPath = /\/upload\/(?:[^/]+\/)*(?=v\d+\/)/;
+  if (uploadPath.test(url)) return url.replace(uploadPath, `/upload/${transforms}/`);
   return url.replace("/upload/", `/upload/${transforms}/`);
 }
 
