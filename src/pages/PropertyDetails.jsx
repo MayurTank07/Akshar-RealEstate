@@ -4,6 +4,7 @@ import Hero from "../componetswest/Hero";
 import Amenities from "../componetswest/Amenities";
 import MapForm from "../componetswest/MapForm";
 import Footer from "../components/Footer";
+import PriorityPropertyDetails from "../components/PriorityPropertyDetails";
 import { publicApi } from "../services/api";
 import useAuth from "../contexts/useAuth";
 import {
@@ -165,6 +166,8 @@ export default function PropertyDetails() {
 
       {/* Amenities Section from componetswest */}
       <Amenities property={property} whatsappAvailable={whatsappAvailable} onWhatsAppEnquiry={requestWhatsAppEnquiry} />
+
+      <PriorityPropertyDetails property={property} />
 
       {/* Back Button */}
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

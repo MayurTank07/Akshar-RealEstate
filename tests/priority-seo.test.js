@@ -3,6 +3,7 @@ import test from "node:test";
 import propertyRoute from "../api/property-route.js";
 import saleLandingRoute from "../api/sale-landing-route.js";
 import sitemapRoute from "../api/sitemap.js";
+import { getPropertyTypeIntentPage, landingStateForPage } from "../src/config/locationLandingPages.js";
 
 const listings = [
   { _id: "0".repeat(24), propertyCode: "AETP-AHMD-0068", slug: "agriculture-land-for-sale-viramgam-ahmedabad-0068", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Ahmedabad", location: "Viramgam", area: "2000 sq-yard", priceAmount: 4500000, status: "active", isIndexable: true },
@@ -32,6 +33,20 @@ globalThis.fetch = async (input) => {
 };
 
 test.after(() => { globalThis.fetch = originalFetch; });
+
+test("property-type landing state leaves inventory matching to the page intent", () => {
+  for (const [prefix, location] of [
+    ["agricultural-land-for-sale", "viramgam"],
+    ["agricultural-land-for-sale", "dashela"],
+    ["plots-for-sale", "viramgam"],
+    ["plots-for-sale", "palaj"],
+  ]) {
+    const state = landingStateForPage(getPropertyTypeIntentPage(prefix, location));
+    assert.equal(state.filters.activeCity, "All");
+    assert.equal(state.filters.activeType, "All");
+    assert.equal(state.filters.advancedFilters.propertyType, "");
+  }
+});
 
 async function render(handler, url) {
   const chunks = [];

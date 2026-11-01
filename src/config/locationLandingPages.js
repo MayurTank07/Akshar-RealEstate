@@ -542,21 +542,22 @@ export function getPropertyTypeIntentPage(prefix = "", locationSlug = "") {
 
 export function landingStateForPage(page) {
   if (!page) return {};
-  const activeCity = page.kind === "locality" ? page.name : page.city || page.name;
-  const isTypeIntent = page.kind === "property-type";
+  // Property-type pages already apply their exact location and type matchers in Hero.
+  // A second city/type filter can hide valid listings when API labels differ.
+  const activeCity = page.kind === "property-type" ? "All" : page.kind === "locality" ? page.name : page.city || page.name;
   const isBhkIntent = page.kind === "bhk" || Boolean(page.bhk);
   return {
     category: "Buy",
-    type: isTypeIntent ? page.typeMatchers?.[0] || "All" : "All",
+    type: "All",
     city: activeCity,
     filters: {
       activeCity,
-      activeType: isTypeIntent ? page.typeMatchers?.[0] || "All" : "All",
+      activeType: "All",
       query: "",
       searchType: "Buy",
       advancedFilters: {
         areaWise: "",
-        propertyType: isTypeIntent ? page.typeMatchers?.[0] || "" : "",
+        propertyType: "",
         propertyCategory: "",
         minPrice: "",
         maxPrice: "",
