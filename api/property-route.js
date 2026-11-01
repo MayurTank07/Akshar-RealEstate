@@ -3,6 +3,7 @@ import path from "node:path";
 import { getBhkIntentPage, getPropertyTypeIntentPage, getSaleLandingPage, slugifyLocation } from "../src/config/locationLandingPages.js";
 import { PROPERTY_IMAGE_FALLBACK, imageSrcSet, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildPropertyJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
+import { priorityPropertySeo } from "../src/config/priorityPropertySeo.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -257,6 +258,8 @@ function propertyPageTitle(property) {
 }
 
 function storedSeoTitle(property) {
+  const prioritySeo = priorityPropertySeo(property);
+  if (prioritySeo?.title) return prioritySeo.title;
   const title = cleanPropertyText(property.seoTitle);
   if (!title) return "";
   if (isUrlLike(title) || /\b(sale|rent)\s+for\s+(sale|rent)\b/i.test(title)) return "";
@@ -264,6 +267,8 @@ function storedSeoTitle(property) {
 }
 
 function storedMetaDescription(property) {
+  const prioritySeo = priorityPropertySeo(property);
+  if (prioritySeo?.description) return prioritySeo.description;
   const description = cleanPropertyText(property.metaDescription || property.seo?.metaDescription || "");
   if (!description) return "";
   if (/view price,\s*(carpet area,\s*)?amenities,\s*photos,\s*location and contact details/i.test(description)) return "";
@@ -374,6 +379,8 @@ function generatedPropertyDescription(property) {
 }
 
 function publicDescription(property) {
+  const prioritySeo = priorityPropertySeo(property);
+  if (prioritySeo?.answer) return prioritySeo.answer;
   const saved = cleanPropertyText(property.description);
   if (saved.length >= 80 && !/thoughtfully presented|https?:\/\/|verified Ahmedabad market guidance/i.test(saved)) return saved;
   return generatedPropertyDescription(property);
@@ -398,6 +405,52 @@ function linkList(items) {
   const links = items.filter(Boolean);
   if (!links.length) return "";
   return `<ul>${links.map((item) => `<li><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`;
+}
+
+function documentChecklist(property) {
+  const isLand = /agricult|farm|land/i.test(propertyKind(property));
+  const isPlot = /plot/i.test(propertyKind(property));
+  const common = [
+    "Seller identity and authority to sell",
+    "Current title and ownership chain",
+    "Latest price, dues and availability",
+    "Exact site boundaries and access",
+  ];
+  if (isLand) return [...common, "Survey number and latest 7/12 or applicable land record", "Agricultural zoning, permitted use and transfer eligibility", "Water, electricity and approach-road status"];
+  if (isPlot) return [...common, "Approved layout and plot measurement", "NA/NOC, zoning and development permission where applicable", "Road width, utilities and possession timeline"];
+  return [...common, "RERA and sanctioned-plan details where applicable", "Carpet area, parking and possession commitment", "Maintenance, taxes and total purchase cost"];
+}
+
+function plainList(items) {
+  return `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+}
+
+function priorityFaqs(property) {
+  const prioritySeo = priorityPropertySeo(property);
+  if (!prioritySeo) return [];
+  const location = propertyLocation(property) || "Gujarat";
+  const area = primaryAreaLabel(property) || "the listed area";
+  const price = priceLabel(property) || "the current asking price";
+  return [
+    {
+      question: `What are the main details of ${property.propertyCode}?`,
+      answer: `${property.propertyCode} is an active ${propertyKind(property).toLowerCase()} listing in ${location}, with ${area} and an asking price of ${price}.`,
+    },
+    {
+      question: "What should be verified before a site visit?",
+      answer: documentChecklist(property).join("; ") + ".",
+    },
+    {
+      question: "Is the price and availability final?",
+      answer: "Price, availability and transaction terms can change. Confirm the latest details with Akshar Estate before travelling, paying a token or signing any document.",
+    },
+  ];
+}
+
+function faqMarkup(property) {
+  const faqs = priorityFaqs(property);
+  if (!faqs.length) return "";
+  return faqs.map(({ question, answer }) => `<details><summary><strong>${escapeHtml(question)}</strong></summary><p>${escapeHtml(answer)}</p></details>`).join("");
 }
 
 function imageAttributes(image, {
@@ -519,6 +572,7 @@ function buildInitialPropertyPage(property, related = {}) {
   const lastUpdated = formatDate(property.lastModifiedAt || property.updatedAt);
   const area = primaryAreaLabel(property);
   const price = priceLabel(property);
+  const prioritySeo = priorityPropertySeo(property);
   const listingFacts = detailList([
     ["Property status", status],
     ["Last updated", lastUpdated],
@@ -557,6 +611,7 @@ function buildInitialPropertyPage(property, related = {}) {
         ${lifecycleNotice}
         ${images.length ? `<figure><img ${imageAttributes(images[0], { width: 1600, height: 1000, widths: [640, 960, 1280, 1600], sizes: "(max-width: 768px) 100vw, 1120px", loading: "eager", fetchPriority: "high" })} style="width:100%;height:auto;border-radius:12px" /><figcaption>${escapeHtml(images[0].alt)}</figcaption></figure>` : ""}
         ${section("Property Overview", `<p>${escapeHtml(description)}</p>${listingFacts}`)}
+        ${prioritySeo ? section("Quick Answer", `<p><strong>${escapeHtml(prioritySeo.answer)}</strong></p>`) : ""}
         ${plotDetails}
         ${section("Price", `<p>${escapeHtml(price || property.price || "Price on request")}</p>`)}
         ${section("Carpet Area", `<p>${escapeHtml(formatArea(property.carpetArea, "carpet area") || "Available on request")}</p>`)}
@@ -571,6 +626,9 @@ function buildInitialPropertyPage(property, related = {}) {
         ${section("Address", `<p>${escapeHtml(property.address || property.map?.address || propertyLocation(property) || "Available on request")}</p>`)}
         ${section("Map", `<p>${escapeHtml(mapLabel(property))}</p>`)}
         ${section("Nearby Landmarks", `<p>${escapeHtml(property.nearbyLandmarks || "Nearby landmark details available on request.")}</p>`)}
+        ${prioritySeo ? section("Documents to Check", plainList(documentChecklist(property))) : ""}
+        ${prioritySeo ? section("Site Visit Guidance", `<p>Confirm the latest availability, asking price, meeting point and assigned supervisor before travelling. During the visit, compare the physical boundaries, road access, surroundings and utilities with the listing and available documents.</p>`) : ""}
+        ${prioritySeo ? section("Frequently Asked Questions", faqMarkup(property)) : ""}
         ${section("Assigned Supervisor", detailList([
           ["Name", broker.name || "Contact our property expert"],
           ["Phone", broker.phone || "Available after assignment"],

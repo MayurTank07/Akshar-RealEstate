@@ -281,6 +281,10 @@ function buildDepthSections(page, listings) {
 function contentClusterLinks(page) {
   const core = [
     { label: "Agricultural land in Gandhinagar", href: "/agricultural-land-for-sale/gandhinagar" },
+    { label: "Agricultural land in Viramgam", href: "/agricultural-land-for-sale/viramgam" },
+    { label: "Agricultural land in Dashela", href: "/agricultural-land-for-sale/dashela" },
+    { label: "Agricultural land in Jhakhora", href: "/agricultural-land-for-sale/jhakhora" },
+    { label: "Agricultural land in Dhanap", href: "/agricultural-land-for-sale/dhanap" },
     { label: "Plots in Ahmedabad", href: "/plots-for-sale/ahmedabad" },
     { label: "Plots in Gandhinagar", href: "/plots-for-sale/gandhinagar" },
     { label: "Flats in Ahmedabad", href: "/flats-for-sale/ahmedabad" },
@@ -296,6 +300,8 @@ function contentClusterLinks(page) {
     { label: "Ahmedabad West property guide", href: "/properties-for-sale/ahmedabad-west" },
     { label: "Commercial property on S.G. Highway", href: "/commercial-property/sg-highway" },
     { label: "Plots for sale in Palaj", href: "/plots-for-sale/palaj" },
+    { label: "Plots for sale in Viramgam", href: "/plots-for-sale/viramgam" },
+    { label: "4 BHK apartment in Palaj", href: "/properties-for-sale/gandhinagar/palaj/4-bhk" },
     { label: "Sell or list your property", href: "/contact" },
   ];
   return core.filter((item) => item.href !== page.path);
@@ -375,7 +381,8 @@ function cleanTypeFilterLink(page, type) {
   const locationSlug = page.localitySlug || page.locationSlug || slugifyLocation(page.city || page.name || "");
   const normalizedType = slugifyLocation(type);
   if (/agricult|farm/.test(normalizedType)) {
-    const clean = getPropertyTypeIntentPage("agricultural-land-for-sale", slugifyLocation(page.city));
+    const clean = getPropertyTypeIntentPage("agricultural-land-for-sale", locationSlug)
+      || getPropertyTypeIntentPage("agricultural-land-for-sale", slugifyLocation(page.city));
     if (clean) return { label, href: clean.path };
   }
   if (/plot/.test(normalizedType)) {

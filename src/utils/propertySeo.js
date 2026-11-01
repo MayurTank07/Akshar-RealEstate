@@ -1,4 +1,5 @@
 import { buildPropertyJsonLd, schemaScriptContent } from "./structuredData";
+import { priorityPropertySeo } from "../config/priorityPropertySeo";
 
 const SITE_NAME = "Akshar Estate The Property HUB";
 
@@ -63,6 +64,8 @@ function generatedMetaDescription(property, { title, type, location }) {
 }
 
 function storedSeoTitle(property) {
+  const prioritySeo = priorityPropertySeo(property);
+  if (prioritySeo?.title) return prioritySeo.title;
   const title = cleanPropertyText(property.seoTitle || property.seo?.metaTitle || "");
   if (!title) return "";
   if (isUrlLike(title) || /\b(sale|rent)\s+for\s+(sale|rent)\b/i.test(title)) return "";
@@ -70,6 +73,8 @@ function storedSeoTitle(property) {
 }
 
 function storedMetaDescription(property) {
+  const prioritySeo = priorityPropertySeo(property);
+  if (prioritySeo?.description) return prioritySeo.description;
   const description = cleanPropertyText(property.metaDescription || property.seo?.metaDescription || "");
   if (!description) return "";
   if (/view price,\s*(carpet area,\s*)?amenities,\s*photos,\s*location and contact details/i.test(description)) return "";

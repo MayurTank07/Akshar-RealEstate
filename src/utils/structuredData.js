@@ -1,4 +1,5 @@
 import { BUSINESS_INFO, SITE_ORIGIN } from "../config/businessInfo.js";
+import { priorityPropertySeo } from "../config/priorityPropertySeo.js";
 
 export function compactText(value, limit = 180) {
   return String(value || "").replace(/\s+/g, " ").trim().slice(0, limit);
@@ -121,9 +122,11 @@ export function businessIdentity(contact = {}) {
       "verified property listings",
       "Gandhinagar real estate",
       "Ahmedabad real estate",
+      "agricultural land for sale",
+      "residential and NA plots",
+      "land investment",
       "residential flats",
-      "commercial property",
-      "plots and land",
+      "commercial and industrial property",
       "property selling assistance",
       "site visit coordination",
     ],
@@ -141,11 +144,11 @@ export function businessIdentity(contact = {}) {
 
 function serviceCatalog() {
   return [
-    ["Property buying assistance", "Shortlist verified flats, bungalows, plots, shops, offices and land in Gandhinagar, Ahmedabad and nearby Gujarat locations."],
+    ["Agricultural land and plot advisory", "Compare agricultural land, residential plots and investment land with location, access and document-check guidance."],
+    ["Property buying assistance", "Shortlist verified plots, land, flats, bungalows, shops and offices in Gandhinagar, Ahmedabad and nearby Gujarat locations."],
     ["Property selling assistance", "Help property owners position listings, capture enquiries and coordinate qualified buyer visits."],
     ["Commercial property consulting", "Support for shops, offices, showrooms, warehouses and investment-ready commercial property."],
-    ["Plot and land advisory", "Local guidance for plot, agriculture land and investment land enquiries with site visit and document-check support."],
-    ["Rental assistance", "Broker-assisted rental matching for residential and commercial requirements."],
+    ["Land investment support", "Local guidance for title checks, access, zoning, permitted use and site visits for land enquiries."],
     ["Site visit coordination", "WhatsApp and phone support for arranging supervised property visits."],
   ].map(([name, description]) => ({
     "@type": "Service",
@@ -323,12 +326,16 @@ function listingAction(property = {}) {
 }
 
 function propertyTitle(property = {}) {
+  const prioritySeo = priorityPropertySeo(property);
+  if (prioritySeo?.title) return prioritySeo.title;
   const title = cleanPropertyText(property.seoTitle);
   if (title && !isUrlLike(title) && !/\b(sale|rent)\s+for\s+(sale|rent)\b/i.test(title)) return title;
   return `${propertyKind(property)} for ${listingAction(property)} in ${propertyLocation(property) || "Gujarat"}`;
 }
 
 function propertyDescription(property = {}) {
+  const prioritySeo = priorityPropertySeo(property);
+  if (prioritySeo?.description) return prioritySeo.description;
   return compactText(
     property.metaDescription ||
       property.description ||
@@ -382,6 +389,7 @@ function propertyAvailability(property = {}) {
 }
 
 function floorSize(property = {}) {
+  if (/plot|land|farm|agriculture/i.test([property.type, property.propertyType, property.category, property.title].join(" "))) return undefined;
   const value = areaValue(property.carpetArea, property.builtUpArea, property.plotArea, property.sqft);
   if (!value) return undefined;
   return {
@@ -425,6 +433,8 @@ export function buildPropertyJsonLd(property = {}, { url = "", breadcrumbs = [] 
       value: true,
     })),
     additionalProperty: [
+      ["Property code", property.propertyCode],
+      ["Listed area", property.area || (property.measurement?.value ? `${property.measurement.value} ${property.measurement.unit || ""}`.trim() : "")],
       ["Property type", propertyKind(property)],
       ["Listing type", listingAction(property)],
       ["Furnishing", property.furnishing],
@@ -434,7 +444,8 @@ export function buildPropertyJsonLd(property = {}, { url = "", breadcrumbs = [] 
       ["Total floors", property.totalFloors],
       ["Project", property.projectName || property.societyName || property.topProject],
     ].filter(([, value]) => value).map(([name, value]) => ({ "@type": "PropertyValue", name, value })),
-    offers: {
+  };
+  const offerNode = {
       "@type": "Offer",
       "@id": `${canonical}#offer`,
       url: canonical,
@@ -443,8 +454,25 @@ export function buildPropertyJsonLd(property = {}, { url = "", breadcrumbs = [] 
       availability: propertyAvailability(property),
       seller: { "@id": `${SITE_ORIGIN}/#realestateagent` },
       itemOffered: { "@id": `${canonical}#property` },
-    },
   };
+
+  const prioritySeo = priorityPropertySeo(property);
+  const faqNode = prioritySeo ? {
+    "@type": "FAQPage",
+    "@id": `${canonical}#faq`,
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: `What are the key details of property ${property.propertyCode}?`,
+        acceptedAnswer: { "@type": "Answer", text: prioritySeo.answer },
+      },
+      {
+        "@type": "Question",
+        name: `What should a buyer verify before visiting this ${propertyKind(property).toLowerCase()}?`,
+        acceptedAnswer: { "@type": "Answer", text: /agricult|land|plot/i.test(propertyKind(property)) ? "Verify the survey or plot record, ownership chain, access road, boundaries, zoning or permitted use, utilities, dues and current availability before a site visit." : "Verify carpet area, project approvals, possession, parking, maintenance, total purchase cost, ownership documents and current availability before a site visit." },
+      },
+    ],
+  } : undefined;
 
   const graph = [
     {
@@ -460,6 +488,7 @@ export function buildPropertyJsonLd(property = {}, { url = "", breadcrumbs = [] 
       url: canonical,
       about: { "@id": `${canonical}#property` },
       isPartOf: { "@id": `${SITE_ORIGIN}/#website` },
+      dateModified: property.lastModifiedAt || property.updatedAt,
       speakable: {
         "@type": "SpeakableSpecification",
         cssSelector: [
@@ -469,6 +498,8 @@ export function buildPropertyJsonLd(property = {}, { url = "", breadcrumbs = [] 
       },
     },
     realEstateNode,
+    offerNode,
+    faqNode,
     breadcrumbs.length ? {
       ...schemaNode(buildBreadcrumbSchema(breadcrumbs)),
       "@id": `${canonical}#breadcrumb`,

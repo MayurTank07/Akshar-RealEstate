@@ -15,8 +15,15 @@ const priorityLocations = [
 
 const prioritySearches = [
   ["Agricultural land in Gandhinagar", "/agricultural-land-for-sale/gandhinagar"],
+  ["Agricultural land in Viramgam", "/agricultural-land-for-sale/viramgam"],
+  ["Agricultural land in Dashela", "/agricultural-land-for-sale/dashela"],
+  ["Agricultural land in Jhakhora", "/agricultural-land-for-sale/jhakhora"],
+  ["Agricultural land in Dhanap", "/agricultural-land-for-sale/dhanap"],
   ["Plots in Ahmedabad", "/plots-for-sale/ahmedabad"],
   ["Plots in Gandhinagar", "/plots-for-sale/gandhinagar"],
+  ["Plots in Viramgam", "/plots-for-sale/viramgam"],
+  ["Plots in Palaj", "/plots-for-sale/palaj"],
+  ["4 BHK apartments in Palaj", "/properties-for-sale/gandhinagar/palaj/4-bhk"],
   ["Flats in Ahmedabad", "/flats-for-sale/ahmedabad"],
   ["Flats in Gandhinagar", "/flats-for-sale/gandhinagar"],
   ["2 BHK flats in Gandhinagar", "/2-bhk-flats-for-sale/gandhinagar"],

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ArrowRight, Building2, CheckCircle2, Home, KeyRound, Landmark, ListChecks, SearchCheck } from "lucide-react";
+import { ArrowRight, Building2, CheckCircle2, Home, Landmark, ListChecks, SearchCheck, Trees } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -11,9 +11,9 @@ import { responsiveImageProps } from "../utils/imageSeo";
 
 const services = [
   {
-    title: "Property for Rent",
-    description: "Curated rental homes and commercial spaces with location checks, owner coordination, and requirement follow-up.",
-    icon: KeyRound,
+    title: "Agricultural Land & Plots",
+    description: "Verified agricultural land, NA plots, residential plots, and investment land with locality-specific guidance.",
+    icon: Trees,
   },
   {
     title: "Property for Sale",
@@ -21,8 +21,8 @@ const services = [
     icon: Home,
   },
   {
-    title: "Pre-Leased Properties",
-    description: "Income-ready assets for investors looking for stable rentals, tenant visibility, and long-term value.",
+    title: "Land Investment Advisory",
+    description: "Area, access, development potential, price context, document coordination, and long-term land value guidance.",
     icon: Landmark,
   },
   {

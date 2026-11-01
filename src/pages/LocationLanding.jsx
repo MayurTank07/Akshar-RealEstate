@@ -63,9 +63,16 @@ export default function LocationLanding({ typePrefix = "" }) {
       <Hero key={page.path} category={state.category} type={state.type} city={state.city} filters={state.filters} pageTitle={page.h1} intentPage={page} intro={intro} />
       <nav aria-label="Related property searches" className="mx-auto flex max-w-7xl flex-wrap gap-x-5 gap-y-2 px-4 py-8 text-sm font-semibold text-blue-700 sm:px-6 lg:px-8">
         <Link to="/agricultural-land-for-sale/gandhinagar">Agricultural land in Gandhinagar</Link>
+        <Link to="/agricultural-land-for-sale/viramgam">Agricultural land in Viramgam</Link>
+        <Link to="/agricultural-land-for-sale/dashela">Agricultural land in Dashela</Link>
+        <Link to="/agricultural-land-for-sale/jhakhora">Agricultural land in Jhakhora</Link>
+        <Link to="/agricultural-land-for-sale/dhanap">Agricultural land in Dhanap</Link>
         <Link to="/plots-for-sale/ahmedabad">Plots in Ahmedabad</Link>
+        <Link to="/plots-for-sale/viramgam">Plots in Viramgam</Link>
+        <Link to="/plots-for-sale/palaj">Plots in Palaj</Link>
         <Link to="/flats-for-sale/ahmedabad">Flats in Ahmedabad</Link>
         <Link to="/2-bhk-flats-for-sale/gandhinagar">2 BHK flats in Gandhinagar</Link>
+        <Link to="/properties-for-sale/gandhinagar/palaj/4-bhk">4 BHK apartments in Palaj</Link>
       </nav>
       <Footer />
     </div>

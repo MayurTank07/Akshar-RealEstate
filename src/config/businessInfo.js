@@ -6,7 +6,7 @@ export const BUSINESS_INFO = {
   url: SITE_ORIGIN,
   logo: `${SITE_ORIGIN}/akshar-logo-512.jpeg`,
   image: `${SITE_ORIGIN}/akshar-logo.jpeg`,
-  description: "Akshar Estate The Property HUB helps buyers, sellers, renters and investors discover verified residential, commercial and land opportunities across Gujarat.",
+  description: "Akshar Estate The Property HUB helps buyers, sellers and investors discover verified agricultural land, plots, residential and commercial property across Gujarat.",
   phone: "+91 9998040233",
   email: "aksharestate2006@gmail.com",
   address: {

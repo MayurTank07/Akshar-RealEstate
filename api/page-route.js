@@ -9,13 +9,16 @@ const PUBLIC_PAGES = {
     title: "Akshar Estate | Real Estate in Ahmedabad and Gandhinagar",
     description: "Find verified property in Ahmedabad and Gandhinagar with Akshar Estate: flats, plots, shops, offices, houses and commercial real estate leads.",
     h1: "Akshar Estate The Property HUB",
-    body: "Find verified residential, commercial, rental and land opportunities across Ahmedabad, Gandhinagar and nearby Gujarat property markets.",
-    answer: "Akshar Estate The Property HUB is a Gandhinagar-based real estate agency helping buyers, sellers, renters and investors find verified flats, plots, land, shops, offices and new project opportunities across Gandhinagar, Ahmedabad and nearby Gujarat markets.",
+    body: "Find verified agricultural land, plots, residential and commercial property across Ahmedabad, Gandhinagar and nearby Gujarat markets.",
+    answer: "Akshar Estate The Property HUB is a Gandhinagar-based real estate agency helping buyers, sellers and investors compare verified agricultural land, plots, flats, commercial property and new projects across Gandhinagar, Ahmedabad and nearby Gujarat markets.",
     links: [
       ["/properties-for-sale/ahmedabad", "Property in Ahmedabad"],
       ["/properties-for-sale/gandhinagar", "Properties for sale in Gandhinagar"],
       ["/properties-for-sale/gandhinagar/palaj", "Properties in Palaj"],
       ["/properties-for-sale/gandhinagar/dhanap", "Properties in Dhanap"],
+      ["/agricultural-land-for-sale/gandhinagar", "Agricultural land in Gandhinagar"],
+      ["/agricultural-land-for-sale/viramgam", "Agricultural land in Viramgam"],
+      ["/plots-for-sale/palaj", "Plots in Palaj"],
       ["/properties-for-sale/ahmedabad/memnagar", "Properties in Memnagar"],
       ["/properties", "All properties"],
     ],
@@ -23,7 +26,7 @@ const PUBLIC_PAGES = {
   "/properties": {
     title: "Property in Ahmedabad and Gandhinagar | Akshar Estate",
     description: "Browse verified flats, plots, shops, offices, houses and commercial property in Ahmedabad, Gandhinagar and nearby Akshar Estate locations.",
-    h1: "Properties for Sale and Rent in Gujarat",
+    h1: "Properties for Sale in Gujarat",
     body: "Browse active Akshar Estate listings by location, property type, BHK, price and availability.",
     answer: "Use Akshar Estate to compare active property listings with photos, price, area, locality, property code, supervisor contact and site-visit support before shortlisting.",
     links: [
@@ -44,16 +47,16 @@ const PUBLIC_PAGES = {
     title: "About Akshar Estate The Property HUB | Gandhinagar Real Estate",
     description: "Learn about Akshar Estate The Property HUB, a Gandhinagar-based real estate team serving buyers, sellers and investors across Gujarat.",
     h1: "About Akshar Estate The Property HUB",
-    body: "Akshar Estate supports property buyers, sellers, renters and investors with verified real estate opportunities across Gujarat.",
-    answer: "Akshar Estate The Property HUB is a local real estate team in Gandhinagar serving property buyers, sellers, renters and investors across Gandhinagar, Ahmedabad and nearby Gujarat locations.",
+    body: "Akshar Estate supports property buyers, sellers and investors with verified sale and investment opportunities across Gujarat.",
+    answer: "Akshar Estate The Property HUB is a local real estate team in Gandhinagar serving buyers, sellers and investors across agricultural land, plots, residential and commercial property in Gandhinagar, Ahmedabad and nearby Gujarat locations.",
     links: [["/contact", "Contact Akshar Estate"], ["/properties", "Browse properties"]],
   },
   "/services": {
     title: "Real Estate Services in Gandhinagar and Ahmedabad | Akshar Estate",
-    description: "Akshar Estate offers buying, selling, rental, investment and supervisor-assisted real estate services in Ahmedabad, Gandhinagar and Gujarat.",
+    description: "Akshar Estate offers agricultural land, plot, property buying, selling, investment and site-visit assistance in Ahmedabad, Gandhinagar and Gujarat.",
     h1: "Real Estate Services",
-    body: "Get support for buying, selling, renting and evaluating real estate opportunities across Gandhinagar, Ahmedabad and nearby markets.",
-    answer: "Akshar Estate provides property buying, selling, rental, commercial property, plot and land, investment and site-visit coordination services in Gandhinagar, Ahmedabad and nearby Gujarat markets.",
+    body: "Get support for buying, selling and evaluating agricultural land, plots, residential and commercial opportunities across Gandhinagar, Ahmedabad and nearby markets.",
+    answer: "Akshar Estate provides agricultural land and plot advisory, property buying and selling support, investment guidance, commercial property assistance and coordinated site visits across Gandhinagar, Ahmedabad and nearby Gujarat markets.",
     links: [["/contact", "Ask for property assistance"], ["/properties-for-sale/gandhinagar", "Gandhinagar properties"]],
   },
   "/contact": {
@@ -171,6 +174,10 @@ function answerBlock(page) {
 function serviceClusterLinks(pathname) {
   const links = [
     ["/agricultural-land-for-sale/gandhinagar", "Agricultural land for sale in Gandhinagar"],
+    ["/agricultural-land-for-sale/viramgam", "Agricultural land for sale in Viramgam"],
+    ["/agricultural-land-for-sale/dashela", "Agricultural land for sale in Dashela"],
+    ["/agricultural-land-for-sale/jhakhora", "Agricultural land for sale in Jhakhora"],
+    ["/agricultural-land-for-sale/dhanap", "Agricultural land for sale in Dhanap"],
     ["/plots-for-sale/ahmedabad", "Plots for sale in Ahmedabad"],
     ["/plots-for-sale/gandhinagar", "Plots for sale in Gandhinagar"],
     ["/flats-for-sale/ahmedabad", "Flats for sale in Ahmedabad"],
@@ -185,6 +192,8 @@ function serviceClusterLinks(pathname) {
     ["/properties-for-sale/ahmedabad/shela", "Shela property guide"],
     ["/commercial-property/sg-highway", "Commercial property on S.G. Highway"],
     ["/plots-for-sale/palaj", "Plots for sale in Palaj"],
+    ["/plots-for-sale/viramgam", "Plots for sale in Viramgam"],
+    ["/properties-for-sale/gandhinagar/palaj/4-bhk", "4 BHK apartment in Palaj"],
     ["/contact", "Sell or list your property"],
   ];
   return links.filter(([href]) => href !== pathname);
