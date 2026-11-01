@@ -10,6 +10,7 @@ import {
 } from "../src/config/locationLandingPages.js";
 import { THUMBNAIL_IMAGE_FALLBACK, imageSrcSet, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildCollectionPageJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
+import { isEditoriallyIndexableBlog } from "../src/utils/blogEditorial.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -92,7 +93,7 @@ async function fetchPublicBlogs(page) {
   const response = await fetch(`${API_BASE_URL}/public/blogs?location=${encodeURIComponent(location)}&limit=4`);
   if (!response.ok) return [];
   const body = await response.json();
-  return Array.isArray(body?.data) ? body.data : [];
+  return Array.isArray(body?.data) ? body.data.filter(isEditoriallyIndexableBlog) : [];
 }
 
 function propertyLocationText(property = {}) {
@@ -444,6 +445,33 @@ function buildListings(listings) {
     </li>`).join("")}</ol>`;
 }
 
+function buildCityInventorySnapshot(page, listings) {
+  if (page.kind !== "region" || !["ahmedabad", "gandhinagar"].includes(page.slug) || !listings.length) return "";
+  const typeCounts = new Map();
+  const localityCounts = new Map();
+  for (const property of listings) {
+    const type = propertyType(property);
+    typeCounts.set(type, (typeCounts.get(type) || 0) + 1);
+    const locality = property.locationMaster?.name || property.location;
+    const slug = slugifyLocation(locality);
+    const landing = slug && getSaleLandingPage(page.slug, slug);
+    if (landing?.verified && landing.path !== page.path) {
+      const current = localityCounts.get(landing.path) || { label: landing.name, count: 0 };
+      localityCounts.set(landing.path, { ...current, count: current.count + 1 });
+    }
+  }
+  const types = [...typeCounts].sort((a, b) => b[1] - a[1]).map(([type, count]) => `${type}: ${count} active ${count === 1 ? "listing" : "listings"}`);
+  const localities = [...localityCounts].sort((a, b) => b[1].count - a[1].count).slice(0, 10)
+    .map(([href, item]) => ({ href, label: `${item.label} (${item.count})` }));
+  return `
+      <section aria-label="Current city inventory">
+        <h2>Current ${escapeHtml(page.name)} Listing Mix</h2>
+        <p>These counts reflect currently active Akshar Estate listings and can change as properties are added or sold.</p>
+        ${plainList(types)}
+        ${localities.length ? `<h3>Localities with Active Listings</h3>${linkList(localities)}` : ""}
+      </section>`;
+}
+
 function buildPagination(page, currentPage, totalPages) {
   if (totalPages <= 1) return "";
   const links = Array.from({ length: totalPages }, (_, index) => {
@@ -546,6 +574,7 @@ function injectHtml(shell, page, context) {
         ${filtered ? "<p>This filtered view is noindex and points canonical signals to the main location page.</p>" : ""}
       </header>
       ${buildAnswerBlock(page, allListings)}
+      ${buildCityInventorySnapshot(page, allListings)}
       ${buildFilterLinks(page, propertyTypes, bhkOptions)}
       <section><h2>Local Property Listings</h2>${buildListings(visibleListings)}${buildPagination(page, currentPage, totalPages)}</section>
       ${page.regionSlug ? `<section><h2>Parent Region</h2>${linkList([{ label: `Properties for sale in ${page.regionName || page.city || page.name}`, href: `/properties-for-sale/${page.regionSlug}` }])}</section>` : ""}

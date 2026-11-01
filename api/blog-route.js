@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { PROPERTY_IMAGE_FALLBACK, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildBlogPostingJsonLd, buildBreadcrumbSchema, schemaScriptContent } from "../src/utils/structuredData.js";
+import { activeBlogLocationLinks, isEditoriallyIndexableBlog, relevantPropertyLinksForBlog } from "../src/utils/blogEditorial.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -85,14 +86,6 @@ function linkList(items) {
   return `<ul>${links.map((item) => `<li><a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a></li>`).join("")}</ul>`;
 }
 
-function locationHref(name) {
-  const slug = String(name || "").toLowerCase().trim().replace(/\./g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-  if (slug === "gandhinagar") return "/properties-for-sale/gandhinagar";
-  if (slug === "ahmedabad") return "/properties-for-sale/ahmedabad";
-  if (["kudasan", "sargasan", "vavol", "pethapur", "gift-city"].includes(slug)) return `/properties-for-sale/gandhinagar/${slug}`;
-  return `/properties-for-sale/ahmedabad/${slug}`;
-}
-
 function buildBlogPage(blog) {
   const breadcrumbs = [
     { label: "Home", href: "/" },
@@ -113,7 +106,8 @@ function buildBlogPage(blog) {
         </header>
         ${blog.featuredImage ? `<img src="${escapeHtml(optimizedImageUrl(blog.featuredImage, { width: 1200, height: 675 }))}" width="1200" height="675" loading="eager" alt="${escapeHtml(`${blog.title} featured image`)}" style="width:100%;height:auto;border-radius:12px" />` : ""}
         <section><h2>Guide Details</h2><div style="white-space:pre-line">${escapeHtml(blog.body)}</div></section>
-        <section><h2>Related Property Locations</h2>${linkList((blog.relatedLocations || []).map((name) => ({ label: `Properties for sale in ${name}`, href: locationHref(name) })))}</section>
+        <section><h2>Explore Active Property Pages</h2>${linkList(relevantPropertyLinksForBlog(blog).map(([label, href]) => ({ label, href })))}</section>
+        <section><h2>Related Property Locations</h2>${linkList(activeBlogLocationLinks(blog).map(([label, href]) => ({ label, href })))}</section>
       </article>
     </main>`;
 }
@@ -131,7 +125,7 @@ function injectBlogHtml(shell, blog) {
   const head = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
-    `<meta name="robots" content="${blog.isIndexable === false ? "noindex,follow" : "index,follow,max-image-preview:large"}" />`,
+    `<meta name="robots" content="${isEditoriallyIndexableBlog(blog) ? "index,follow,max-image-preview:large" : "noindex,follow"}" />`,
     `<link rel="canonical" href="${escapeHtml(url)}" />`,
     `<meta property="og:title" content="${escapeHtml(title)}" />`,
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
@@ -170,7 +164,7 @@ export default async function handler(req, res) {
     const slug = decodeURIComponent(String(rawSlug)).trim().replace(/^\/+|\/+$/g, "").toLowerCase();
     if (!slug) return notFound(res);
     const blog = await fetchBlog(slug);
-    if (!blog?.slug) return notFound(res);
+    if (!isEditoriallyIndexableBlog(blog)) return notFound(res);
     const hasTrailingSlash = url.pathname.endsWith("/") || firstQueryValue(req.query?.slash) === "1";
     const hasQueryNoise = [...url.searchParams.keys()].some((key) => !["slug", "slash"].includes(key));
     if (slug !== blog.slug || hasTrailingSlash || hasQueryNoise) return redirect(res, canonicalPath(blog.slug));

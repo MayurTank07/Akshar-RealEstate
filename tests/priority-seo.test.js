@@ -107,6 +107,14 @@ test("priority category routes show matching inventory and a single SEO root", a
   assert.match(sitemap.body, /properties-for-sale\/gandhinagar\/palaj\/4-bhk/);
 });
 
+test("city pages summarize current inventory and link to active localities", async () => {
+  const gandhinagar = await render(saleLandingRoute, "/properties-for-sale/gandhinagar");
+  assert.equal(gandhinagar.status, 200);
+  assert.match(gandhinagar.body, /Current Gandhinagar Listing Mix/);
+  assert.match(gandhinagar.body, /href="\/properties-for-sale\/gandhinagar\/palaj"/);
+  assert.match(gandhinagar.body, /href="\/properties-for-sale\/gandhinagar\/dhanap"/);
+});
+
 test("all nine priority listings have unique, indexable, answer-ready property pages", async () => {
   const priorityListings = listings.filter((item) => /^AETP-(?:AHMD|GNR|VIRA)-/.test(item.propertyCode) && !["AETP-AHMD-0071", "AETP-AHMD-0059", "AETP-GNR-0060"].includes(item.propertyCode));
   assert.equal(priorityListings.length, 9);

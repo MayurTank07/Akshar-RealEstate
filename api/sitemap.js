@@ -4,6 +4,7 @@ import {
   SITE_ORIGIN,
   slugifyLocation,
 } from "../src/config/locationLandingPages.js";
+import { isEditoriallyIndexableBlog } from "../src/utils/blogEditorial.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -183,7 +184,7 @@ function propertyTypeEntries(properties) {
 
 function blogEntries(blogs) {
   return blogs
-    .filter((blog) => blog.slug && blog.isIndexable !== false && !blog.deletedAt)
+    .filter(isEditoriallyIndexableBlog)
     .map((blog) => ({
       path: `/blog/${blog.slug}`,
       lastmod: blog.updatedAt || blog.publishedAt,

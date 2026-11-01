@@ -6,21 +6,13 @@ import Navbar from "../components/Navbar";
 import StructuredData from "../components/StructuredData";
 import { publicApi } from "../services/api";
 import { buildBlogPostingJsonLd, buildBreadcrumbSchema } from "../utils/structuredData";
-import { slugifyLocation } from "../config/locationLandingPages";
+import { activeBlogLocationLinks, isEditoriallyIndexableBlog, relevantPropertyLinksForBlog } from "../utils/blogEditorial";
 
 function formatDate(value) {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "long", year: "numeric" }).format(date);
-}
-
-function locationHref(name) {
-  const slug = slugifyLocation(name);
-  if (["gandhinagar"].includes(slug)) return "/properties-for-sale/gandhinagar";
-  if (["ahmedabad"].includes(slug)) return "/properties-for-sale/ahmedabad";
-  if (["kudasan", "sargasan", "vavol", "pethapur", "gift-city"].includes(slug)) return `/properties-for-sale/gandhinagar/${slug}`;
-  return `/properties-for-sale/ahmedabad/${slug}`;
 }
 
 export default function BlogDetails() {
@@ -33,7 +25,10 @@ export default function BlogDetails() {
     let active = true;
     publicApi.blog(slug)
       .then((response) => {
-        if (active) setBlog(response.data);
+        if (active) {
+          if (isEditoriallyIndexableBlog(response.data)) setBlog(response.data);
+          else setMissing(true);
+        }
       })
       .catch(() => {
         if (active) setMissing(true);
@@ -82,13 +77,23 @@ export default function BlogDetails() {
           <div className="prose prose-slate mt-8 max-w-none whitespace-pre-line text-base font-medium leading-8 text-slate-700">
             {blog.body}
           </div>
-          {blog.relatedLocations?.length > 0 && (
+          {relevantPropertyLinksForBlog(blog).length > 0 && (
+            <section className="mt-10 border-t border-slate-200 pt-6">
+              <h2 className="text-xl font-extrabold text-slate-950">Explore Active Property Pages</h2>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {relevantPropertyLinksForBlog(blog).map(([label, href]) => (
+                  <Link key={href} to={href} className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-extrabold text-blue-700 transition hover:bg-blue-100">{label}</Link>
+                ))}
+              </div>
+            </section>
+          )}
+          {activeBlogLocationLinks(blog).length > 0 && (
             <section className="mt-10 border-t border-slate-200 pt-6">
               <h2 className="text-xl font-extrabold text-slate-950">Related Property Locations</h2>
               <div className="mt-4 flex flex-wrap gap-2">
-                {blog.relatedLocations.map((name) => (
-                  <Link key={name} to={locationHref(name)} className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-extrabold text-blue-700 transition hover:bg-blue-100">
-                    Properties for sale in {name}
+                {activeBlogLocationLinks(blog).map(([label, href]) => (
+                  <Link key={href} to={href} className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm font-extrabold text-blue-700 transition hover:bg-blue-100">
+                    {label}
                   </Link>
                 ))}
               </div>

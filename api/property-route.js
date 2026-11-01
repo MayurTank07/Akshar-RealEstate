@@ -4,6 +4,7 @@ import { getBhkIntentPage, getPropertyTypeIntentPage, getSaleLandingPage, slugif
 import { PROPERTY_IMAGE_FALLBACK, imageSrcSet, optimizedImageUrl } from "../src/utils/imageSeo.js";
 import { buildPropertyJsonLd, schemaScriptContent } from "../src/utils/structuredData.js";
 import { priorityPropertySeo } from "../src/config/priorityPropertySeo.js";
+import { isEditoriallyIndexableBlog } from "../src/utils/blogEditorial.js";
 
 const API_BASE_URL =
   process.env.VITE_API_BASE_URL ||
@@ -89,7 +90,7 @@ async function fetchPublicBlogs(params = {}) {
   const response = await fetch(`${API_BASE_URL}/public/blogs?${search.toString()}`);
   if (!response.ok) return [];
   const body = await response.json();
-  return Array.isArray(body?.data) ? body.data : [];
+  return Array.isArray(body?.data) ? body.data.filter(isEditoriallyIndexableBlog) : [];
 }
 
 async function fetchRelatedProperties(property) {

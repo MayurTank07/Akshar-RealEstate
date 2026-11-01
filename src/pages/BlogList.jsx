@@ -4,6 +4,7 @@ import Breadcrumbs from "../components/Breadcrumbs";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import { publicApi } from "../services/api";
+import { isEditoriallyIndexableBlog } from "../utils/blogEditorial";
 
 function formatDate(value) {
   if (!value) return "Draft date pending";
@@ -20,7 +21,7 @@ export default function BlogList() {
     let active = true;
     publicApi.blogs({ limit: 24 })
       .then((response) => {
-        if (active) setBlogs(Array.isArray(response.data) ? response.data : []);
+        if (active) setBlogs(Array.isArray(response.data) ? response.data.filter(isEditoriallyIndexableBlog) : []);
       })
       .catch(() => {
         if (active) setBlogs([]);
