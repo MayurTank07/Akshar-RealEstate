@@ -5,7 +5,7 @@ import propertyRoute from "../api/property-route.js";
 import saleLandingRoute from "../api/sale-landing-route.js";
 import sitemapRoute from "../api/sitemap.js";
 import { getPropertyTypeIntentPage, landingStateForPage } from "../src/config/locationLandingPages.js";
-import { priorityPropertySeo } from "../src/config/priorityPropertySeo.js";
+import { activePriorityProperties, priorityPropertySeo } from "../src/config/priorityPropertySeo.js";
 
 const listings = [
   { _id: "0".repeat(24), propertyCode: "AETP-AHMD-0068", slug: "agriculture-land-for-sale-viramgam-viramgam-0068", type: "Agriculture land", category: "Agriculture land for sale", title: "Agricultural land", city: "Viramgam", location: "Viramgam", area: "2000 sq-yard", priceAmount: 4500000, status: "active", isIndexable: true },
@@ -40,6 +40,18 @@ test("homepage fallback has one sale-focused H1", () => {
   const shell = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
   assert.equal((shell.match(/<h1>/g) || []).length, 1);
   assert.match(shell, /<h1>Agricultural Land, Plots &amp; Properties for Sale in Gujarat<\/h1>/);
+});
+
+test("homepage gives nine priority listings crawlable, stable links", () => {
+  const shell = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const section = shell.match(/<section aria-label="Featured land and plot listings">([\s\S]*?)<\/section>/)?.[1] || "";
+  const ids = [...section.matchAll(/href="\/property\/([a-f\d]{24})"/g)].map((match) => match[1]);
+  assert.equal(ids.length, 9);
+  assert.equal(new Set(ids).size, 9);
+  assert.deepEqual(activePriorityProperties(listings).map((property) => property.propertyCode), [
+    "AETP-AHMD-0068", "AETP-GNR-0029", "AETP-AHMD-0069", "AETP-GNR-0028", "AETP-GNR-0027",
+    "AETP-GNR-0025", "AETP-GNR-0067", "AETP-GNR-0021", "AETP-VIRA-0072",
+  ]);
 });
 
 test("property-type landing state leaves inventory matching to the page intent", () => {

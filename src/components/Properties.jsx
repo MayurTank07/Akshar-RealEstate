@@ -6,6 +6,7 @@ import { publicApi } from "../services/api";
 import { formatINR } from "../utils/currency";
 import { normalizeProperty } from "../utils/propertyData";
 import { THUMBNAIL_IMAGE_FALLBACK, propertyImageAlt, propertyImageUrl, responsiveImageProps } from "../utils/imageSeo";
+import { activePriorityProperties } from "../config/priorityPropertySeo";
 
 const PUBLIC_LISTING_STATUSES = ["active", "published", "available", "reserved"];
 
@@ -36,6 +37,7 @@ export default function Properties() {
   }, []);
 
   const saleProperties = properties.filter((property) => !/rent|lease/i.test(String(property.listingType || "")));
+  const priorityProperties = activePriorityProperties(properties);
   const recentlyAdded = [...saleProperties]
     .filter((property) => PUBLIC_LISTING_STATUSES.includes(String(property.status || "active").toLowerCase()))
     .sort((a, b) => {
@@ -69,6 +71,18 @@ export default function Properties() {
   return (
     <section id="properties" className="overflow-hidden bg-slate-50 py-12 sm:py-16">
       <div className="wf-container">
+        <div className="mb-12">
+          <PropertyRail
+            section={{
+              title: "Featured Land, Plots & Sale Properties",
+              eyebrow: "Priority listings",
+              description: "Explore current agricultural land, plots and selected sale property with property-specific details.",
+              items: priorityProperties,
+            }}
+            loading={loading}
+            error={error}
+          />
+        </div>
         <div className="mb-12">
           <PropertyRail
             section={{
@@ -137,7 +151,7 @@ function PropertyRail({ section, loading = false, error = "" }) {
           </p>
         </div>
         <span className="hidden rounded-full bg-white px-3 py-1 text-xs font-extrabold text-slate-500 ring-1 ring-slate-200 sm:inline-flex">
-          {section.items.length} homes
+          {section.items.length} listings
         </span>
       </div>
 

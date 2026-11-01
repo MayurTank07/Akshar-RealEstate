@@ -81,4 +81,11 @@ export function priorityPropertyCodes() {
   return Object.keys(PRIORITY_PROPERTY_SEO);
 }
 
+export function activePriorityProperties(properties = []) {
+  const active = new Map(properties
+    .filter((property) => property.slug && ["active", "published", "available", "reserved"].includes(String(property.status || "").toLowerCase()) && property.isIndexable !== false && !property.deletedAt && !/rent|lease/i.test(String(property.listingType || "")))
+    .map((property) => [property.propertyCode, property]));
+  return priorityPropertyCodes().map((code) => active.get(code)).filter(Boolean);
+}
+
 export default PRIORITY_PROPERTY_SEO;
